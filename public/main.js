@@ -89,45 +89,62 @@ function renderTrack(trackId, trackData) {
 }
 
 async function openCase() {
+    const btn = document.getElementById('open-btn');
     const price = cases[activeCaseId].price;
     if (currentUser.balance < price) return alert("Not enough credits!");
-    currentUser.balance -= price; updateUI();
-    document.getElementById('open-btn').disabled = true;
+    
+    btn.classList.add('btn-loading');
 
-    const res = await fetch('/api/open-case', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ caseId: activeCaseId })
-    });
-    const data = await res.json();
-    renderTrack('spinner', data.track);
+    try {
+        const res = await fetch('/api/open-case', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ caseId: activeCaseId })
+        });
+        const data = await res.json();
+        
+        // Remove loading and disable button for animation duration
+        btn.classList.remove('btn-loading');
+        btn.disabled = true;
 
-    const spinner = document.getElementById('spinner');
-    const finalX = (50 * NODE_WIDTH) - (document.getElementById('main-view').offsetWidth / 2) + (NODE_WIDTH / 2);
+        renderTrack('spinner', data.track);
+        const spinner = document.getElementById('spinner');
+        const finalX = (50 * NODE_WIDTH) - (document.getElementById('main-view').offsetWidth / 2) + (NODE_WIDTH / 2);
 
-    spinner.style.transition = 'none'; spinner.style.transform = 'translateX(0)';
-    setTimeout(() => {
-        spinner.style.transition = 'transform 6s cubic-bezier(0.05, 0, 0, 1)';
-        spinner.style.transform = `translateX(-${finalX}px)`;
-    }, 50);
+        spinner.style.transition = 'none'; 
+        spinner.style.transform = 'translateX(0)';
+        
+        setTimeout(() => {
+            spinner.style.transition = 'transform 6s cubic-bezier(0.05, 0, 0, 1)';
+            spinner.style.transform = `translateX(-${finalX}px)`;
+        }, 50);
 
-    setTimeout(() => {
-        currentUser.balance = data.newBalance; updateUI();
-        document.getElementById('open-btn').disabled = false;
-    }, 6500);
+        setTimeout(() => {
+            currentUser.balance = data.newBalance; 
+            updateUI();
+            btn.disabled = false;
+        }, 6500);
+    } catch (e) {
+        btn.classList.remove('btn-loading');
+        alert("Transaction failed");
+    }
 }
 
-// Battles
 function createBattle() {
+    const btn = event.target;
     const cid = document.getElementById('battle-case-select').value;
     if(currentUser.balance < cases[cid].price) return alert("Low balance");
+    
+    btn.classList.add('btn-loading');
     socket.emit('createBattle', { userId: currentUser._id, caseId: cid });
-    currentUser.balance -= cases[cid].price; updateUI();
+    // Note: The loading will naturally disappear when the tab switches or list updates
 }
 
 function joinBattle(id, price) {
+    const btn = event.target;
     if(currentUser.balance < price) return alert("Low balance");
+    
+    btn.classList.add('btn-loading');
     socket.emit('joinBattle', { battleId: id, userId: currentUser._id });
-    currentUser.balance -= price; updateUI();
 }
 
 socket.on('updateBattles', (battles) => {
@@ -191,21 +208,45 @@ document.getElementById('avatar-input').onchange = function(e) {
 };
 
 async function uploadAvatar() {
-    const res = await fetch('/api/update-avatar', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ avatar: document.getElementById('settings-avatar-prev').src })
-    });
-    const data = await res.json();
-    if(data.success) { currentUser = data.user; updateUI(); alert("Saved!"); }
+    const btn = event.target;
+    btn.classList.add('btn-loading');
+    try {
+        const res = await fetch('/api/update-avatar', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ avatar: document.getElementById('settings-avatar-prev').src })
+        });
+        const data = await res.json();
+        if(data.success) { 
+            currentUser = data.user; 
+            updateUI(); 
+            alert("Saved!"); 
+        }
+    } finally {
+        btn.classList.remove('btn-loading');
+    }
 }
 
 async function auth(type) {
-    const res = await fetch(`/api/${type}`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({username: document.getElementById('user').value, password: document.getElementById('pass').value})
-    });
-    const data = await res.json();
-    if(data.success) location.reload(); else alert("Error");
+    const btn = event.target; // Get the clicked button
+    btn.classList.add('btn-loading');
+    
+    try {
+        const res = await fetch(`/api/${type}`, {
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: document.getElementById('user').value, 
+                password: document.getElementById('pass').value
+            })
+        });
+        const data = await res.json();
+        if(data.success) location.reload(); 
+        else alert("Error: " + (data.error || "Login failed"));
+    } catch (e) {
+        alert("Server connection error");
+    } finally {
+        btn.classList.remove('btn-loading');
+    }
 }
 
 async function logout() { await fetch('/api/logout', {method: 'POST'}); location.reload(); }

@@ -74,3 +74,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 /* Settings PFP Fix */
 .settings-card { max-width: 400px; margin: 0 auto; background: var(--card); padding: 40px; border-radius: 20px; text-align: center; }
 .settings-avatar img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
+/* Loading Spinner Logic */
+.btn-loading {
+    position: relative;
+    color: transparent !important; /* Hide text */
+    pointer-events: none; /* Prevent double clicks */
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Specific fix for the "Open Case" button to keep its width */
+.btn-open {
+    min-width: 300px;
+    transition: all 0.3s ease;
+}
