@@ -102,9 +102,13 @@ async function openCase() {
         });
         const data = await res.json();
         
-        // Remove loading and disable button for animation duration
         btn.classList.remove('btn-loading');
         btn.disabled = true;
+
+        // --- MOVE THIS PART HERE (Immediately after server response) ---
+        currentUser.balance = data.newBalance; 
+        updateUI();
+        // ---------------------------------------------------------------
 
         renderTrack('spinner', data.track);
         const spinner = document.getElementById('spinner');
@@ -119,8 +123,7 @@ async function openCase() {
         }, 50);
 
         setTimeout(() => {
-            currentUser.balance = data.newBalance; 
-            updateUI();
+            // Only re-enable the button after animation
             btn.disabled = false;
         }, 6500);
     } catch (e) {
@@ -129,14 +132,21 @@ async function openCase() {
     }
 }
 
+socket.on('balanceUpdate', (newBalance) => {
+    currentUser.balance = newBalance;
+    updateUI();
+    // Remove loading from the "New Battle" button if it exists
+    const createBtn = document.querySelector('.lobby-create .btn-primary');
+    if(createBtn) createBtn.classList.remove('btn-loading');
+});
+
 function createBattle() {
-    const btn = event.target;
+    const btn = event.target; // Note: using event.target is fine here
     const cid = document.getElementById('battle-case-select').value;
     if(currentUser.balance < cases[cid].price) return alert("Low balance");
     
     btn.classList.add('btn-loading');
     socket.emit('createBattle', { userId: currentUser._id, caseId: cid });
-    // Note: The loading will naturally disappear when the tab switches or list updates
 }
 
 function joinBattle(id, price) {

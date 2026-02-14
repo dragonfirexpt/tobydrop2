@@ -114,13 +114,28 @@ io.on('connection', (socket) => {
     socket.on('chatMessage', (data) => io.emit('chatMessage', data));
     socket.on('createBattle', async (data) => {
         const user = await User.findById(data.userId);
+        const price = caseData[data.caseId].price;
+
+        // 1. Check if user can afford it
+        if (!user || user.balance < price) return;
+
+        // 2. Deduct the balance immediately in DB
+        user.balance -= price;
+        await user.save();
+
         const b = {
             id: Math.random().toString(36).substr(2, 9),
             player1: { username: user.username, id: user._id, avatar: user.avatar },
-            player2: null, caseId: data.caseId, price: caseData[data.caseId].price
+            player2: null, 
+            caseId: data.caseId, 
+            price: price
         };
+        
         activeBattles.push(b);
+        
+        // 3. Inform everyone (including the creator) to update their UI/Balance
         io.emit('updateBattles', activeBattles);
+        socket.emit('balanceUpdate', user.balance); // Send new balance back to creator
     });
     socket.on('joinBattle', async (data) => {
         const idx = activeBattles.findIndex(b => b.id === data.battleId);
