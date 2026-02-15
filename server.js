@@ -9,6 +9,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+
+
 mongoose.connect('mongodb+srv://admin:rapazin@cluster0.2nsczvm.mongodb.net/?appName=Cluster0');
 
 app.use(express.json({ limit: '10mb' })); 
@@ -27,62 +29,141 @@ const User = mongoose.model('User', new mongoose.Schema({
     avatar: { type: String, default: 'https://api.dicebear.com/7.x/bottts/svg?seed=default' }
 }));
 
+const CONDITIONS = [
+    { name: "Factory New", short: "FN", chance: 10, multiplier: 1.0 },
+    { name: "Minimal Wear", short: "MW", chance: 15, multiplier: 0.8 },
+    { name: "Field-Tested", short: "FT", chance: 15, multiplier: 0.6 },
+    { name: "Well-Worn", short: "WW", chance: 20, multiplier: 0.5 },
+    { name: "Battle-Scarred", short: "BS", chance: 40, multiplier: 0.4 }
+];
+
+const rollCondition = () => {
+    let rand = Math.random() * 100;
+    let cum = 0;
+    for (let c of CONDITIONS) {
+        cum += c.chance;
+        if (rand < cum) return c;
+    }
+    return CONDITIONS[2];
+};
+
 const caseData = {
     bronze: {
-        name: "Bronze Box", price: 20,
+        name: "Community Collection", 
+        price: 1.00, 
         items: [
-            { name: "Paper Clip", value: 1, color: "#888", chance: 60 },
-            { name: "Rusty Key", value: 5, color: "#888", chance: 25 },
-            { name: "Bronze Coin", value: 45, color: "#00f2ff", chance: 12 },
-            { name: "Silver Ingot", value: 150, color: "#ffb703", chance: 3 }
-        ]
-    },
-    silver: {
-        name: "Silver Safe", price: 100,
-        items: [
-            { name: "Old Watch", value: 20, color: "#888", chance: 50 },
-            { name: "Chrome Blade", value: 80, color: "#00f2ff", chance: 35 },
-            { name: "Gold Nugget", value: 450, color: "#8847ff", chance: 12 },
-            { name: "Diamond Ring", value: 1200, color: "#ffb703", chance: 3 }
-        ]
-    },
-    gold: {
-        name: "Gold Vault", price: 500,
-        items: [
-            { name: "Onyx Shard", value: 100, color: "#888", chance: 55 },
-            { name: "Titanium Core", value: 400, color: "#00f2ff", chance: 30 },
-            { name: "Golden Apple", value: 2500, color: "#ff00ff", chance: 12 },
-            { name: "Ether Crystal", value: 6500, color: "#ffb703", chance: 3 }
-        ]
-    },
-    diamond: {
-        name: "Diamond Crate", price: 2500,
-        items: [
-            { name: "Prism Glass", value: 500, color: "#00f2ff", chance: 50 },
-            { name: "Plasma Core", value: 2200, color: "#8847ff", chance: 35 },
-            { name: "Diamond Blade", value: 12000, color: "#ff00ff", chance: 12 },
-            { name: "Black Matter", value: 35000, color: "#ff0000", chance: 3 }
-        ]
-    },
-    cyber: {
-        name: "Cyber Void", price: 10000,
-        items: [
-            { name: "Circuitry", value: 2000, color: "#8847ff", chance: 45 },
-            { name: "Neural Link", value: 8500, color: "#ff00ff", chance: 40 },
-            { name: "Cyber Katana", value: 45000, color: "#ffb703", chance: 12 },
-            { name: "AI Overlord", value: 150000, color: "#ff0000", chance: 3 }
-        ]
-    },
-    toby: {
-        name: "TOBY GOD", price: 50000,
-        items: [
-            { name: "God's Dust", value: 10000, color: "#ff00ff", chance: 40 },
-            { name: "Infinity Star", value: 45000, color: "#ffb703", chance: 40 },
-            { name: "Dragon Spirit", value: 250000, color: "#ff0000", chance: 15 },
-            { name: "TOBY'S CROWN", value: 1000000, color: "#ff0000", chance: 5 }
+            { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005 },
+            { name: "AK-47 | Nightwish", maxVal: 108.45, minVal: 102.44, color: "#eb4b4b", chance: 0.018 },
+            { name: "AWP | Ice Coaled", maxVal: 83.42, minVal: 9.67, color: "#d32ce6", chance: 0.053 },
+            { name: "M4A1-S | Player Two", maxVal: 83.42, minVal: 82.04, color: "#eb4b4b", chance: 0.013 },
+            { name: "AK-47 | Inheritance", maxVal: 69.72, minVal: 69.72, color: "#eb4b4b", chance: 0.012 },
+            { name: "AWP | Exothermic", maxVal: 31.14, minVal: 19.88, color: "#d32ce6", chance: 0.050 },
+            { name: "USP-S | Sleeping Potion", maxVal: 17.72, minVal: 6.28, color: "#d32ce6", chance: 0.106 },
+            { name: "USP-S | Jawbreaker", maxVal: 12.59, minVal: 5.89, color: "#d32ce6", chance: 0.159 },
+            { name: "AK-47 | Midnight Laminate", maxVal: 10.76, minVal: 10.55, color: "#8847ff", chance: 0.055 },
+            { name: "UMP-45 | Wild Child", maxVal: 9.95, minVal: 4.93, color: "#d32ce6", chance: 0.890 },
+            { name: "Sawed-Off | Apocalypto", maxVal: 8.71, minVal: 0.79, color: "#8847ff", chance: 6.479 },
+            { name: "M4A1-S | Glitched Paint", maxVal: 7.85, minVal: 4.83, color: "#8847ff", chance: 0.039 },
+            { name: "Dual Berettas | Twin Turbo", maxVal: 4.09, minVal: 2.89, color: "#d32ce6", chance: 1.987 },
+            { name: "M4A1-S | Night Terror", maxVal: 4.05, minVal: 1.08, color: "#8847ff", chance: 5.422 },
+            { name: "MAC-10 | Saibā Oni", maxVal: 4.05, minVal: 1.64, color: "#8847ff", chance: 6.147 },
+            { name: "Glock-18 | Block-18", maxVal: 4.05, minVal: 0.79, color: "#8847ff", chance: 9.307 },
+            { name: "M4A4 | Choppa", maxVal: 3.88, minVal: 0.08, color: "#8847ff", chance: 15.339 },
+            { name: "USP-S | Tropical Breeze", maxVal: 2.96, minVal: 1.35, color: "#8847ff", chance: 8.070 },
+            { name: "R8 Revolver | Tango", maxVal: 2.53, minVal: 0.20, color: "#4b69ff", chance: 6.933 },
+            { name: "AWP | Pit Viper", value: 2.13, maxVal: 2.13, minVal: 1.50, color: "#8847ff", chance: 5.128 },
+            { name: "XM1014 | Mockingbird", maxVal: 1.48, minVal: 0.08, color: "#4b69ff", chance: 6.373 },
+            { name: "P90 | Freight", maxVal: 1.40, minVal: 0.09, color: "#4b69ff", chance: 7.763 },
+            { name: "Zeus x27 | Electric Blue", maxVal: 0.83, minVal: 0.05, color: "#4b69ff", chance: 11.372 },
+            { name: "M4A4 | Naval Shred Camo", maxVal: 0.18, minVal: 0.05, color: "#4b69ff", chance: 8.280 }
         ]
     }
 };
+
+const axios = require('axios'); // Você pode precisar instalar: npm install axios
+
+let skinDatabase = []; // Agora é um Array
+
+function autoLinkImages() {
+    console.log("🎨 Vinculando imagens às skins (Correção Doppler Ruby/Sapphire)...");
+    
+    // Função para limpar strings (remove estrelas, acentos e carateres especiais)
+    const simplify = (str) => {
+        if (!str) return "";
+        return str.normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+                  .replace(/★/g, "")              // Remove a estrela
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, "");      // Remove tudo o que não é letra/número
+    };
+
+    for (let caseKey in caseData) {
+        caseData[caseKey].items.forEach(item => {
+            const originalName = item.name.trim().toLowerCase();
+            
+            // 1. Identificar se é uma fase especial
+            const specialPhases = ["ruby", "sapphire", "emerald", "black pearl"];
+            const detectedPhase = specialPhases.find(p => originalName.includes(p));
+
+            let foundItem = skinDatabase.find(dbItem => {
+                if (!dbItem.name) return false;
+                const dbNameLower = dbItem.name.toLowerCase();
+
+                // Se detetamos uma fase (ex: Ruby)
+                if (detectedPhase) {
+                    const weaponName = originalName.split('|')[0].trim(); // ex: "gut knife"
+                    
+                    // O item do banco DEVE ter o nome da arma E a palavra "doppler" E a fase (ruby)
+                    return dbNameLower.includes(weaponName) && 
+                           dbNameLower.includes("doppler") && 
+                           dbNameLower.includes(detectedPhase);
+                }
+
+                // Busca normal para as outras skins
+                return simplify(dbItem.name).includes(simplify(item.name));
+            });
+
+            // 2. Se não achou com a busca acima (fallback)
+            if (!foundItem) {
+                foundItem = skinDatabase.find(dbItem => simplify(dbItem.name).includes(simplify(item.name)));
+            }
+
+            if (foundItem) {
+                item.img = foundItem.image;
+            } else {
+                console.warn(`⚠️ Imagem não encontrada: "${item.name}"`);
+                item.img = "https://via.placeholder.com/512x384?text=Skin+Not+Found";
+            }
+        });
+    }
+    console.log("✅ Imagens sincronizadas com as fases corretas!");
+}
+
+async function loadSkinDatabase() {
+    try {
+        console.log("file_download Carregando nova API de skins (ByMykel)...");
+        const response = await axios.get('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json');
+        
+        // --- CORREÇÃO AQUI: Garante que os dados são um Array ---
+        if (Array.isArray(response.data)) {
+            skinDatabase = response.data;
+        } else {
+            // Se vier como objeto, extraímos apenas os valores (os itens)
+            skinDatabase = Object.values(response.data);
+        }
+        
+        console.log(`check ${skinDatabase.length} itens carregados no sistema!`);
+        autoLinkImages();
+    } catch (error) {
+        console.error("error Erro ao carregar API ByMykel:", error.message);
+    }
+}
+
+loadSkinDatabase();
+
+// Chame a função no final do arquivo ou antes do server.listen
+
+
 
 const rollItem = (items) => {
     let rand = Math.random() * 100;
@@ -122,6 +203,10 @@ app.get('/api/me', async (req, res) => {
     res.json({ loggedIn: !!user, user });
 });
 
+app.get('/api/cases', (req, res) => {
+    res.json(caseData);
+});
+
 app.post('/api/update-avatar', async (req, res) => {
     const user = await User.findByIdAndUpdate(req.session.userId, { avatar: req.body.avatar }, { new: true });
     res.json({ success: true, user });
@@ -130,28 +215,51 @@ app.post('/api/update-avatar', async (req, res) => {
 app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ success: true })));
 
 app.post('/api/open-case', async (req, res) => {
-    const user = await User.findById(req.session.userId);
-    const selectedCase = caseData[req.body.caseId];
-    if (!user || user.balance < selectedCase.price) return res.status(400).json({ error: "No funds" });
+    try {
+        const { caseId } = req.body;
+        const user = await User.findById(req.session.userId);
+        const selectedCase = caseData[caseId];
 
-    // Deduct price immediately
-    user.balance -= selectedCase.price;
-    
-    const winner = rollItem(selectedCase.items);
-    
-    // Add the winner value to the database balance immediately (for safety)
-    // but we will tell the client the balance BEFORE the win so they can animate it
-    const balanceAfterDeduction = user.balance; 
-    user.balance += winner.value;
-    
-    await user.save();
+        if (!user) return res.status(401).json({ error: "Faz login primeiro!" });
+        if (!selectedCase) return res.status(404).json({ error: "Esta caixa não existe no servidor!" });
+        if (user.balance < selectedCase.price) return res.status(400).json({ error: "Saldo insuficiente!" });
 
-    res.json({ 
-        winner, 
-        track: generateTrack(winner, selectedCase.items), 
-        balanceAfterDeduction: balanceAfterDeduction, // Money after paying
-        finalBalance: user.balance                    // Money after winning
-    });
+        // 1. Escolher o item
+        const baseItem = rollItem(selectedCase.items);
+        if (!baseItem) return res.status(500).json({ error: "Erro ao sortear item" });
+
+        // 2. Escolher a condição
+        const cond = rollCondition();
+        
+        // 3. Calcular valor (Garantir que min/max existem)
+        const min = baseItem.minVal || 0;
+        const max = baseItem.maxVal || min; // Se não houver max, usa o min
+        const priceGap = max - min;
+        const finalValue = parseFloat((min + (priceGap * cond.multiplier)).toFixed(2));
+        
+        // 4. Atualizar saldo (Apenas UMA vez no final)
+        const balanceAfterDeduction = user.balance - selectedCase.price;
+        user.balance = balanceAfterDeduction + finalValue;
+        await user.save();
+
+        const winner = { 
+            ...baseItem, 
+            name: `${baseItem.name} (${cond.short})`, 
+            value: finalValue,
+            img: baseItem.img || "https://via.placeholder.com/512x384?text=No+Image"
+        };
+
+        res.json({ 
+            winner, 
+            track: generateTrack(winner, selectedCase.items), 
+            balanceAfterDeduction, 
+            finalBalance: user.balance 
+        });
+
+    } catch (e) {
+        console.error("CRASH NO SERVIDOR:", e);
+        res.status(500).json({ error: "Erro interno no servidor" });
+    }
 });
 
 io.on('connection', (socket) => {

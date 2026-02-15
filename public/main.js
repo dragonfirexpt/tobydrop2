@@ -1,58 +1,14 @@
 const socket = io();
 let currentUser = null;
-let activeCaseId = 'starter';
-const NODE_WIDTH = 160;
+let activeCaseId = 'gold';
+const NODE_WIDTH = 180;
 
 const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
 winSound.volume = 0.25; // Set volume to 50%
 
-const cases = {
-    bronze: { name: "Bronze Box", price: 20 },
-    silver: { name: "Silver Safe", price: 100 },
-    gold: { name: "Gold Vault", price: 500 },
-    diamond: { name: "Diamond Crate", price: 2500 },
-    cyber: { name: "Cyber Void", price: 10000 },
-    toby: { name: "TOBY GOD", price: 50000 }
-};
-
-const itemsData = {
-    bronze: [
-        { name: "Paper Clip", value: 1, color: "#888", chance: 60 },
-        { name: "Rusty Key", value: 5, color: "#888", chance: 25 },
-        { name: "Bronze Coin", value: 45, color: "#00f2ff", chance: 12 },
-        { name: "Silver Ingot", value: 150, color: "#ffb703", chance: 3 }
-    ],
-    silver: [
-        { name: "Old Watch", value: 20, color: "#888", chance: 50 },
-        { name: "Chrome Blade", value: 80, color: "#00f2ff", chance: 35 },
-        { name: "Gold Nugget", value: 450, color: "#8847ff", chance: 12 },
-        { name: "Diamond Ring", value: 1200, color: "#ffb703", chance: 3 }
-    ],
-    gold: [
-        { name: "Onyx Shard", value: 100, color: "#888", chance: 55 },
-        { name: "Titanium Core", value: 400, color: "#00f2ff", chance: 30 },
-        { name: "Golden Apple", value: 2500, color: "#ff00ff", chance: 12 },
-        { name: "Ether Crystal", value: 6500, color: "#ffb703", chance: 3 }
-    ],
-    diamond: [
-        { name: "Prism Glass", value: 500, color: "#00f2ff", chance: 50 },
-        { name: "Plasma Core", value: 2200, color: "#8847ff", chance: 35 },
-        { name: "Diamond Blade", value: 12000, color: "#ff00ff", chance: 12 },
-        { name: "Black Matter", value: 35000, color: "#ff0000", chance: 3 }
-    ],
-    cyber: [
-        { name: "Circuitry", value: 2000, color: "#8847ff", chance: 45 },
-        { name: "Neural Link", value: 8500, color: "#ff00ff", chance: 40 },
-        { name: "Cyber Katana", value: 45000, color: "#ffb703", chance: 12 },
-        { name: "AI Overlord", value: 150000, color: "#ff0000", chance: 3 }
-    ],
-    toby: [
-        { name: "God's Dust", value: 10000, color: "#ff00ff", chance: 40 },
-        { name: "Infinity Star", value: 45000, color: "#ffb703", chance: 40 },
-        { name: "Dragon Spirit", value: 250000, color: "#ff0000", chance: 15 },
-        { name: "TOBY'S CROWN", value: 1000000, color: "#ff0000", chance: 5 }
-    ]
-};
+// No topo do main.js
+let itemsData = {}; 
+let cases = {}; 
 
 let currentCrashState = null;
 
@@ -114,6 +70,16 @@ function handleCrashAction() {
     }
 }
 async function init() {
+    // 1. Ir buscar os dados das caixas ao Servidor
+    const caseRes = await fetch('/api/cases');
+    itemsData = await caseRes.json();
+    
+    // 2. Preencher o objeto cases automaticamente para o menu
+    for (let id in itemsData) {
+        cases[id] = { name: itemsData[id].name, price: itemsData[id].price };
+    }
+
+    // 3. Verificar login do utilizador
     const res = await fetch('/api/me');
     const data = await res.json();
     if (data.loggedIn) {
@@ -182,20 +148,50 @@ function showHome() {
 
 function selectCase(id) {
     activeCaseId = id;
+    
+    // 1. Verificar se a caixa existe no que veio do servidor
+    if (!itemsData || !itemsData[id]) {
+        console.error("Caixa não encontrada no sistema:", id);
+        alert("Erro: Dados da caixa não carregados. Recarregue a página.");
+        return;
+    }
+
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.getElementById('opening-tab').style.display = 'block';
-    document.getElementById('case-title').innerText = cases[id].name.toUpperCase();
-    document.getElementById('open-btn').innerText = `OPEN FOR $${cases[id].price}`;
     
-    // Fill Preview
+    const caseInfo = itemsData[id]; 
+    document.getElementById('case-title').innerText = caseInfo.name.toUpperCase();
+    document.getElementById('open-btn').innerText = `OPEN FOR $${caseInfo.price}`;
+    
     const preview = document.getElementById('preview-items');
-    preview.innerHTML = itemsData[id].map(item => `
-        <div class="preview-item" style="border-color: ${item.color}">
-            <b>${item.name}</b>
-            <span>$${item.value}</span>
-            <small>${item.chance}% Drop</small>
-        </div>
-    `).join('');
+
+    // Ordenar por chance (raros no topo)
+    const sortedItems = [...caseInfo.items].sort((a, b) => a.chance - b.chance);
+
+    preview.innerHTML = sortedItems.map(item => {
+        // --- LÓGICA DE PREÇO SEGURA ---
+        let priceDisplay = "$0.00";
+        
+        // Se o item tiver os novos campos minVal/maxVal
+        if (item.minVal !== undefined && item.maxVal !== undefined) {
+            priceDisplay = (item.minVal === item.maxVal) 
+                ? `$${Number(item.minVal).toLocaleString()}` 
+                : `$${Number(item.minVal).toLocaleString()} - $${Number(item.maxVal).toLocaleString()}`;
+        } 
+        // Se o item ainda usar o campo antigo 'value'
+        else if (item.value !== undefined) {
+            priceDisplay = `$${Number(item.value).toLocaleString()}`;
+        }
+
+        return `
+            <div class="preview-item" style="border-color: ${item.color}">
+                <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
+                <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
+                <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">${priceDisplay}</span>
+                <small style="color: #666; display: block; margin-top: 5px;">${item.chance}% Drop</small>
+            </div>
+        `;
+    }).join('');
 }
 
 function switchTab(id, el) {
@@ -208,18 +204,25 @@ function switchTab(id, el) {
 function renderTrack(trackId, trackData) {
     const track = document.getElementById(trackId);
     if(!track) return;
-    track.innerHTML = trackData.map(item => `
-        <div class="item-node" style="background: linear-gradient(180deg, #0e1015 0%, ${item.color}15 100%)">
-            <b>${item.name}</b><span>$${item.value}</span>
-        </div>
-    `).join('');
+
+    track.innerHTML = trackData.map(item => {
+        // Pega o valor disponível (vencedor tem 'value', outros têm 'maxVal' ou 'minVal')
+        const val = item.value || item.maxVal || item.minVal || 0;
+        const formattedVal = Number(val).toLocaleString();
+        
+        return `
+            <div class="item-node" style="border-bottom: 4px solid ${item.color}">
+                <img src="${item.img || 'https://via.placeholder.com/110x80?text=Skin'}" style="width: 110px; height: 80px; object-fit: contain; margin-bottom: 5px;">
+                <b style="font-size: 11px; text-align: center; display: block; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${item.name}</b>
+                <span style="color: var(--accent); font-weight: 800; font-size: 14px;">$${formattedVal}</span>
+            </div>
+        `;
+    }).join('');
 }
 
 async function openCase() {
     const btn = document.getElementById('open-btn');
-    const price = cases[activeCaseId].price;
-    
-    if (currentUser.balance < price) return alert("Not enough credits!");
+    if (currentUser.balance < itemsData[activeCaseId].price) return alert("Not enough credits!");
     
     btn.classList.add('btn-loading');
     btn.disabled = true;
@@ -230,27 +233,31 @@ async function openCase() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ caseId: activeCaseId })
         });
+        
         const data = await res.json();
+
+        // Se o servidor devolver erro (ex: 404, 500)
+        if (!res.ok) {
+            throw new Error(data.error || "Server Error");
+        }
         
         btn.classList.remove('btn-loading');
-
-        // 1. ANIMATE LOSS IMMEDIATELY (The price of the case)
         updateBalanceUI(data.balanceAfterDeduction);
 
         renderTrack('spinner', data.track);
         const spinner = document.getElementById('spinner');
         const containerWidth = document.getElementById('main-view').offsetWidth;
         const finalX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+        const targetX = finalX - (Math.floor(Math.random() * (NODE_WIDTH * 0.8)) - (NODE_WIDTH * 0.4));
 
         spinner.style.transition = 'none'; 
         spinner.style.transform = 'translateX(0)';
         
         setTimeout(() => {
             spinner.style.transition = 'transform 6s cubic-bezier(0.05, 0, 0, 1)';
-            spinner.style.transform = `translateX(-${finalX}px)`;
+            spinner.style.transform = `translateX(-${targetX}px)`;
         }, 50);
 
-        // 2. ANIMATE GAIN AFTER SPIN (When the item is "received")
         setTimeout(() => {
             updateBalanceUI(data.finalBalance);
             btn.disabled = false;
@@ -259,10 +266,10 @@ async function openCase() {
     } catch (e) {
         btn.classList.remove('btn-loading');
         btn.disabled = false;
-        alert("Transaction failed");
+        console.error("ERRO DETALHADO:", e); // Vê isto na consola (F12)
+        alert("Erro: " + e.message);
     }
 }
-
 socket.on('balanceUpdate', (newBalance) => {
    updateBalanceUI(newBalance); 
     // Remove loading from the "New Battle" button if it exists

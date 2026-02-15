@@ -182,3 +182,44 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 .btn-danger { background: #ff4444 !important; color: white !important; }
 
+/* Update Item Node for Images */
+.item-node {
+    min-width: 180px !important; /* Força a largura exata */
+    width: 180px !important;
+    max-width: 180px !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #111;
+    background: linear-gradient(180deg, #0e1015 0%, rgba(255,255,255,0.02) 100%);
+    padding: 10px;
+    box-sizing: border-box;
+    flex-shrink: 0; /* Impede que o flexbox esmague os itens */
+}
+
+.item-node b {
+    font-size: 11px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.item-node span {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/* Update Preview items */
+.preview-item img {
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    transition: transform 0.3s;
+}
+
+.preview-item:hover img {
+    transform: scale(1.1);
+}
