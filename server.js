@@ -141,21 +141,55 @@ function autoLinkImages() {
 
 async function loadSkinDatabase() {
     try {
-        console.log("file_download Carregando nova API de skins (ByMykel)...");
+        console.log("file_download Baixando base de dados de skins...");
         const response = await axios.get('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json');
         
-        // --- CORREÇÃO AQUI: Garante que os dados são um Array ---
-        if (Array.isArray(response.data)) {
-            skinDatabase = response.data;
-        } else {
-            // Se vier como objeto, extraímos apenas os valores (os itens)
-            skinDatabase = Object.values(response.data);
-        }
+        let rawData = Array.isArray(response.data) ? response.data : Object.values(response.data);
         
-        console.log(`check ${skinDatabase.length} itens carregados no sistema!`);
-        autoLinkImages();
+        // Criar um Índice para busca rápida (Ocupa RAM temporariamente, mas é MUITO mais rápido)
+        const skinLookup = {};
+        const simplify = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '') : "";
+
+        console.log("⚡ Indexando skins...");
+        rawData.forEach(s => {
+            const key = simplify(s.name);
+            // Guardamos apenas a imagem para poupar RAM
+            if (!skinLookup[key]) skinLookup[key] = s.image;
+            
+            // Lógica especial para Dopplers (Ruby, etc) dentro do índice
+            if (s.name.includes("Doppler")) {
+                const phase = s.name.toLowerCase().match(/\((.*?)\)/);
+                if (phase) {
+                    const specializedKey = simplify(s.name.split('|')[0]) + "doppler" + simplify(phase[1]);
+                    skinLookup[specializedKey] = s.image;
+                }
+            }
+        });
+
+        // Agora vinculamos as imagens usando o Índice (O(1) em vez de O(N))
+        console.log("🎨 Vinculando imagens às caixas...");
+        for (let caseKey in caseData) {
+            caseData[caseKey].items.forEach(item => {
+                const searchKey = simplify(item.name);
+                
+                if (skinLookup[searchKey]) {
+                    item.img = skinLookup[searchKey];
+                } else {
+                    // Tenta uma busca parcial rápida no índice
+                    const fallbackKey = Object.keys(skinLookup).find(k => k.includes(searchKey));
+                    item.img = fallbackKey ? skinLookup[fallbackKey] : "https://via.placeholder.com/512x384?text=Not+Found";
+                }
+            });
+        }
+
+        // --- O PASSO MAIS IMPORTANTE ---
+        // Libertar a memória. Apagamos os dados brutos e o índice.
+        rawData = null;
+        console.log("🧹 Memória limpa. SkinDatabase removido da RAM.");
+        console.log("✅ Servidor pronto e leve!");
+
     } catch (error) {
-        console.error("error Erro ao carregar API ByMykel:", error.message);
+        console.error("Erro na Database:", error.message);
     }
 }
 
