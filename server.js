@@ -234,4 +234,95 @@ io.on('connection', (socket) => {
     });
 });
 
+let crashState = {
+    multiplier: 1.00,
+    status: 'waiting', // waiting, running, crashed
+    timer: 10,
+    bets: [], // { userId, username, amount, avatar, cashedOut: false }
+};
+
+function startCrashLoop() {
+    crashState.status = 'waiting';
+    crashState.timer = 10;
+    crashState.multiplier = 1.00;
+    crashState.bets = [];
+
+    const waitInterval = setInterval(() => {
+        crashState.timer -= 0.1;
+        io.emit('crashTick', crashState);
+
+        if (crashState.timer <= 0) {
+            clearInterval(waitInterval);
+            runCrashGame();
+        }
+    }, 100);
+}
+
+function runCrashGame() {
+    crashState.status = 'running';
+    // House edge: 3% chance to crash at 1.00x instantly
+    const crashPoint = Math.random() < 0.03 ? 1.00 : (1 / (Math.random() || 0.001) * 0.97).toFixed(2);
+    
+    const gameInterval = setInterval(() => {
+        crashState.multiplier += 0.01 + (crashState.multiplier * 0.005); // Exponential growth
+        io.emit('crashTick', crashState);
+
+        if (crashState.multiplier >= crashPoint) {
+            clearInterval(gameInterval);
+            crashState.status = 'crashed';
+            io.emit('crashTick', crashState);
+            setTimeout(startCrashLoop, 4000); // 4s delay before next round
+        }
+    }, 100);
+}
+
+startCrashLoop(); // Initialize the loop
+
+io.on('connection', (socket) => {
+    socket.on('crashBet', async (data, callback) => { // Added callback for acknowledgement
+    const user = await User.findById(data.userId);
+    
+    // 1. LIMIT: Check if user already has an active bet in this round
+    const alreadyBet = crashState.bets.some(b => b.userId === user._id.toString());
+    
+    if (crashState.status === 'waiting' && user && user.balance >= data.amount && !alreadyBet) {
+        user.balance -= data.amount;
+        await user.save();
+        
+        crashState.bets.push({ 
+            userId: user._id.toString(), 
+            username: user.username, 
+            amount: data.amount, 
+            avatar: user.avatar, 
+            cashedOut: false 
+        });
+
+        socket.emit('balanceUpdate', user.balance);
+        io.emit('crashTick', crashState);
+        
+        if (callback) callback({ success: true }); // Tell client bet was successful
+    } else {
+        if (callback) callback({ success: false, error: "Already bet or invalid" });
+    }
+});
+
+    socket.on('crashCashOut', async (data, callback) => {
+    const bet = crashState.bets.find(b => b.userId === data.userId && !b.cashedOut);
+    if (crashState.status === 'running' && bet) {
+        bet.cashedOut = true;
+        bet.payout = bet.amount * crashState.multiplier;
+        
+        const user = await User.findById(data.userId);
+        user.balance += bet.payout;
+        await user.save();
+        
+        socket.emit('balanceUpdate', user.balance);
+        io.emit('crashTick', crashState);
+        
+        if (callback) callback({ success: true }); // Tell client cashout was successful
+    }
+});
+});
+
 server.listen(3000, () => console.log('🚀 TOBYDROP Running'));
+

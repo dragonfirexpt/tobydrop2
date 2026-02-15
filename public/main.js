@@ -54,6 +54,65 @@ const itemsData = {
     ]
 };
 
+let currentCrashState = null;
+
+socket.on('crashTick', (state) => {
+    currentCrashState = state;
+    const multText = document.getElementById('crash-multiplier');
+    const statusText = document.getElementById('crash-status');
+    const btn = document.getElementById('crash-btn');
+    const fill = document.getElementById('crash-progress-fill');
+
+    if (state.status === 'waiting') {
+        multText.style.color = 'white';
+        multText.innerText = `${state.timer.toFixed(1)}s`;
+        statusText.innerText = "PREPARING...";
+        btn.innerText = "PLACE BET";
+        btn.disabled = false;
+        btn.classList.remove('btn-danger');
+        fill.style.width = `${(state.timer / 10) * 100}%`;
+    } else if (state.status === 'running') {
+        multText.innerText = `${state.multiplier.toFixed(2)}x`;
+        multText.style.color = 'var(--accent)';
+        statusText.innerText = "ROCKET IS FLYING...";
+        fill.style.width = '0%';
+        
+        const myBet = state.bets.find(b => b.userId === currentUser._id && !b.cashedOut);
+        if (myBet) {
+            btn.innerText = `CASH OUT ($${(myBet.amount * state.multiplier).toFixed(2)})`;
+            btn.classList.add('btn-danger');
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    } else if (state.status === 'crashed') {
+        multText.innerText = `CRASHED @ ${state.multiplier.toFixed(2)}x`;
+        multText.style.color = '#ff4444';
+        statusText.innerText = "BOOM!";
+        btn.disabled = true;
+    }
+
+    // Update player list
+    const playerList = document.getElementById('crash-players');
+    playerList.innerHTML = state.bets.map(b => `
+        <div class="crash-player-row ${b.cashedOut ? 'cashed' : ''}">
+            <img src="${b.avatar}">
+            <span>${b.username}</span>
+            <b>$${b.amount}</b>
+            ${b.cashedOut ? `<small>+ $${b.payout.toFixed(2)}</small>` : ''}
+        </div>
+    `).join('');
+});
+
+function handleCrashAction() {
+    if (currentCrashState.status === 'waiting') {
+        const amount = parseFloat(document.getElementById('crash-amount').value);
+        if (amount > currentUser.balance || amount <= 0) return alert("Invalid Bet");
+        socket.emit('crashBet', { userId: currentUser._id, amount });
+    } else if (currentCrashState.status === 'running') {
+        socket.emit('crashCashOut', { userId: currentUser._id });
+    }
+}
 async function init() {
     const res = await fetch('/api/me');
     const data = await res.json();

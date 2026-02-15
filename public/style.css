@@ -159,3 +159,26 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     transform: translateY(-5px);
     background: #15181f;
 }
+
+.crash-container { display: flex; gap: 20px; height: 500px; }
+.crash-main { flex: 1; background: #000; border-radius: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+.crash-sidebar { width: 250px; background: var(--card); border-radius: 20px; padding: 20px; overflow-y: auto; }
+
+#crash-display { text-align: center; }
+#crash-multiplier { font-size: 80px; margin: 0; font-weight: 800; transition: color 0.2s; text-shadow: 0 0 30px rgba(0, 242, 255, 0.3); }
+#crash-status { letter-spacing: 3px; color: #555; font-weight: 800; }
+
+#crash-progress-bar { width: 300px; height: 4px; background: #111; margin-top: 20px; border-radius: 2px; overflow: hidden; }
+#crash-progress-fill { height: 100%; background: var(--accent); width: 100%; transition: width 0.1s linear; }
+
+.crash-controls { margin-top: 40px; display: flex; gap: 10px; }
+.crash-controls input { background: #111; border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 10px; width: 150px; }
+
+.crash-player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #000; border-radius: 8px; border-left: 3px solid #333; }
+.crash-player-row.cashed { border-left-color: #00ff88; background: rgba(0, 255, 136, 0.05); }
+.crash-player-row img { width: 25px; height: 25px; border-radius: 50%; }
+.crash-player-row b { margin-left: auto; }
+.crash-player-row small { color: #00ff88; font-weight: 800; }
+
+.btn-danger { background: #ff4444 !important; color: white !important; }
+

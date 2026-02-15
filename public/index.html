@@ -27,6 +27,7 @@
                 <button onclick="showHome()" class="nav-link active">CASES</button>
                 <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
                 <button onclick="switchTab('settings-tab', this)" class="nav-link">SETTINGS</button>
+                <button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>
             </nav>
             <div class="nav-user">
                 <div class="balance-display">
@@ -83,7 +84,8 @@
     <option value="gold">Gold ($500)</option>
     <option value="diamond">Diamond ($2,500)</option>
     <option value="cyber">Cyber ($10,000)</option>
-    <option value="toby">Toby God ($50,000)</option></select>
+    <option value="toby">Toby God ($50,000)</option>
+</select>
                                 <button onclick="createBattle()" class="btn-primary">NEW BATTLE</button>
                             </div>
                         </div>
@@ -106,6 +108,28 @@
                         </div>
                     </div>
                 </section>
+
+                <section id="crash-tab" class="tab-view" style="display:none">
+    <div class="crash-container">
+        <div class="crash-main">
+            <div id="crash-display">
+                <h1 id="crash-multiplier">1.00x</h1>
+                <p id="crash-status">WAITING FOR BETS...</p>
+                <div id="crash-progress-bar"><div id="crash-progress-fill"></div></div>
+            </div>
+            
+            <div class="crash-controls">
+                <input type="number" id="crash-amount" placeholder="Bet Amount" value="10">
+                <button id="crash-btn" class="btn-primary" onclick="handleCrashAction()">PLACE BET</button>
+            </div>
+        </div>
+
+        <div class="crash-sidebar">
+            <h3>PLAYERS</h3>
+            <div id="crash-players"></div>
+        </div>
+    </div>
+</section>
 
                 <section id="settings-tab" class="tab-view" style="display:none">
                     <div class="settings-card">
