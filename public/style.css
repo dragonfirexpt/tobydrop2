@@ -106,3 +106,56 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     min-width: 300px;
     transition: all 0.3s ease;
 }
+
+#balance-indicator-container {
+    position: absolute;
+    right: 0;
+    top: 0;
+    pointer-events: none;
+}
+
+.balance-indicator {
+    position: absolute;
+    right: 0;
+    font-weight: 800;
+    font-size: 18px;
+    white-space: nowrap;
+    animation: floatUpFade 1.5s ease-out forwards;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 100;
+}
+
+.indicator-gain { color: #00ff88; } /* Green */
+.indicator-loss { color: #ff4444; } /* Red */
+
+@keyframes floatUpFade {
+    0% { transform: translateY(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-50px); opacity: 0; }
+}
+
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+/* Tiered styling for flair */
+.tier-1 { border-bottom: 4px solid #888; }
+.tier-2 { border-bottom: 4px solid #ffb703; }
+.tier-3 { border-bottom: 4px solid #ff0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.2); }
+
+.case-card {
+    background: var(--card);
+    padding: 40px 20px;
+    border-radius: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.case-card:hover {
+    transform: translateY(-5px);
+    background: #15181f;
+}

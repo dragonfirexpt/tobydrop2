@@ -28,28 +28,58 @@ const User = mongoose.model('User', new mongoose.Schema({
 }));
 
 const caseData = {
-    starter: {
-        name: "Starter Box", price: 50,
+    bronze: {
+        name: "Bronze Box", price: 20,
         items: [
-            { name: "Rusty Key", value: 5, color: "#888", chance: 70 },
-            { name: "Iron Plate", value: 40, color: "#00f2ff", chance: 25 },
-            { name: "Silver Coin", value: 300, color: "#ffb703", chance: 5 }
+            { name: "Paper Clip", value: 1, color: "#888", chance: 60 },
+            { name: "Rusty Key", value: 5, color: "#888", chance: 25 },
+            { name: "Bronze Coin", value: 45, color: "#00f2ff", chance: 12 },
+            { name: "Silver Ingot", value: 150, color: "#ffb703", chance: 3 }
         ]
     },
-    elite: {
-        name: "Elite Crate", price: 250,
+    silver: {
+        name: "Silver Safe", price: 100,
         items: [
-            { name: "Neon Katana", value: 50, color: "#00f2ff", chance: 60 },
-            { name: "Cyber Armor", value: 400, color: "#8847ff", chance: 35 },
-            { name: "Diamond Core", value: 2000, color: "#ffb703", chance: 5 }
+            { name: "Old Watch", value: 20, color: "#888", chance: 50 },
+            { name: "Chrome Blade", value: 80, color: "#00f2ff", chance: 35 },
+            { name: "Gold Nugget", value: 450, color: "#8847ff", chance: 12 },
+            { name: "Diamond Ring", value: 1200, color: "#ffb703", chance: 3 }
+        ]
+    },
+    gold: {
+        name: "Gold Vault", price: 500,
+        items: [
+            { name: "Onyx Shard", value: 100, color: "#888", chance: 55 },
+            { name: "Titanium Core", value: 400, color: "#00f2ff", chance: 30 },
+            { name: "Golden Apple", value: 2500, color: "#ff00ff", chance: 12 },
+            { name: "Ether Crystal", value: 6500, color: "#ffb703", chance: 3 }
+        ]
+    },
+    diamond: {
+        name: "Diamond Crate", price: 2500,
+        items: [
+            { name: "Prism Glass", value: 500, color: "#00f2ff", chance: 50 },
+            { name: "Plasma Core", value: 2200, color: "#8847ff", chance: 35 },
+            { name: "Diamond Blade", value: 12000, color: "#ff00ff", chance: 12 },
+            { name: "Black Matter", value: 35000, color: "#ff0000", chance: 3 }
+        ]
+    },
+    cyber: {
+        name: "Cyber Void", price: 10000,
+        items: [
+            { name: "Circuitry", value: 2000, color: "#8847ff", chance: 45 },
+            { name: "Neural Link", value: 8500, color: "#ff00ff", chance: 40 },
+            { name: "Cyber Katana", value: 45000, color: "#ffb703", chance: 12 },
+            { name: "AI Overlord", value: 150000, color: "#ff0000", chance: 3 }
         ]
     },
     toby: {
-        name: "TOBY SPECIAL", price: 1000,
+        name: "TOBY GOD", price: 50000,
         items: [
-            { name: "Void Essence", value: 100, color: "#8847ff", chance: 50 },
-            { name: "Dragon Heart", value: 1500, color: "#ffb703", chance: 45 },
-            { name: "GOD MODE", value: 15000, color: "#ff0000", chance: 5 }
+            { name: "God's Dust", value: 10000, color: "#ff00ff", chance: 40 },
+            { name: "Infinity Star", value: 45000, color: "#ffb703", chance: 40 },
+            { name: "Dragon Spirit", value: 250000, color: "#ff0000", chance: 15 },
+            { name: "TOBY'S CROWN", value: 1000000, color: "#ff0000", chance: 5 }
         ]
     }
 };
@@ -103,29 +133,49 @@ app.post('/api/open-case', async (req, res) => {
     const user = await User.findById(req.session.userId);
     const selectedCase = caseData[req.body.caseId];
     if (!user || user.balance < selectedCase.price) return res.status(400).json({ error: "No funds" });
+
+    // Deduct price immediately
+    user.balance -= selectedCase.price;
+    
     const winner = rollItem(selectedCase.items);
-    user.balance = (user.balance - selectedCase.price) + winner.value;
+    
+    // Add the winner value to the database balance immediately (for safety)
+    // but we will tell the client the balance BEFORE the win so they can animate it
+    const balanceAfterDeduction = user.balance; 
+    user.balance += winner.value;
+    
     await user.save();
-    res.json({ winner, track: generateTrack(winner, selectedCase.items), newBalance: user.balance });
+
+    res.json({ 
+        winner, 
+        track: generateTrack(winner, selectedCase.items), 
+        balanceAfterDeduction: balanceAfterDeduction, // Money after paying
+        finalBalance: user.balance                    // Money after winning
+    });
 });
 
 io.on('connection', (socket) => {
     socket.emit('updateBattles', activeBattles);
+    
     socket.on('chatMessage', (data) => io.emit('chatMessage', data));
+
     socket.on('createBattle', async (data) => {
         const user = await User.findById(data.userId);
         const price = caseData[data.caseId].price;
 
-        // 1. Check if user can afford it
         if (!user || user.balance < price) return;
 
-        // 2. Deduct the balance immediately in DB
         user.balance -= price;
         await user.save();
 
         const b = {
             id: Math.random().toString(36).substr(2, 9),
-            player1: { username: user.username, id: user._id, avatar: user.avatar },
+            player1: { 
+                username: user.username, 
+                id: user._id, 
+                avatar: user.avatar,
+                socketId: socket.id // <-- Store the creator's socket ID
+            },
             player2: null, 
             caseId: data.caseId, 
             price: price
@@ -133,28 +183,53 @@ io.on('connection', (socket) => {
         
         activeBattles.push(b);
         
-        // 3. Inform everyone (including the creator) to update their UI/Balance
-        io.emit('updateBattles', activeBattles);
-        socket.emit('balanceUpdate', user.balance); // Send new balance back to creator
+        io.emit('updateBattles', activeBattles); // Everyone still needs to see the lobby update
+        socket.emit('balanceUpdate', user.balance);
     });
+
     socket.on('joinBattle', async (data) => {
         const idx = activeBattles.findIndex(b => b.id === data.battleId);
         const b = activeBattles[idx];
+
         if (b && !b.player2 && b.player1.id.toString() !== data.userId) {
             const user = await User.findById(data.userId);
-            if (user.balance < b.price) return;
+            if (!user || user.balance < b.price) return;
+
+            user.balance -= b.price;
+            await user.save();
+
+            // Store the joiner's info and socket ID
+            b.player2 = { 
+                username: user.username, 
+                id: user._id, 
+                avatar: user.avatar,
+                socketId: socket.id // <-- Store the joiner's socket ID
+            };
+
             const its = caseData[b.caseId].items;
-            b.player2 = { username: user.username, id: user._id, avatar: user.avatar };
-            const r1 = rollItem(its); const r2 = rollItem(its);
+            const r1 = rollItem(its); 
+            const r2 = rollItem(its);
             const winId = r1.value >= r2.value ? b.player1.id : b.player2.id;
+            
             const winner = await User.findById(winId);
-            const loser = await User.findById(winId == b.player1.id ? b.player2.id : b.player1.id);
-            winner.balance += (r1.value + r2.value - b.price);
-            loser.balance -= b.price;
-            await winner.save(); await loser.save();
-            io.emit('startBattleSpin', { battle: b, track1: generateTrack(r1, its), track2: generateTrack(r2, its), winnerId: winId });
+            winner.balance += (r1.value + r2.value);
+            await winner.save();
+
+            // --- THE FIX: Send ONLY to the two players involved ---
+            const battlePayload = { 
+                battle: b, 
+                track1: generateTrack(r1, its), 
+                track2: generateTrack(r2, its), 
+                winnerId: winId 
+            };
+
+            io.to(b.player1.socketId).emit('startBattleSpin', battlePayload);
+            io.to(b.player2.socketId).emit('startBattleSpin', battlePayload);
+            // -------------------------------------------------------
+
             activeBattles.splice(idx, 1);
             io.emit('updateBattles', activeBattles);
+            socket.emit('balanceUpdate', user.balance);
         }
     });
 });
