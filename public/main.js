@@ -80,34 +80,105 @@ function handleCrashAction() {
         socket.emit('crashCashOut', { userId: currentUser._id });
     }
 }
-
-function openBattleModal() {
-    document.getElementById('battle-modal').style.display = 'flex';
-    selectedCasesForBattle = [];
-    updateModalSelected();
-    
+function renderAvailableCasesForBattle() {
     const container = document.getElementById('modal-available-cases');
-    container.innerHTML = Object.keys(itemsData).map(id => `
+    const sortType = document.getElementById('battle-case-sort').value;
+    
+    // Transformamos o objeto itemsData em um array para poder ordenar
+    let entries = Object.entries(itemsData);
+
+    if (sortType === 'high') {
+        entries.sort((a, b) => b[1].price - a[1].price);
+    } else if (sortType === 'low') {
+        entries.sort((a, b) => a[1].price - b[1].price);
+    }
+
+    container.innerHTML = entries.map(([id, data]) => `
         <div class="modal-case-item" onclick="addCaseToBattle('${id}')">
-            <img src="${itemsData[id].img}" style="width: 40px; height: 30px; object-fit: contain;">
-            <div style="flex: 1; text-align: left; margin-left: 10px;">
-                <b>${itemsData[id].name}</b><br>
-                <span>$${formatCurrency(itemsData[id].price)}</span>
+            <img src="${data.img}">
+            <div class="info">
+                <b>${data.name}</b>
+                <span>$${formatCurrency(data.price)}</span>
             </div>
         </div>
     `).join('');
 }
+function openBattleModal() {
+    document.getElementById('battle-modal').style.display = 'flex';
+    selectedCasesForBattle = [];
+    updateModalSelected();
+    renderAvailableCasesForBattle(); // Chama a função de renderização
+}
+
 
 function closeBattleModal() {
     document.getElementById('battle-modal').style.display = 'none';
 }
 
 function addCaseToBattle(id) {
-    if (selectedCasesForBattle.length >= 10) return alert("Max 10 cases");
+    if (selectedCasesForBattle.length >= 20) { // Alterado de 10 para 20
+        return alert("Max 20 cases per battle!");
+    }
     selectedCasesForBattle.push(id);
     updateModalSelected();
 }
+function sellAllItems() {
+    if (!currentUser || currentUser.inventory.length === 0) {
+        return alert("Your inventory is already empty!");
+    }
+    document.getElementById('sell-all-modal').style.display = 'flex';
+}
 
+function closeSellAllModal() {
+    document.getElementById('sell-all-modal').style.display = 'none';
+}
+
+async function confirmSellAll() {
+    const btn = document.getElementById('confirm-sell-all-btn');
+    const mainBtn = document.getElementById('btn-sell-all');
+    
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/sell-all-items', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Sound effect
+            if(landSound) {
+                landSound.currentTime = 0;
+                landSound.play();
+            }
+            
+            // Update balance and refresh UI
+            updateBalanceUI(data.balance);
+            await loadInventory();
+            
+            // Close the modal
+            closeSellAllModal();
+        } else {
+            alert("Error: " + data.error);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Server connection error");
+    } finally {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+    }
+}
+
+// Função para filtrar as caixas no modal
+function filterBattleCases() {
+    const term = document.getElementById('battle-case-search').value.toLowerCase();
+    const cards = document.querySelectorAll('.modal-case-item');
+    
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name').toLowerCase();
+        card.style.display = name.includes(term) ? 'flex' : 'none';
+    });
+}
 function updateModalSelected() {
     const container = document.getElementById('modal-selected-cases');
     let total = 0;
@@ -120,6 +191,8 @@ function updateModalSelected() {
                 <span onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">×</span>
             </div>`;
     }).join('');
+    
+    // Atualiza o texto do preço total e a contagem (Ex: Battle Cases 5/20)
     document.getElementById('total-battle-price').innerText = `$${formatCurrency(total)}`;
 }
 function getSafeAvatar(url) {
@@ -485,7 +558,7 @@ async function loadInventory() {
     const res = await fetch('/api/me');
     const data = await res.json();
     if (!data.loggedIn) return;
-
+    currentUser = data.user; 
     let items = data.user.inventory;
     const grid = document.getElementById('inventory-grid');
 

@@ -6,6 +6,17 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&display=swap" rel="stylesheet">
 </head>
+<div id="sell-all-modal" class="modal-overlay" style="display: none; z-index: 4000;">
+    <div class="modal-box" style="width: 400px; text-align: center;">
+        <h3>SELL EVERYTHING?</h3>
+        <p style="color: #888; margin-bottom: 30px;">This will sell all skins in your inventory and convert them to balance. This action cannot be undone.</p>
+        
+        <div class="modal-actions" style="justify-content: center; gap: 15px;">
+            <button onclick="closeSellAllModal()" class="btn-secondary">CANCEL</button>
+            <button onclick="confirmSellAll()" class="btn-primary" id="confirm-sell-all-btn">CONFIRM SELL</button>
+        </div>
+    </div>
+</div>
 <body>
     <div id="auth-screen" class="auth-full">
         <div class="auth-box">
@@ -61,8 +72,9 @@
                 <section id="inventory-tab" class="tab-view" style="display:none">
     <div class="inventory-header">
         <h2>MY INVENTORY</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="sellAllItems()" class="btn-sell-all" id="btn-sell-all">SELL ALL</button>
         <div class="inventory-filters">
-            <!-- Filtro por Preço -->
             <select id="sort-price" onchange="loadInventory()">
                 <option value="newest">Newest First</option>
                 <option value="high">Price: High to Low</option>
@@ -79,6 +91,7 @@
                 <option value="#4b69ff">Mil-Spec (Blue)</option>
             </select>
         </div>
+    </div>
     </div>
     <div id="inventory-grid" class="inventory-grid">
         <!-- Items loaded here -->
@@ -121,9 +134,17 @@
             <h3>CREATE BATTLE</h3>
             <div class="modal-config">
                 <div class="case-selector-zone">
-                    <h4>Available Cases</h4>
-                    <div id="modal-available-cases" class="modal-grid"></div>
-                </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4>Available Cases</h4>
+        <!-- Novo seletor de ordenação -->
+        <select id="battle-case-sort" onchange="renderAvailableCasesForBattle()" style="background: #000; color: #fff; border: 1px solid var(--border); border-radius: 5px; padding: 5px; font-size: 12px; cursor: pointer;">
+            <option value="default">Newest</option>
+            <option value="high">Price: High to Low</option>
+            <option value="low">Price: Low to High</option>
+        </select>
+    </div>
+    <div id="modal-available-cases" class="modal-grid-compact"></div>
+</div>
                 <div class="selected-zone">
                     <h4>Battle Cases (<span id="total-battle-price">$0.00</span>)</h4>
                     <div id="modal-selected-cases" class="selected-list"></div>
