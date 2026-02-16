@@ -12,6 +12,13 @@ let cases = {};
 
 let currentCrashState = null;
 
+function formatCurrency(num) {
+    return Number(num).toLocaleString('pt-PT', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    });
+}
+
 socket.on('crashTick', (state) => {
     currentCrashState = state;
     const multText = document.getElementById('crash-multiplier');
@@ -100,16 +107,15 @@ function updateBalanceUI(newBalance) {
 
     if (difference !== 0) {
         showBalanceAnimation(difference);
-
         if (difference > 0) {
-            winSound.currentTime = 0; // Reset sound to start (in case it's already playing)
+            winSound.currentTime = 0;
             winSound.play().catch(e => console.log("Sound play failed:", e));
         }
     }
 
     currentUser.balance = newBalance;
-    // Format as a whole number with commas
-    document.getElementById('balance').innerText = `$${Math.floor(newBalance).toLocaleString()}`;
+    // UPDATED: Use formatCurrency instead of Math.floor
+    document.getElementById('balance').innerText = `$${formatCurrency(newBalance)}`;
 }
 
 function showBalanceAnimation(amount) {
@@ -118,23 +124,21 @@ function showBalanceAnimation(amount) {
 
     const el = document.createElement('div');
     const isGain = amount > 0;
-    
     el.className = `balance-indicator ${isGain ? 'indicator-gain' : 'indicator-loss'}`;
     
-    // Math.abs turns -50 into 50, then we add the sign manually
-    const formattedAmount = Math.floor(Math.abs(amount)).toLocaleString();
+    // UPDATED: Use formatCurrency for the floating number
+    const formattedAmount = formatCurrency(Math.abs(amount));
     el.innerText = (isGain ? '+ ' : '- ') + `$${formattedAmount}`;
     
     container.appendChild(el);
-
     setTimeout(() => el.remove(), 1500);
 }
 
 
 function updateUI() {
     if(!currentUser) return;
-    // Format as whole number
-    document.getElementById('balance').innerText = `$${Math.floor(currentUser.balance).toLocaleString()}`;
+    // UPDATED: Use formatCurrency
+    document.getElementById('balance').innerText = `$${formatCurrency(currentUser.balance)}`;
     document.getElementById('user-avatar-top').src = currentUser.avatar;
     document.getElementById('settings-avatar-prev').src = currentUser.avatar;
 }
@@ -169,19 +173,16 @@ function selectCase(id) {
     const sortedItems = [...caseInfo.items].sort((a, b) => a.chance - b.chance);
 
     preview.innerHTML = sortedItems.map(item => {
-        // --- LÓGICA DE PREÇO SEGURA ---
-        let priceDisplay = "$0.00";
-        
-        // Se o item tiver os novos campos minVal/maxVal
-        if (item.minVal !== undefined && item.maxVal !== undefined) {
-            priceDisplay = (item.minVal === item.maxVal) 
-                ? `$${Number(item.minVal).toLocaleString()}` 
-                : `$${Number(item.minVal).toLocaleString()} - $${Number(item.maxVal).toLocaleString()}`;
-        } 
-        // Se o item ainda usar o campo antigo 'value'
-        else if (item.value !== undefined) {
-            priceDisplay = `$${Number(item.value).toLocaleString()}`;
-        }
+    let priceDisplay = "$0,00";
+    
+    if (item.minVal !== undefined && item.maxVal !== undefined) {
+        priceDisplay = (item.minVal === item.maxVal) 
+            ? `$${formatCurrency(item.minVal)}` 
+            : `$${formatCurrency(item.minVal)} - $${formatCurrency(item.maxVal)}`;
+    } 
+    else if (item.value !== undefined) {
+        priceDisplay = `$${formatCurrency(item.value)}`;
+    }
 
         return `
             <div class="preview-item" style="border-color: ${item.color}">
@@ -206,9 +207,9 @@ function renderTrack(trackId, trackData) {
     if(!track) return;
 
     track.innerHTML = trackData.map(item => {
-        // Pega o valor disponível (vencedor tem 'value', outros têm 'maxVal' ou 'minVal')
         const val = item.value || item.maxVal || item.minVal || 0;
-        const formattedVal = Number(val).toLocaleString();
+        // UPDATED: Use formatCurrency for spinner items
+        const formattedVal = formatCurrency(val);
         
         return `
             <div class="item-node" style="border-bottom: 4px solid ${item.color}">
