@@ -52,35 +52,35 @@ const caseData = {
         name: "Community Collection", 
         price: 1.00, 
         items: [
-            { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005 },
-            { name: "AK-47 | Nightwish", maxVal: 108.45, minVal: 102.44, color: "#eb4b4b", chance: 0.018 },
-            { name: "AWP | Ice Coaled", maxVal: 83.42, minVal: 9.67, color: "#d32ce6", chance: 0.053 },
-            { name: "M4A1-S | Player Two", maxVal: 83.42, minVal: 82.04, color: "#eb4b4b", chance: 0.013 },
-            { name: "AK-47 | Inheritance", maxVal: 69.72, minVal: 69.72, color: "#eb4b4b", chance: 0.012 },
-            { name: "AWP | Exothermic", maxVal: 31.14, minVal: 19.88, color: "#d32ce6", chance: 0.050 },
-            { name: "USP-S | Sleeping Potion", maxVal: 17.72, minVal: 6.28, color: "#d32ce6", chance: 0.106 },
-            { name: "USP-S | Jawbreaker", maxVal: 12.59, minVal: 5.89, color: "#d32ce6", chance: 0.159 },
-            { name: "AK-47 | Midnight Laminate", maxVal: 10.76, minVal: 10.55, color: "#8847ff", chance: 0.055 },
-            { name: "UMP-45 | Wild Child", maxVal: 9.95, minVal: 4.93, color: "#d32ce6", chance: 0.890 },
-            { name: "Sawed-Off | Apocalypto", maxVal: 8.71, minVal: 0.79, color: "#8847ff", chance: 6.479 },
-            { name: "M4A1-S | Glitched Paint", maxVal: 7.85, minVal: 4.83, color: "#8847ff", chance: 0.039 },
-            { name: "Dual Berettas | Twin Turbo", maxVal: 4.09, minVal: 2.89, color: "#d32ce6", chance: 1.987 },
-            { name: "M4A1-S | Night Terror", maxVal: 4.05, minVal: 1.08, color: "#8847ff", chance: 5.422 },
-            { name: "MAC-10 | Saibā Oni", maxVal: 4.05, minVal: 1.64, color: "#8847ff", chance: 6.147 },
-            { name: "Glock-18 | Block-18", maxVal: 4.05, minVal: 0.79, color: "#8847ff", chance: 9.307 },
-            { name: "M4A4 | Choppa", maxVal: 3.88, minVal: 0.08, color: "#8847ff", chance: 15.339 },
-            { name: "USP-S | Tropical Breeze", maxVal: 2.96, minVal: 1.35, color: "#8847ff", chance: 8.070 },
-            { name: "R8 Revolver | Tango", maxVal: 2.53, minVal: 0.20, color: "#4b69ff", chance: 6.933 },
-            { name: "AWP | Pit Viper", value: 2.13, maxVal: 2.13, minVal: 1.50, color: "#8847ff", chance: 5.128 },
-            { name: "XM1014 | Mockingbird", maxVal: 1.48, minVal: 0.08, color: "#4b69ff", chance: 6.373 },
-            { name: "P90 | Freight", maxVal: 1.40, minVal: 0.09, color: "#4b69ff", chance: 7.763 },
-            { name: "Zeus x27 | Electric Blue", maxVal: 0.83, minVal: 0.05, color: "#4b69ff", chance: 11.372 },
-            { name: "M4A4 | Naval Shred Camo", maxVal: 0.18, minVal: 0.05, color: "#4b69ff", chance: 8.280 }
+            { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005, img: "https://via.placeholder.com/150" },
+            { name: "AK-47 | Nightwish", maxVal: 108.45, minVal: 102.44, color: "#eb4b4b", chance: 0.018, img: "https://via.placeholder.com/150" },
+            { name: "AWP | Ice Coaled", maxVal: 83.42, minVal: 9.67, color: "#d32ce6", chance: 0.053, img: "https://via.placeholder.com/150" },
+            { name: "M4A1-S | Player Two", maxVal: 83.42, minVal: 82.04, color: "#eb4b4b", chance: 0.013, img: "https://via.placeholder.com/150" },
+            { name: "AK-47 | Inheritance", maxVal: 69.72, minVal: 69.72, color: "#eb4b4b", chance: 0.012, img: "https://via.placeholder.com/150" },
+            { name: "AWP | Exothermic", maxVal: 31.14, minVal: 19.88, color: "#d32ce6", chance: 0.050, img: "https://via.placeholder.com/150" },
+            { name: "USP-S | Sleeping Potion", maxVal: 17.72, minVal: 6.28, color: "#d32ce6", chance: 0.106, img: "https://via.placeholder.com/150" },
+            { name: "USP-S | Jawbreaker", maxVal: 12.59, minVal: 5.89, color: "#d32ce6", chance: 0.159, img: "https://via.placeholder.com/150" },
+            { name: "AK-47 | Midnight Laminate", maxVal: 10.76, minVal: 10.55, color: "#8847ff", chance: 0.055, img: "https://via.placeholder.com/150" },
+            { name: "UMP-45 | Wild Child", maxVal: 9.95, minVal: 4.93, color: "#d32ce6", chance: 0.890, img: "https://via.placeholder.com/150" },
+            { name: "Sawed-Off | Apocalypto", maxVal: 8.71, minVal: 0.79, color: "#8847ff", chance: 6.479, img: "https://via.placeholder.com/150" },
+            { name: "M4A1-S | Glitched Paint", maxVal: 7.85, minVal: 4.83, color: "#8847ff", chance: 0.039, img: "https://via.placeholder.com/150" },
+            { name: "Dual Berettas | Twin Turbo", maxVal: 4.09, minVal: 2.89, color: "#d32ce6", chance: 1.987, img: "https://via.placeholder.com/150" },
+            { name: "M4A1-S | Night Terror", maxVal: 4.05, minVal: 1.08, color: "#8847ff", chance: 5.422, img: "https://via.placeholder.com/150" },
+            { name: "MAC-10 | Saibā Oni", maxVal: 4.05, minVal: 1.64, color: "#8847ff", chance: 6.147, img: "https://via.placeholder.com/150" },
+            { name: "Glock-18 | Block-18", maxVal: 4.05, minVal: 0.79, color: "#8847ff", chance: 9.307, img: "https://via.placeholder.com/150" },
+            { name: "M4A4 | Choppa", maxVal: 3.88, minVal: 0.08, color: "#8847ff", chance: 15.339, img: "https://via.placeholder.com/150" },
+            { name: "USP-S | Tropical Breeze", maxVal: 2.96, minVal: 1.35, color: "#8847ff", chance: 8.070, img: "https://via.placeholder.com/150" },
+            { name: "R8 Revolver | Tango", maxVal: 2.53, minVal: 0.20, color: "#4b69ff", chance: 6.933, img: "https://via.placeholder.com/150" },
+            { name: "AWP | Pit Viper", value: 2.13, maxVal: 2.13, minVal: 1.50, color: "#8847ff", chance: 5.128, img: "https://via.placeholder.com/150" },
+            { name: "XM1014 | Mockingbird", maxVal: 1.48, minVal: 0.08, color: "#4b69ff", chance: 6.373, img: "https://via.placeholder.com/150" },
+            { name: "P90 | Freight", maxVal: 1.40, minVal: 0.09, color: "#4b69ff", chance: 7.763, img: "https://via.placeholder.com/150" },
+            { name: "Zeus x27 | Electric Blue", maxVal: 0.83, minVal: 0.05, color: "#4b69ff", chance: 11.372, img: "https://via.placeholder.com/150" },
+            { name: "M4A4 | Naval Shred Camo", maxVal: 0.18, minVal: 0.05, color: "#4b69ff", chance: 8.280, img: "https://via.placeholder.com/150" }
         ]
     }
 };
 
-const axios = require('axios'); // Você pode precisar instalar: npm install axios
+// const axios = require('axios'); // Você pode precisar instalar: npm install axios
 
 let skinDatabase = []; // Agora é um Array
 
@@ -193,7 +193,7 @@ async function loadSkinDatabase() {
     }
 }
 
-loadSkinDatabase();
+// loadSkinDatabase();
 
 // Chame a função no final do arquivo ou antes do server.listen
 
@@ -253,47 +253,23 @@ app.post('/api/open-case', async (req, res) => {
         const { caseId } = req.body;
         const user = await User.findById(req.session.userId);
         const selectedCase = caseData[caseId];
+        if (!user || !selectedCase || user.balance < selectedCase.price) return res.status(400).json({ error: "Saldo insuficiente" });
 
-        if (!user) return res.status(401).json({ error: "Faz login primeiro!" });
-        if (!selectedCase) return res.status(404).json({ error: "Esta caixa não existe no servidor!" });
-        if (user.balance < selectedCase.price) return res.status(400).json({ error: "Saldo insuficiente!" });
-
-        // 1. Escolher o item
         const baseItem = rollItem(selectedCase.items);
-        if (!baseItem) return res.status(500).json({ error: "Erro ao sortear item" });
-
-        // 2. Escolher a condição
         const cond = rollCondition();
         
-        // 3. Calcular valor (Garantir que min/max existem)
-        const min = baseItem.minVal || 0;
-        const max = baseItem.maxVal || min; // Se não houver max, usa o min
+        // Proteção contra NaN: Converter para número ou usar 0
+        const min = Number(baseItem.minVal) || 0;
+        const max = Number(baseItem.maxVal) || min;
         const priceGap = max - min;
         const finalValue = parseFloat((min + (priceGap * cond.multiplier)).toFixed(2));
         
-        // 4. Atualizar saldo (Apenas UMA vez no final)
-        const balanceAfterDeduction = user.balance - selectedCase.price;
-        user.balance = balanceAfterDeduction + finalValue;
+        user.balance = parseFloat(((user.balance - selectedCase.price) + finalValue).toFixed(2));
         await user.save();
 
-        const winner = { 
-            ...baseItem, 
-            name: `${baseItem.name} (${cond.short})`, 
-            value: finalValue,
-            img: baseItem.img || "https://via.placeholder.com/512x384?text=No+Image"
-        };
-
-        res.json({ 
-            winner, 
-            track: generateTrack(winner, selectedCase.items), 
-            balanceAfterDeduction, 
-            finalBalance: user.balance 
-        });
-
-    } catch (e) {
-        console.error("CRASH NO SERVIDOR:", e);
-        res.status(500).json({ error: "Erro interno no servidor" });
-    }
+        const winner = { ...baseItem, name: `${baseItem.name} (${cond.short})`, value: finalValue };
+        res.json({ winner, track: generateTrack(winner, selectedCase.items), balanceAfterDeduction: user.balance - finalValue, finalBalance: user.balance });
+    } catch (e) { res.status(500).json({ error: "Erro interno" }); }
 });
 
 io.on('connection', (socket) => {
@@ -421,50 +397,44 @@ function runCrashGame() {
 startCrashLoop(); // Initialize the loop
 
 io.on('connection', (socket) => {
-    socket.on('crashBet', async (data, callback) => { // Added callback for acknowledgement
-    const user = await User.findById(data.userId);
-    
-    // 1. LIMIT: Check if user already has an active bet in this round
-    const alreadyBet = crashState.bets.some(b => b.userId === user._id.toString());
-    
-    if (crashState.status === 'waiting' && user && user.balance >= data.amount && !alreadyBet) {
-        user.balance -= data.amount;
-        await user.save();
-        
-        crashState.bets.push({ 
-            userId: user._id.toString(), 
-            username: user.username, 
-            amount: data.amount, 
-            avatar: user.avatar, 
-            cashedOut: false 
-        });
+    socket.on('crashBet', async (data, callback) => {
+        const user = await User.findById(data.userId);
+        const amount = Number(data.amount); // Forçar número
+        const alreadyBet = crashState.bets.some(b => b.userId === user._id.toString());
 
-        socket.emit('balanceUpdate', user.balance);
-        io.emit('crashTick', crashState);
-        
-        if (callback) callback({ success: true }); // Tell client bet was successful
-    } else {
-        if (callback) callback({ success: false, error: "Already bet or invalid" });
-    }
-});
+        if (crashState.status === 'waiting' && user && !isNaN(amount) && amount > 0 && user.balance >= amount && !alreadyBet) {
+            user.balance = parseFloat((user.balance - amount).toFixed(2));
+            await user.save();
+            crashState.bets.push({ userId: user._id.toString(), username: user.username, amount: amount, avatar: user.avatar, cashedOut: false });
+            socket.emit('balanceUpdate', user.balance);
+            io.emit('crashTick', crashState);
+            if (callback) callback({ success: true });
+        } else if (callback) callback({ success: false });
+    });
 
     socket.on('crashCashOut', async (data, callback) => {
-    const bet = crashState.bets.find(b => b.userId === data.userId && !b.cashedOut);
-    if (crashState.status === 'running' && bet) {
-        bet.cashedOut = true;
-        bet.payout = bet.amount * crashState.multiplier;
-        
-        const user = await User.findById(data.userId);
-        user.balance += bet.payout;
-        await user.save();
-        
-        socket.emit('balanceUpdate', user.balance);
-        io.emit('crashTick', crashState);
-        
-        if (callback) callback({ success: true }); // Tell client cashout was successful
-    }
-});
+        const bet = crashState.bets.find(b => b.userId === data.userId && !b.cashedOut);
+        if (crashState.status === 'running' && bet) {
+            const mult = Number(crashState.multiplier) || 1;
+            const payout = parseFloat((bet.amount * mult).toFixed(2));
+            
+            if (isNaN(payout)) return; // Trava de segurança
+
+            bet.cashedOut = true;
+            bet.payout = payout;
+            const user = await User.findById(data.userId);
+            user.balance = parseFloat((user.balance + payout).toFixed(2));
+            await user.save();
+            
+            socket.emit('balanceUpdate', user.balance);
+            io.emit('crashTick', crashState);
+            if (callback) callback({ success: true });
+        }
+    });
 });
 
-server.listen(3000, () => console.log('🚀 TOBYDROP Running'));
+server.listen(3000, "0.0.0.0", () => {
+  console.log("🚀 TOBYDROP Running");
+});
+
 
