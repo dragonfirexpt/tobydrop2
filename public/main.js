@@ -11,6 +11,7 @@ let itemsData = {};
 let cases = {}; 
 
 let currentCrashState = null;
+let selectedCasesForBattle = [];
 
 function formatCurrency(num) {
     return Number(num).toLocaleString('pt-PT', { 
@@ -76,6 +77,58 @@ function handleCrashAction() {
         socket.emit('crashCashOut', { userId: currentUser._id });
     }
 }
+
+function openBattleModal() {
+    document.getElementById('battle-modal').style.display = 'flex';
+    selectedCasesForBattle = [];
+    updateModalSelected();
+    
+    const container = document.getElementById('modal-available-cases');
+    container.innerHTML = Object.keys(itemsData).map(id => `
+        <div class="modal-case-item" onclick="addCaseToBattle('${id}')">
+            <b>${itemsData[id].name}</b>
+            <span>$${formatCurrency(itemsData[id].price)}</span>
+        </div>
+    `).join('');
+}
+
+function closeBattleModal() {
+    document.getElementById('battle-modal').style.display = 'none';
+}
+
+function addCaseToBattle(id) {
+    if (selectedCasesForBattle.length >= 10) return alert("Max 10 cases");
+    selectedCasesForBattle.push(id);
+    updateModalSelected();
+}
+
+function updateModalSelected() {
+    const container = document.getElementById('modal-selected-cases');
+    let total = 0;
+    container.innerHTML = selectedCasesForBattle.map((id, index) => {
+        total += itemsData[id].price;
+        return `<div class="selected-item">${itemsData[id].name} <span onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">×</span></div>`;
+    }).join('');
+    document.getElementById('total-battle-price').innerText = `$${formatCurrency(total)}`;
+}
+function getSafeAvatar(url) {
+    if (!url || url === "" || url === "undefined") {
+        return 'https://api.dicebear.com/9.x/bottts/svg?seed=fallback';
+    }
+    return url;
+}
+function confirmCreateBattle() {
+    if (selectedCasesForBattle.length === 0) return alert("Add at least one case!");
+    const isBot = document.getElementById('bot-checkbox').checked;
+    
+    socket.emit('createBattle', {
+        userId: currentUser._id,
+        caseIds: selectedCasesForBattle,
+        isBot: isBot
+    });
+    closeBattleModal();
+}
+
 async function init() {
     // 1. Ir buscar os dados das caixas ao Servidor
     const caseRes = await fetch('/api/cases');
@@ -306,64 +359,100 @@ function joinBattle(id, price) {
 }
 
 socket.on('updateBattles', (battles) => {
-    document.getElementById('battle-list').innerHTML = battles.map(b => `
-        <div class="battle-card">
-            <div class="users">
-                <img src="${b.player1.avatar}">
-                <div><b>${b.player1.username}</b> <small style="color:#444">vs</small> <b>WAITING</b></div>
-            </div>
-            <div style="text-align:center"><small style="color:#555">CASE</small><br><b>${b.caseId.toUpperCase()}</b></div>
-            ${b.player1.id !== currentUser._id ? `<button class="btn-primary" onclick="joinBattle('${b.id}', ${b.price})">JOIN $${b.price}</button>` : '<span>YOURS</span>'}
-        </div>
-    `).join('');
-});
+    const list = document.getElementById('battle-list');
+    if (!list) return;
 
-socket.on('startBattleSpin', (data) => {
+    list.innerHTML = battles.map(b => {
+        const firstCaseId = b.caseIds[0];
+        const firstCaseName = itemsData[firstCaseId] ? itemsData[firstCaseId].name : "Case";
+        const totalCases = b.caseIds.length;
+        const displayName = totalCases > 1 ? `${firstCaseName} +${totalCases - 1}` : firstCaseName;
+
+        // Avatar logic for the lobby
+        const p1Ava = b.player1.avatar;
+        const p2Ava = 'https://api.dicebear.com/9.x/bottts/svg?seed=waiting';
+
+        return `
+            <div class="battle-card">
+                <div class="users">
+                    <div class="avatar-stack">
+                        <img src="${p1Ava}" class="p1-img">
+                        <div class="vs-circle">VS</div>
+                        <img src="${p2Ava}" class="p2-img grayscale">
+                    </div>
+                    <div class="user-info">
+                        <b>${b.player1.username}</b>
+                        <small>WAITING FOR PLAYER</small>
+                    </div>
+                </div>
+                <div class="battle-details">
+                    <small>${totalCases} CAIXA(S)</small><br>
+                    <b style="color: var(--accent)">${displayName.toUpperCase()}</b>
+                </div>
+                <div class="battle-actions">
+                    ${b.player1.id !== currentUser._id ? 
+                        `<button class="btn-primary" onclick="joinBattle('${b.id}', ${b.price})">JOIN $${formatCurrency(b.price)}</button>` : 
+                        '<span class="badge-yours">YOUR BATTLE</span>'}
+                </div>
+            </div>
+        `;
+    }).join('');
+});
+socket.on('startBattleSpin', async (data) => {
     switchTab('arena-tab');
-    
-    // Set UI elements
-    document.getElementById('p1-ava').src = data.battle.player1.avatar;
-    document.getElementById('p2-ava').src = data.battle.player2.avatar;
+      document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
+    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
+    // Reset visual
     document.getElementById('p1-name').innerText = data.battle.player1.username;
     document.getElementById('p2-name').innerText = data.battle.player2.username;
-    document.getElementById('battle-msg').innerText = "FIGHT!";
+    
+    let p1Acc = 0;
+    let p2Acc = 0;
 
-    renderTrack('p1-spinner', data.track1);
-    renderTrack('p2-spinner', data.track2);
+    // Loop das Caixas
+    for (let i = 0; i < data.p1Rolls.length; i++) {
+        document.getElementById('battle-msg').innerText = `ROUND ${i + 1} / ${data.p1Rolls.length}`;
+        
+        renderTrack('p1-spinner', data.p1Rolls[i].track);
+        renderTrack('p2-spinner', data.p2Rolls[i].track);
 
-    const tracks = [document.getElementById('p1-spinner'), document.getElementById('p2-spinner')];
-    const containerWidth = document.querySelector('.spinner-container.sm').offsetWidth;
-    const finalX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+        const tracks = [document.getElementById('p1-spinner'), document.getElementById('p2-spinner')];
+        tracks.forEach(t => { t.style.transition = 'none'; t.style.transform = 'translateX(0)'; });
 
-    tracks.forEach(t => { 
-        t.style.transition = 'none'; 
-        t.style.transform = 'translateX(0)'; 
-    });
-
-    setTimeout(() => {
+        await new Promise(r => setTimeout(r, 100));
+        const containerWidth = document.querySelector('.spinner-container.sm').offsetWidth;
+        const finalX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+        
         tracks.forEach(t => {
-            t.style.transition = 'transform 6s cubic-bezier(0.05, 0, 0, 1)';
+            t.style.transition = 'transform 4s cubic-bezier(0.05, 0, 0, 1)';
             t.style.transform = `translateX(-${finalX}px)`;
         });
-    }, 100);
 
-    // END OF BATTLE
+        await new Promise(r => setTimeout(r, 4500)); // Espera a roleta parar
+
+        p1Acc += data.p1Rolls[i].value;
+        p2Acc += data.p2Rolls[i].value;
+
+        // Atualiza os parciais embaixo dos nomes
+        document.getElementById('p1-name').innerHTML = `${data.battle.player1.username}<br><span style="color:var(--accent);font-size:18px;">$${formatCurrency(p1Acc)}</span>`;
+        document.getElementById('p2-name').innerHTML = `${data.battle.player2.username}<br><span style="color:var(--accent);font-size:18px;">$${formatCurrency(p2Acc)}</span>`;
+    }
+
+    // --- FINAL DA BATALHA ---
+    const winnerName = data.winnerId === data.battle.player1.id ? data.battle.player1.username : data.battle.player2.username;
+    document.getElementById('battle-msg').innerText = `${winnerName.toUpperCase()} WINS!`;
+
+    // SÓ AGORA ATUALIZAMOS O SALDO REAL
     setTimeout(() => {
-        const winnerName = data.winnerId === data.battle.player1.id ? data.battle.player1.username : data.battle.player2.username;
-        document.getElementById('battle-msg').innerText = `${winnerName.toUpperCase()} WINS!`;
+        const isP1 = currentUser._id === data.battle.player1.id;
+        const myFinalBalance = isP1 ? data.p1FinalBalance : data.p2FinalBalance;
         
-        // After showing the winner name, refresh the balance to trigger animation
-        setTimeout(async () => {
-            const res = await fetch('/api/me');
-            const refresh = await res.json();
-            if(refresh.loggedIn) {
-                // This will trigger the Green animation if you are the winner
-                updateBalanceUI(refresh.user.balance); 
-            }
-        }, 1500);
-    }, 6500);
+        if (myFinalBalance !== undefined) {
+            // Isso vai disparar a animação verde de dinheiro entrando
+            updateBalanceUI(myFinalBalance); 
+        }
+    }, 800);
 });
-
 // Chat
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
     if(e.key === 'Enter' && e.target.value.trim() !== '') {

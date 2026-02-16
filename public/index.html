@@ -51,6 +51,7 @@
                     <div class="view-header">SELECT A CASE</div>
                     <div class="case-grid">
                        <div class="case-card tier-1" onclick="selectCase('bronze')"><h3>Recoil Box</h3><p>$1</p></div>
+                       <div class="case-card tier-2" onclick="selectCase('phoenix')"><h3>Phoenix Vault</h3><p>$3</p></div>
                     </div>
                 </section>
 
@@ -70,18 +71,38 @@
                 </section>
 
                 <section id="battles-tab" class="tab-view" style="display:none">
-                    <div class="battle-lobby">
-                        <div class="lobby-header">
-                            <h2>BATTLE LOBBY</h2>
-                            <div class="lobby-create">
-                                <select id="battle-case-select"><option value="bronze">Recoil Box ($1)</option>
-</select>
-                                <button onclick="createBattle()" class="btn-primary">NEW BATTLE</button>
-                            </div>
-                        </div>
-                        <div id="battle-list" class="battle-list"></div>
+    <div class="battle-lobby">
+        <div class="lobby-header">
+            <h2>BATTLE LOBBY</h2>
+            <button onclick="openBattleModal()" class="btn-primary">CREATE CUSTOM BATTLE</button>
+        </div>
+        <div id="battle-list" class="battle-list"></div>
+    </div>
+
+    <!-- Battle Creation Modal -->
+    <div id="battle-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h3>CREATE BATTLE</h3>
+            <div class="modal-config">
+                <div class="case-selector-zone">
+                    <h4>Available Cases</h4>
+                    <div id="modal-available-cases" class="modal-grid"></div>
+                </div>
+                <div class="selected-zone">
+                    <h4>Battle Cases (<span id="total-battle-price">$0.00</span>)</h4>
+                    <div id="modal-selected-cases" class="selected-list"></div>
+                    <div class="bot-toggle">
+                        <label><input type="checkbox" id="bot-checkbox"> Play against BOT 🤖</label>
                     </div>
-                </section>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeBattleModal()" class="btn-secondary">CANCEL</button>
+                <button onclick="confirmCreateBattle()" class="btn-primary" id="confirm-battle-btn">START BATTLE</button>
+            </div>
+        </div>
+    </div>
+</section>
 
                 <section id="arena-tab" class="tab-view" style="display:none">
                     <div class="arena">

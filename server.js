@@ -26,7 +26,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     username: { type: String, unique: true },
     password: { type: String, required: true },
     balance: { type: Number, default: 5000 },
-    avatar: { type: String, default: 'https://api.dicebear.com/7.x/bottts/svg?seed=default' }
+    // URL atualizada para a versão 9 (mais estável)
+    avatar: { type: String, default: 'https://api.dicebear.com/9.x/bottts/svg?seed=identicon' }
 }));
 
 const CONDITIONS = [
@@ -77,7 +78,38 @@ const caseData = {
             { name: "Zeus x27 | Electric Blue", maxVal: 0.83, minVal: 0.05, color: "#4b69ff", chance: 11.372 },
             { name: "M4A4 | Naval Shred Camo", maxVal: 0.18, minVal: 0.05, color: "#4b69ff", chance: 8.280 }
         ]
+    },
+    phoenix: {
+        name: "Phoenix Vault",
+        price: 3.00, // Preço sugerido para a caixa
+        items: [
+            { name: "Talon Knife | Tiger Tooth", maxVal: 750.37, minVal: 750.37, color: "#ffb703", chance: 0.005, fixedCondition: "FN" },
+            { name: "Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.016, fixedCondition: "FN" },
+            { name: "Gut Knife | Doppler Phase 4", maxVal: 197.01, minVal: 197.01, color: "#ffb703", chance: 0.057, fixedCondition: "FN" },
+            { name: "AK-47 | Vulcan", maxVal: 183.63, minVal: 183.63, color: "#eb4b4b", chance: 0.011, fixedCondition: "FN" },
+            { name: "AWP | Containment Breach", maxVal: 92.33, minVal: 92.33, color: "#eb4b4b", chance: 0.122, fixedCondition: "MW" },
+            { name: "AK-47 | Neon Rider", maxVal: 82.60, minVal: 71.71, color: "#eb4b4b", chance: 0.154 },
+            { name: "AK-47 | Inheritance", maxVal: 81.78, minVal: 81.78, color: "#eb4b4b", chance: 0.088, fixedCondition: "FT" },
+            { name: "AWP | The End", maxVal: 55.06, minVal: 55.06, color: "#d32ce6", chance: 0.120, fixedCondition: "FN" },
+            { name: "AWP | Crakow!", maxVal: 40.16, minVal: 40.16, color: "#d32ce6", chance: 0.072, fixedCondition: "MW" },
+            { name: "M4A4 | Desolate Space", maxVal: 16.95, minVal: 16.95, color: "#d32ce6", chance: 3.530, fixedCondition: "FT" },
+            { name: "AK-47 | Searing Rage", maxVal: 14.26, minVal: 7.12, color: "#d32ce6", chance: 4.610 },
+            { name: "M4A1-S | Leaded Glass", maxVal: 13.41, minVal: 13.41, color: "#d32ce6", chance: 2.538, fixedCondition: "MW" },
+            { name: "M4A1-S | Control Panel", maxVal: 11.95, minVal: 11.80, color: "#d32ce6", chance: 2.081 },
+            { name: "AWP | Ice Coaled", maxVal: 11.29, minVal: 9.75, color: "#d32ce6", chance: 1.946 },
+            { name: "M4A1-S | Black Lotus", maxVal: 10.32, minVal: 10.32, color: "#8847ff", chance: 2.922, fixedCondition: "FN" },
+            { name: "UMP-45 | K.O. Factory", maxVal: 6.99, minVal: 6.81, color: "#8847ff", chance: 3.848 },
+            { name: "AK-47 | Ice Coaled", maxVal: 6.28, minVal: 6.28, color: "#8847ff", chance: 4.355, fixedCondition: "MW" },
+            { name: "Zeus x27 | Olympus", maxVal: 6.12, minVal: 5.67, color: "#8847ff", chance: 4.039 },
+            { name: "M4A1-S | Night Terror", maxVal: 4.09, minVal: 1.10, color: "#4b69ff", chance: 15.065 },
+            { name: "P90 | Randy Rush", maxVal: 2.58, minVal: 0.98, color: "#4b69ff", chance: 9.070 },
+            { name: "Desert Eagle | Serpent Strike", maxVal: 1.74, minVal: 0.83, color: "#4b69ff", chance: 11.462 },
+            { name: "Galil AR | Control", maxVal: 1.69, minVal: 0.70, color: "#4b69ff", chance: 13.863 },
+            { name: "AWP | Pit Viper", maxVal: 1.50, minVal: 1.33, color: "#4b69ff", chance: 7.869 },
+            { name: "Zeus x27 | Tosai", maxVal: 1.33, minVal: 0.70, color: "#4b69ff", chance: 12.157 }
+        ]
     }
+
 };
 
 const axios = require('axios'); // Você pode precisar instalar: npm install axios
@@ -322,6 +354,31 @@ app.post('/api/open-case', async (req, res) => {
         });
     } catch (e) { res.status(500).json({ error: "Erro interno" }); }
 });
+async function resolveBattleRolls(caseIds) {
+    let rolls = [];
+    for (let cid of caseIds) {
+        const selectedCase = caseData[cid];
+        if (!selectedCase) continue; // Pula se a caixa não existir
+
+        const its = selectedCase.items;
+        const baseItem = rollItem(its);
+        const cond = getConditionForItem(baseItem);
+        const val = calculateValue(baseItem, cond);
+        
+        // Criamos o objeto completo da skin sorteada
+        const winnerObj = { 
+            ...baseItem, 
+            conditionShort: cond.short, 
+            value: val 
+        };
+
+        rolls.push({
+            ...winnerObj,
+            track: generateTrack(winnerObj, its)
+        });
+    }
+    return rolls;
+}
 
 io.on('connection', (socket) => {
     socket.emit('updateBattles', activeBattles);
@@ -330,92 +387,106 @@ io.on('connection', (socket) => {
 
     socket.on('createBattle', async (data) => {
     const user = await User.findById(data.userId);
-    const price = caseData[data.caseId].price;
+    if (!user) return;
 
-    if (!user || user.balance < price) return;
+    let totalPrice = 0;
+    data.caseIds.forEach(cid => { if(caseData[cid]) totalPrice += caseData[cid].price });
+    if (user.balance < totalPrice) return;
 
-    user.balance -= price;
+    // 1. DEDUZIR O DINHEIRO IMEDIATAMENTE
+    user.balance = parseFloat((user.balance - totalPrice).toFixed(2));
     await user.save();
 
+    // 2. ENVIAR ATUALIZAÇÃO DE SALDO (MOSTRAR O DINHEIRO SAINDO)
+    socket.emit('balanceUpdate', user.balance); 
+
     const battleId = Math.random().toString(36).substr(2, 9);
-    
-    // Player 1 entra na sala da batalha
     socket.join(battleId);
 
     const b = {
-        id: battleId,
-        player1: { 
-            username: user.username, 
-            id: user._id.toString(), // Salva como string
-            avatar: user.avatar
-        },
-        player2: null, 
-        caseId: data.caseId, 
-        price: price
-    };
-    
-    activeBattles.push(b);
-    io.emit('updateBattles', activeBattles);
-    socket.emit('balanceUpdate', user.balance);
+    id: battleId,
+    player1: { 
+        username: user.username, 
+        id: user._id.toString(), 
+        avatar: user.avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=player1' 
+    },
+    player2: data.isBot ? { 
+        username: "TOBY BOT 🤖", 
+        id: "bot", 
+        avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=TobyBot" // Avatar fixo para o Bot
+    } : null,
+    caseIds: data.caseIds,
+    price: totalPrice,
+    isBot: data.isBot
+};
+
+    if (data.isBot) {
+        const p1Rolls = await resolveBattleRolls(b.caseIds);
+        const p2Rolls = await resolveBattleRolls(b.caseIds);
+        const p1Total = p1Rolls.reduce((sum, r) => sum + r.value, 0);
+        const p2Total = p2Rolls.reduce((sum, r) => sum + r.value, 0);
+        
+        const winId = p1Total >= p2Total ? b.player1.id : "bot";
+        
+        // SALVAR VITÓRIA NO BANCO MAS NÃO ENVIAR balanceUpdate AINDA
+        let balanceAfterWin = user.balance;
+        if (winId !== "bot") {
+            const winAmount = p1Total + p2Total;
+            // Atualizamos no banco mas não emitimos o evento via socket aqui
+            await User.findByIdAndUpdate(user._id, { $inc: { balance: winAmount } });
+            balanceAfterWin = parseFloat((user.balance + winAmount).toFixed(2));
+        }
+
+        io.to(battleId).emit('startBattleSpin', {
+            battle: b, p1Rolls, p2Rolls, winnerId: winId,
+            p1FinalBalance: balanceAfterWin, // O front-end vai "segurar" esse valor
+            p2FinalBalance: 0
+        });
+    } else {
+        activeBattles.push(b);
+        io.emit('updateBattles', activeBattles);
+    }
 });
 
     socket.on('joinBattle', async (data) => {
     const idx = activeBattles.findIndex(b => b.id === data.battleId);
     const b = activeBattles[idx];
 
-    // Garante comparação de string para evitar erros do MongoDB
     if (b && !b.player2 && b.player1.id !== data.userId.toString()) {
-        const user = await User.findById(data.userId);
-        if (!user || user.balance < b.price) return;
+        const user2 = await User.findById(data.userId);
+        if (!user2 || user2.balance < b.price) return;
 
-        user.balance -= b.price;
-        await user.save();
+        // 1. DEDUZIR DINHEIRO DO P2
+        user2.balance = parseFloat((user2.balance - b.price).toFixed(2));
+        await user2.save();
+        socket.emit('balanceUpdate', user2.balance); // P2 vê o dinheiro saindo
 
-        // Player 2 entra na sala da batalha
         socket.join(b.id);
+        b.player2 = { username: user2.username, id: user2._id.toString(), avatar: user2.avatar };
 
-        b.player2 = { 
-            username: user.username, 
-            id: user._id.toString(),
-            avatar: user.avatar
-        };
+        const p1Rolls = await resolveBattleRolls(b.caseIds);
+        const p2Rolls = await resolveBattleRolls(b.caseIds);
+        const p1Total = p1Rolls.reduce((sum, r) => sum + r.value, 0);
+        const p2Total = p2Rolls.reduce((sum, r) => sum + r.value, 0);
 
-        const its = caseData[b.caseId].items;
+        const winId = p1Total >= p2Total ? b.player1.id : b.player2.id;
         
-        // Lógica de sorteio (mantive a sua)
-        const r1 = rollItem(its); 
-        const r2 = rollItem(its);
-        
-        // Cálculo de valor para decidir o vencedor da batalha
-        // Note: usei calculateValue para ser justo com as condições
-        const cond1 = getConditionForItem(r1);
-        const cond2 = getConditionForItem(r2);
-        const val1 = calculateValue(r1, cond1);
-        const val2 = calculateValue(r2, cond2);
+        // PROCESSAR VENCEDOR NO BANCO (SILENCIOSAMENTE)
+        const totalPot = parseFloat((p1Total + p2Total).toFixed(2));
+        await User.findByIdAndUpdate(winId, { $inc: { balance: totalPot } });
 
-        const res1 = { ...r1, conditionShort: cond1.short, value: val1 };
-        const res2 = { ...r2, conditionShort: cond2.short, value: val2 };
+        // Pegar saldos finais para o Payload
+        const p1Obj = await User.findById(b.player1.id);
+        const p2Obj = await User.findById(b.player2.id);
 
-        const winId = val1 >= val2 ? b.player1.id : b.player2.id;
-        
-        const winner = await User.findById(winId);
-        winner.balance = parseFloat((winner.balance + val1 + val2).toFixed(2));
-        await winner.save();
-
-        const battlePayload = { 
-            battle: b, 
-            track1: generateTrack(res1, its), 
-            track2: generateTrack(res2, its), 
-            winnerId: winId 
-        };
-
-        // --- AQUI ESTÁ A MUDANÇA ---
-        // Envia para TODOS na sala da batalha (Player 1 e Player 2)
-        io.to(b.id).emit('startBattleSpin', battlePayload);
+        io.to(b.id).emit('startBattleSpin', {
+            battle: b, p1Rolls, p2Rolls, winnerId: winId,
+            p1FinalBalance: p1Obj.balance,
+            p2FinalBalance: p2Obj.balance
+        });
 
         activeBattles.splice(idx, 1);
         io.emit('updateBattles', activeBattles);
-        socket.emit('balanceUpdate', user.balance);
     }
 });
 });
