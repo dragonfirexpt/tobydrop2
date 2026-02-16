@@ -347,7 +347,9 @@ function renderTrack(trackId, trackData) {
 
 async function openCase() {
     const btn = document.getElementById('open-btn');
-    if (currentUser.balance < itemsData[activeCaseId].price) return alert("Not enough credits!");
+    const caseInfo = itemsData[activeCaseId];
+    
+    if (currentUser.balance < caseInfo.price) return alert("Not enough credits!");
     
     btn.classList.add('btn-loading');
     btn.disabled = true;
@@ -360,17 +362,16 @@ async function openCase() {
         });
         
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-        spinSound.currentTime = 0; 
-        spinSound.play().catch(e => console.log("Erro ao tocar som:", e));
-
-        // Se o servidor devolver erro (ex: 404, 500)
-        if (!res.ok) {
-            throw new Error(data.error || "Server Error");
-        }
-        
-        btn.classList.remove('btn-loading');
+        // SOM E ANIMAÇÃO DE DESCIDA DE SALDO (Pagar a caixa)
+        // Aqui usamos o balanceAfterDeduction que agora o servidor envia
         updateBalanceUI(data.balanceAfterDeduction);
+
+        // Inicia o som da roleta
+        spinSound.playbackRate = 0.65; // Som lento para animação longa
+        spinSound.currentTime = 0; 
+        spinSound.play().catch(e => {});
 
         renderTrack('spinner', data.track);
         const spinner = document.getElementById('spinner');
@@ -382,20 +383,27 @@ async function openCase() {
         spinner.style.transform = 'translateX(0)';
         
         setTimeout(() => {
-            spinner.style.transition = 'transform 6s cubic-bezier(0.05, 0, 0, 1)';
+            spinner.style.transition = 'transform 9s cubic-bezier(0.05, 0, 0, 1)';
             spinner.style.transform = `translateX(-${targetX}px)`;
         }, 50);
 
+        // FINAL DA ROLETA
         setTimeout(() => {
+            landSound.currentTime = 0;
+            landSound.play();
+            
+            // ATUALIZAÇÃO FINAL
             updateBalanceUI(data.finalBalance);
+            loadInventory(); // Atualiza a aba de inventário automaticamente
+            
             btn.disabled = false;
-        }, 6500);
+            btn.classList.remove('btn-loading');
+        }, 9500);
 
     } catch (e) {
         btn.classList.remove('btn-loading');
         btn.disabled = false;
-        console.error("ERRO DETALHADO:", e); // Vê isto na consola (F12)
-        alert("Erro: " + e.message);
+        alert(e.message);
     }
 }
 socket.on('balanceUpdate', (newBalance) => {
@@ -473,9 +481,56 @@ socket.on('updateBattles', (battles) => {
         `;
     }).join('');
 });
+async function loadInventory() {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (!data.loggedIn) return;
+
+    const grid = document.getElementById('inventory-grid');
+    if (data.user.inventory.length === 0) {
+        grid.innerHTML = '<p style="color:#555; grid-column: 1/-1; text-align:center;">Empty inventory...</p>';
+        return;
+    }
+
+    grid.innerHTML = data.user.inventory.map(item => `
+        <div class="inventory-card" style="border-bottom: 3px solid ${item.color}">
+            <img src="${item.img}">
+            <div class="inv-info">
+                <b>${item.name}</b>
+                <small>${item.conditionShort}</small>
+                <span>$${formatCurrency(item.value)}</span>
+            </div>
+            <button class="btn-sell" onclick="sellItem('${item.id}')">SELL</button>
+        </div>
+    `).reverse().join(''); // Reverse to show newest first
+}
+
+async function sellItem(id) {
+    const res = await fetch('/api/sell-item', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ itemId: id })
+    });
+    const data = await res.json();
+    if (data.success) {
+        updateBalanceUI(data.balance);
+        loadInventory(); // Refresh list
+    }
+}
 socket.on('startBattleSpin', async (data) => {
     switchTab('arena-tab');
-    
+    document.getElementById('battle-msg').innerText = ""; // Reseta o texto de vitória
+    document.getElementById('p1-total-val').innerText = "0,00"; // Reseta o saldo do P1
+    document.getElementById('p2-total-val').innerText = "0,00"; // Reseta o saldo do P2
+    document.getElementById('current-round').innerText = "1"; // Reseta o contador de rondas
+    // Configuração inicial
+    document.getElementById('p1-inventory').innerHTML = '';
+    document.getElementById('p2-inventory').innerHTML = '';
+    document.getElementById('total-rounds').innerText = data.p1Rolls.length;
+    document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
+    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
+    document.getElementById('p1-username').innerText = data.battle.player1.username;
+    document.getElementById('p2-username').innerText = data.battle.player2.username;
      const timeline = document.getElementById('battle-case-timeline');
     timeline.innerHTML = data.battle.caseIds.map((cid, idx) => {
         const caseImg = itemsData[cid] ? itemsData[cid].img : 'https://via.placeholder.com/40';
@@ -485,14 +540,6 @@ socket.on('startBattleSpin', async (data) => {
             </div>
         `;
     }).join('');
-    // Configuração inicial
-    document.getElementById('p1-inventory').innerHTML = '';
-    document.getElementById('p2-inventory').innerHTML = '';
-    document.getElementById('total-rounds').innerText = data.p1Rolls.length;
-    document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
-    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
-    document.getElementById('p1-username').innerText = data.battle.player1.username;
-    document.getElementById('p2-username').innerText = data.battle.player2.username;
 
     let p1Acc = 0;
     let p2Acc = 0;

@@ -27,6 +27,7 @@
                 <button onclick="showHome()" class="nav-link active">CASES</button>
                 <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
                 <button onclick="switchTab('settings-tab', this)" class="nav-link">SETTINGS</button>
+                <button onclick="switchTab('inventory-tab', this); loadInventory()" class="nav-link">INVENTORY</button>
                 <button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>
             </nav>
             <div class="nav-user">
@@ -47,6 +48,15 @@
 
         <div class="app-body">
             <main class="main-content">
+                <section id="inventory-tab" class="tab-view" style="display:none">
+    <div class="inventory-header">
+        <h2>MY INVENTORY</h2>
+        <p>Sell your skins to get more balance!</p>
+    </div>
+    <div id="inventory-grid" class="inventory-grid">
+        <!-- Items loaded here -->
+    </div>
+</section>
                 <section id="home-tab" class="tab-view">
                     <div class="view-header">SELECT A CASE</div>
                     <div id="home-case-grid" class="case-grid">

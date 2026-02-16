@@ -26,8 +26,16 @@ const User = mongoose.model('User', new mongoose.Schema({
     username: { type: String, unique: true },
     password: { type: String, required: true },
     balance: { type: Number, default: 5000 },
-    // URL atualizada para a versão 9 (mais estável)
-    avatar: { type: String, default: 'https://api.dicebear.com/9.x/bottts/svg?seed=identicon' }
+    avatar: { type: String, default: 'https://api.dicebear.com/9.x/bottts/svg?seed=identicon' },
+    // New Inventory Array
+    inventory: [{
+        name: String,
+        value: Number,
+        img: String,
+        color: String,
+        conditionShort: String,
+        id: String // Unique ID for selling
+    }]
 }));
 
 const CONDITIONS = [
@@ -321,40 +329,74 @@ app.post('/api/update-avatar', async (req, res) => {
 
 app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ success: true })));
 
+app.post('/api/sell-item', async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) return res.status(401).json({ error: "Não autorizado" });
+
+        const itemIdx = user.inventory.findIndex(i => i.id === req.body.itemId);
+        
+        if (itemIdx > -1) {
+            const itemValue = Number(user.inventory[itemIdx].value) || 0;
+            
+            // Adiciona o valor ao saldo
+            user.balance = parseFloat((Number(user.balance) + itemValue).toFixed(2));
+            
+            // Remove do inventário
+            user.inventory.splice(itemIdx, 1);
+            
+            await user.save();
+            res.json({ success: true, balance: user.balance });
+        } else {
+            res.status(400).json({ error: "Item não encontrado no inventário" });
+        }
+    } catch (e) {
+        res.status(500).json({ error: "Erro ao vender item" });
+    }
+});
 app.post('/api/open-case', async (req, res) => {
     try {
         const { caseId } = req.body;
         const user = await User.findById(req.session.userId);
         const selectedCase = caseData[caseId];
-        if (!user || !selectedCase || user.balance < selectedCase.price) return res.status(400).json({ error: "Saldo insuficiente" });
 
+        if (!user || !selectedCase) return res.status(400).json({ error: "Erro ao carregar dados" });
+
+        const casePrice = Number(selectedCase.price);
+        if (user.balance < casePrice) return res.status(400).json({ error: "Saldo insuficiente" });
+
+        // Sorteio
         const baseItem = rollItem(selectedCase.items);
         const cond = getConditionForItem(baseItem);
+        const finalValue = calculateValue(baseItem, cond);
+
+        // 1. Tira o dinheiro da caixa
+        user.balance = parseFloat((user.balance - casePrice).toFixed(2));
         
-        const min = Number(baseItem.minVal) || 0;
-        const max = Number(baseItem.maxVal) || min;
-        
-        // BETTER PRICING: min price + (range * multiplier)
-       const finalValue = calculateValue(baseItem, cond);
-        
-        user.balance = parseFloat(((user.balance - selectedCase.price) + finalValue).toFixed(2));
+        // 2. Cria o item para o inventário
+        const newItem = { 
+            name: baseItem.name, 
+            conditionShort: cond.short, 
+            value: finalValue, 
+            img: baseItem.img, 
+            color: baseItem.color,
+            id: Math.random().toString(36).substr(2, 9)
+        };
+
+        user.inventory.push(newItem);
         await user.save();
 
-        // FIX: Keep name original, add condition as a separate property
-        const winner = { 
-    ...baseItem, 
-    condition: cond.name, 
-    conditionShort: cond.short, 
-    value: finalValue 
-};
-
+        // 3. ENVIAR RESPOSTA (Garantindo que balanceAfterDeduction existe)
         res.json({ 
-            winner, 
-            track: generateTrack(winner, selectedCase.items), 
-            balanceAfterDeduction: user.balance - finalValue, 
-            finalBalance: user.balance 
+            winner: newItem, 
+            track: generateTrack(newItem, selectedCase.items), 
+            balanceAfterDeduction: user.balance, // <-- IMPORTANTE: O saldo já sem o preço da caixa
+            finalBalance: user.balance // Como a skin vai para o inventário, o saldo final é o mesmo
         });
-    } catch (e) { res.status(500).json({ error: "Erro interno" }); }
+
+    } catch (e) {
+        res.status(500).json({ error: "Erro interno" });
+    }
 });
 async function resolveBattleRolls(caseIds) {
     let rolls = [];
@@ -398,29 +440,27 @@ io.on('connection', (socket) => {
     // 1. DEDUZIR O DINHEIRO IMEDIATAMENTE
     user.balance = parseFloat((user.balance - totalPrice).toFixed(2));
     await user.save();
-
-    // 2. ENVIAR ATUALIZAÇÃO DE SALDO (MOSTRAR O DINHEIRO SAINDO)
     socket.emit('balanceUpdate', user.balance); 
 
     const battleId = Math.random().toString(36).substr(2, 9);
     socket.join(battleId);
 
     const b = {
-    id: battleId,
-    player1: { 
-        username: user.username, 
-        id: user._id.toString(), 
-        avatar: user.avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=player1' 
-    },
-    player2: data.isBot ? { 
-        username: "BOT", 
-        id: "bot", 
-        avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=TobyBot" // Avatar fixo para o Bot
-    } : null,
-    caseIds: data.caseIds,
-    price: totalPrice,
-    isBot: data.isBot
-};
+        id: battleId,
+        player1: { 
+            username: user.username, 
+            id: user._id.toString(), 
+            avatar: user.avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=player1' 
+        },
+        player2: data.isBot ? { 
+            username: "BOT", 
+            id: "bot", 
+            avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=TobyBot" 
+        } : null,
+        caseIds: data.caseIds,
+        price: totalPrice,
+        isBot: data.isBot
+    };
 
     if (data.isBot) {
         const p1Rolls = await resolveBattleRolls(b.caseIds);
@@ -430,18 +470,26 @@ io.on('connection', (socket) => {
         
         const winId = p1Total >= p2Total ? b.player1.id : "bot";
         
-        // SALVAR VITÓRIA NO BANCO MAS NÃO ENVIAR balanceUpdate AINDA
-        let balanceAfterWin = user.balance;
+        // --- LOGICA DE INVENTÁRIO (BOT) ---
         if (winId !== "bot") {
-            const winAmount = p1Total + p2Total;
-            // Atualizamos no banco mas não emitimos o evento via socket aqui
-            await User.findByIdAndUpdate(user._id, { $inc: { balance: winAmount } });
-            balanceAfterWin = parseFloat((user.balance + winAmount).toFixed(2));
+            const allSkins = [...p1Rolls, ...p2Rolls].map(s => ({
+                name: s.name,
+                value: s.value,
+                img: s.img,
+                color: s.color,
+                conditionShort: s.conditionShort,
+                id: Math.random().toString(36).substr(2, 9)
+            }));
+            
+            // Adiciona todas as skins ao inventário do criador
+            await User.findByIdAndUpdate(user._id, { 
+                $push: { inventory: { $each: allSkins } } 
+            });
         }
 
         io.to(battleId).emit('startBattleSpin', {
             battle: b, p1Rolls, p2Rolls, winnerId: winId,
-            p1FinalBalance: balanceAfterWin, // O front-end vai "segurar" esse valor
+            p1FinalBalance: user.balance, // O saldo não muda no fim, as skins vão para o inv
             p2FinalBalance: 0
         });
     } else {
@@ -461,7 +509,7 @@ io.on('connection', (socket) => {
         // 1. DEDUZIR DINHEIRO DO P2
         user2.balance = parseFloat((user2.balance - b.price).toFixed(2));
         await user2.save();
-        socket.emit('balanceUpdate', user2.balance); // P2 vê o dinheiro saindo
+        socket.emit('balanceUpdate', user2.balance);
 
         socket.join(b.id);
         b.player2 = { username: user2.username, id: user2._id.toString(), avatar: user2.avatar };
@@ -473,11 +521,22 @@ io.on('connection', (socket) => {
 
         const winId = p1Total >= p2Total ? b.player1.id : b.player2.id;
         
-        // PROCESSAR VENCEDOR NO BANCO (SILENCIOSAMENTE)
-        const totalPot = parseFloat((p1Total + p2Total).toFixed(2));
-        await User.findByIdAndUpdate(winId, { $inc: { balance: totalPot } });
+        // --- LOGICA DE INVENTÁRIO (PVP) ---
+        const allSkins = [...p1Rolls, ...p2Rolls].map(s => ({
+            name: s.name,
+            value: s.value,
+            img: s.img,
+            color: s.color,
+            conditionShort: s.conditionShort,
+            id: Math.random().toString(36).substr(2, 9)
+        }));
 
-        // Pegar saldos finais para o Payload
+        // O vencedor recebe TODAS as skins no inventário
+        await User.findByIdAndUpdate(winId, { 
+            $push: { inventory: { $each: allSkins } } 
+        });
+
+        // Pegar saldos para manter a UI sincronizada (o saldo não deve aumentar, apenas as skins entram no inv)
         const p1Obj = await User.findById(b.player1.id);
         const p2Obj = await User.findById(b.player2.id);
 
