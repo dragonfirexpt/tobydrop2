@@ -494,3 +494,103 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 }
 
 .btn-sell:hover { background: #ff6666; }
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+}
+
+.inventory-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.inventory-filters select {
+    background: #000;
+    color: #fff;
+    border: 1px solid var(--border);
+    padding: 8px 15px;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.inventory-filters select:hover {
+    border-color: var(--accent);
+}
+
+/* Ajuste das cores dos textos no card de inventário */
+.inv-info small {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+/* Deixar o grid responsivo */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    max-height: 70vh; /* Permite scroll se o inventário for gigante */
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Scrollbar fina para o inventário */
+.inventory-grid::-webkit-scrollbar { width: 4px; }
+.inventory-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+/* Garante que o spinner de loading fique branco por cima do botão de sell */
+.btn-sell.btn-loading::after {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+}
+
+/* Opcional: deixar o botão com aspecto desativado enquanto carrega */
+.btn-sell:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Container for the groups */
+.main-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Individual groups */
+.nav-group {
+    display: flex;
+    gap: 5px;
+}
+
+/* The Mini Separator */
+.nav-separator {
+    width: 1px;
+    height: 20px; /* Adjust height to your liking */
+    background: var(--border); /* Uses your existing border color */
+    margin: 0 10px;
+    opacity: 0.5;
+}
+
+/* Optional: Adjust nav-link padding so they look tighter in groups */
+.nav-link {
+    padding: 8px 12px;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+}
+
+/* Make sure buttons look consistent when active */
+.nav-link.active {
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}

@@ -486,35 +486,81 @@ async function loadInventory() {
     const data = await res.json();
     if (!data.loggedIn) return;
 
+    let items = data.user.inventory;
     const grid = document.getElementById('inventory-grid');
-    if (data.user.inventory.length === 0) {
-        grid.innerHTML = '<p style="color:#555; grid-column: 1/-1; text-align:center;">Empty inventory...</p>';
+
+    // 1. FILTRAR POR RARIDADE
+    const rarityFilter = document.getElementById('filter-rarity').value;
+    if (rarityFilter !== 'all') {
+        items = items.filter(item => item.color === rarityFilter);
+    }
+
+    // 2. ORDENAR (PREÇO OU DATA)
+    const sortType = document.getElementById('sort-price').value;
+    if (sortType === 'high') {
+        items.sort((a, b) => b.value - a.value);
+    } else if (sortType === 'low') {
+        items.sort((a, b) => a.value - b.value);
+    } else if (sortType === 'newest') {
+        // Como o Mongoose guarda por ordem de inserção, o loadInventory antigo já fazia reverse()
+        items = items.reverse(); 
+    }
+
+    // 3. RENDERIZAR
+    if (items.length === 0) {
+        grid.innerHTML = '<p style="color:#555; grid-column: 1/-1; text-align:center; padding: 50px;">No items found with these filters.</p>';
         return;
     }
 
-    grid.innerHTML = data.user.inventory.map(item => `
+    grid.innerHTML = items.map(item => `
         <div class="inventory-card" style="border-bottom: 3px solid ${item.color}">
             <img src="${item.img}">
             <div class="inv-info">
                 <b>${item.name}</b>
-                <small>${item.conditionShort}</small>
+                <small style="color: ${item.color}">${item.conditionShort}</small>
                 <span>$${formatCurrency(item.value)}</span>
             </div>
-            <button class="btn-sell" onclick="sellItem('${item.id}')">SELL</button>
+            <button class="btn-sell" onclick="sellItem(event, '${item.id}')">SELL</button>
         </div>
-    `).reverse().join(''); // Reverse to show newest first
+    `).join('');
 }
 
-async function sellItem(id) {
-    const res = await fetch('/api/sell-item', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ itemId: id })
-    });
-    const data = await res.json();
-    if (data.success) {
-        updateBalanceUI(data.balance);
-        loadInventory(); // Refresh list
+async function sellItem(event, id) {
+    // 1. Identificar o botão que foi clicado
+    const btn = event.target;
+    
+    // 2. Adicionar o estado de loading
+    btn.classList.add('btn-loading');
+    btn.disabled = true; // Impede cliques duplos
+
+    try {
+        const res = await fetch('/api/sell-item', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ itemId: id })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            // 3. Som de dinheiro (opcional, usa o landSound se quiseres)
+            landSound.currentTime = 0;
+            landSound.play();
+
+            // 4. Atualizar o saldo com animação
+            updateBalanceUI(data.balance);
+            
+            // 5. Recarregar o inventário (o item desaparecerá)
+            await loadInventory(); 
+        } else {
+            alert("Error selling item: " + data.error);
+            btn.classList.remove('btn-loading');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
     }
 }
 socket.on('startBattleSpin', async (data) => {

@@ -23,13 +23,23 @@
     <div id="game-screen" style="display:none">
         <header class="top-nav">
             <div class="brand">TOBY<span>DROP</span></div>
-            <nav>
-                <button onclick="showHome()" class="nav-link active">CASES</button>
-                <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
-                <button onclick="switchTab('settings-tab', this)" class="nav-link">SETTINGS</button>
-                <button onclick="switchTab('inventory-tab', this); loadInventory()" class="nav-link">INVENTORY</button>
-                <button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>
-            </nav>
+            <nav class="main-nav">
+    <!-- Minigames Group -->
+    <div class="nav-group">
+        <button onclick="showHome()" class="nav-link active">CASES</button>
+        <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
+        <button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>
+    </div>
+
+    <!-- The Separator Line -->
+    <div class="nav-separator"></div>
+
+    <!-- Account/Utility Group -->
+    <div class="nav-group">
+        <button onclick="switchTab('inventory-tab', this); loadInventory()" class="nav-link">INVENTORY</button>
+        <button onclick="switchTab('settings-tab', this)" class="nav-link">SETTINGS</button>
+    </div>
+</nav>
             <div class="nav-user">
                 <div class="balance-display">
     <small>BALANCE</small>
@@ -51,7 +61,24 @@
                 <section id="inventory-tab" class="tab-view" style="display:none">
     <div class="inventory-header">
         <h2>MY INVENTORY</h2>
-        <p>Sell your skins to get more balance!</p>
+        <div class="inventory-filters">
+            <!-- Filtro por Preço -->
+            <select id="sort-price" onchange="loadInventory()">
+                <option value="newest">Newest First</option>
+                <option value="high">Price: High to Low</option>
+                <option value="low">Price: Low to High</option>
+            </select>
+
+            <!-- Filtro por Raridade -->
+            <select id="filter-rarity" onchange="loadInventory()">
+                <option value="all">All Rarities</option>
+                <option value="#ffb703">★ Gold / Knives</option>
+                <option value="#eb4b4b">Covert (Red)</option>
+                <option value="#d32ce6">Classified (Pink)</option>
+                <option value="#8847ff">Restricted (Purple)</option>
+                <option value="#4b69ff">Mil-Spec (Blue)</option>
+            </select>
+        </div>
     </div>
     <div id="inventory-grid" class="inventory-grid">
         <!-- Items loaded here -->

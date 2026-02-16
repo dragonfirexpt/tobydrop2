@@ -90,12 +90,12 @@ const caseData = {
     },
     phoenix: {
         name: "Phoenix Vault",
-        price: 3.00,
+        price: 5.00,
         img: "https://img.clash.gg/standard/23379c598b6ad75fba36a055843a156b.png#hash=lsWJHQg7aLmXWHB7qIpfqrv2CCiHh3WIVw==",
         items: [
             { name: "Talon Knife | Tiger Tooth", maxVal: 750.37, minVal: 750.37, color: "#ffb703", chance: 0.005, fixedCondition: "FN" },
-            { name: "Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.016, fixedCondition: "FN" },
-            { name: "Gut Knife | Doppler Phase 4", maxVal: 197.01, minVal: 197.01, color: "#ffb703", chance: 0.057, fixedCondition: "FN" },
+            { name: "Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.016, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlNF9saWdodC5jNDQ3MThlNzQ1MDNhOGY2NTg0MzM2MzQzNDU1NDI1YjNiYTRkNTI5LnBuZw--/auto/auto/85/notrim/38f33dd23029871b7105d5753682124c.webp"},
+            { name: "Gut Knife | Doppler Phase 4", maxVal: 197.01, minVal: 197.01, color: "#ffb703", chance: 0.057, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9ndXRfYW1fZG9wcGxlcl9waGFzZTRfbGlnaHQuNjdjYWJkNDYwNTdiZTE4YjgxOTA3MDBjMjg1ZGQ3NzcwZGFiZmZjMC5wbmc-/auto/auto/85/notrim/057d957e26e949ec78b95c3f4571d6c3.webp" },
             { name: "AK-47 | Vulcan", maxVal: 183.63, minVal: 183.63, color: "#eb4b4b", chance: 0.011, fixedCondition: "FN" },
             { name: "AWP | Containment Breach", maxVal: 92.33, minVal: 92.33, color: "#eb4b4b", chance: 0.122, fixedCondition: "MW" },
             { name: "AK-47 | Neon Rider", maxVal: 82.60, minVal: 71.71, color: "#eb4b4b", chance: 0.154 },
@@ -118,8 +118,38 @@ const caseData = {
             { name: "AWP | Pit Viper", maxVal: 1.50, minVal: 1.33, color: "#4b69ff", chance: 7.869 },
             { name: "Zeus x27 | Tosai", maxVal: 1.33, minVal: 0.70, color: "#4b69ff", chance: 12.157 }
         ]
+    },
+royal: {
+        name: "Royal Legacy",
+        price: 20.00,
+        img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/AWP-Heaven.webp",
+        items: [
+            { name: "AWP | Medusa", maxVal: 3281.48, minVal: 3281.48, color: "#eb4b4b", chance: 0.012, fixedCondition: "FN"},
+            { name: "Nomad Knife | Doppler Ruby", maxVal: 2220.06, minVal: 2220.06, color: "#ffb703", chance: 0.016, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9vdXRkb29yX2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5hMDUxYWE3MmEwNzEwMzllMGY2MTYyMjRkNDY5ZmY3MDViZmNlOTI5LnBuZw--/auto/auto/85/notrim/9b21cf901c664ad3fc824d11a2fd005d.webp"},
+            { name: "M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.014, fixedCondition: "FN"},
+            { name: "Karambit | Tiger Tooth", maxVal: 1478.52, minVal: 1478.52, color: "#ffb703", chance: 0.028, fixedCondition: "FN"},
+            { name: "Bayonet | Gamma Doppler Phase 2", maxVal: 1010.18, minVal: 1010.18, color: "#ffb703", chance: 0.028, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UyX2xpZ2h0LmIzNGRjMjdkMDUzMGRkNDNlZTJmYzFiZjE3Y2MwYzVhOWI0MWI0MjMucG5n/auto/auto/85/notrim/bd638ec178949f856962fb2cc0891044.webp"},
+            { name: "Sport Gloves | Amphibious", maxVal: 451.48, minVal: 451.48, color: "#ffb703", chance: 0.052, fixedCondition: "MW"},
+            { name: "Navaja Knife | Doppler Phase 4", maxVal: 182.23, minVal: 182.23, color: "#ffb703", chance: 0.114, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9neXBzeV9qYWNra25pZmVfYW1fZG9wcGxlcl9waGFzZTRfbGlnaHQuMDk0Y2FjZmRhMTJiOGU2Yjk1MDlmNjcxYWZjMzExZmFiM2ExZTczYS5wbmc-/auto/auto/85/notrim/8b2c3580cdd2f6e91dc75bd90d6d51e4.webp"},
+            { name: "Survival Knife | Case Hardened", maxVal: 148.75, minVal: 148.75, color: "#ffb703", chance: 0.131, fixedCondition: "FT" },
+            { name: "Gut Knife | Bright Water", maxVal: 124.40, minVal: 124.40, color: "#ffb703", chance: 0.222, fixedCondition: "FN" },
+            { name: "Shadow Daggers | Lore", maxVal: 94.45, minVal: 94.45, color: "#ffb703", chance: 0.147, fixedCondition: "MW" },
+            { name: "AWP | Printstream", maxVal: 84.20, minVal: 70.31, color: "#eb4b4b", chance: 0.919 },
+            { name: "AK-47 | Neon Rider", maxVal: 71.39, minVal: 70.17, color: "#eb4b4b", chance: 1.005 },
+            { name: "AK-47 | Asiimov", maxVal: 61.01, minVal: 61.01, color: "#eb4b4b", chance: 1.079, fixedCondition: "FT" },
+            { name: "USP-S | Printstream", maxVal: 55.63, minVal: 55.63, color: "#eb4b4b", chance: 1.011, fixedCondition: "MW" },
+            { name: "AWP | Chrome Cannon", maxVal: 51.86, minVal: 39.82, color: "#eb4b4b", chance: 8.375 },
+            { name: "SG 553 | Integrale", maxVal: 41.70, minVal: 5.72, color: "#d32ce6", chance: 11.984 },
+            { name: "M4A4 | Tooth Fairy", maxVal: 27.22, minVal: 5.54, color: "#d32ce6", chance: 9.782 },
+            { name: "AK-47 | Frontside Misty", maxVal: 25.92, minVal: 25.92, color: "#d32ce6", chance: 6.871, fixedCondition: "MW" },
+            { name: "AWP | Mortis", maxVal: 23.91, minVal: 6.03, color: "#d32ce6", chance: 11.782 },
+            { name: "AK-47 | Point Disarray", maxVal: 22.67, minVal: 22.67, color: "#d32ce6", chance: 7.560, fixedCondition: "FN" },
+            { name: "M4A1-S | Stratosphere", maxVal: 15.61, minVal: 13.66, color: "#8847ff", chance: 7.966 },
+            { name: "AK-47 | Phantom Disruptor", maxVal: 13.96, minVal: 8.67, color: "#8847ff", chance: 10.545 },
+            { name: "AWP | Duality", maxVal: 10.07, minVal: 5.08, color: "#8847ff", chance: 9.786 },
+            { name: "M4A1-S | Solitude", maxVal: 8.15, minVal: 2.04, color: "#8847ff", chance: 10.571 }
+        ]
     }
-
 };
 
 const axios = require('axios'); // Você pode precisar instalar: npm install axios
