@@ -197,6 +197,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     padding: 10px;
     box-sizing: border-box;
     flex-shrink: 0; /* Impede que o flexbox esmague os itens */
+    position: relative; /* Needed to position the condition badge */
 }
 
 .item-node b {
@@ -206,6 +207,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
+    padding: 0 10px;
+    z-index: 1;
 }
 
 .item-node span {
@@ -222,4 +225,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 .preview-item:hover img {
     transform: scale(1.1);
+}
+
+.item-cond {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #aaa;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
 }

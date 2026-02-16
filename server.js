@@ -31,10 +31,10 @@ const User = mongoose.model('User', new mongoose.Schema({
 
 const CONDITIONS = [
     { name: "Factory New", short: "FN", chance: 10, multiplier: 1.0 },
-    { name: "Minimal Wear", short: "MW", chance: 15, multiplier: 0.8 },
-    { name: "Field-Tested", short: "FT", chance: 15, multiplier: 0.6 },
-    { name: "Well-Worn", short: "WW", chance: 20, multiplier: 0.5 },
-    { name: "Battle-Scarred", short: "BS", chance: 40, multiplier: 0.4 }
+    { name: "Minimal Wear", short: "MW", chance: 15, multiplier: 0.7 },
+    { name: "Field-Tested", short: "FT", chance: 20, multiplier: 0.4 },
+    { name: "Well-Worn", short: "WW", chance: 25, multiplier: 0.2 },
+    { name: "Battle-Scarred", short: "BS", chance: 30, multiplier: 0.0 }
 ];
 
 const rollCondition = () => {
@@ -49,14 +49,14 @@ const rollCondition = () => {
 
 const caseData = {
     bronze: {
-        name: "Community Collection", 
+        name: "Recoil Box", 
         price: 1.00, 
         items: [
-            { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005 },
+            { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005, fixedCondition: "FN", img: "https://cs2-cdn.pricempire.com/panorama/images/econ/default_generated/weapon_knife_gut_am_ruby_marbleized_light_png.png" },
             { name: "AK-47 | Nightwish", maxVal: 108.45, minVal: 102.44, color: "#eb4b4b", chance: 0.018 },
             { name: "AWP | Ice Coaled", maxVal: 83.42, minVal: 9.67, color: "#d32ce6", chance: 0.053 },
             { name: "M4A1-S | Player Two", maxVal: 83.42, minVal: 82.04, color: "#eb4b4b", chance: 0.013 },
-            { name: "AK-47 | Inheritance", maxVal: 69.72, minVal: 69.72, color: "#eb4b4b", chance: 0.012 },
+            { name: "AK-47 | Inheritance", maxVal: 69.72, minVal: 69.72, color: "#eb4b4b", chance: 0.012, fixedCondition: "FT" },
             { name: "AWP | Exothermic", maxVal: 31.14, minVal: 19.88, color: "#d32ce6", chance: 0.050 },
             { name: "USP-S | Sleeping Potion", maxVal: 17.72, minVal: 6.28, color: "#d32ce6", chance: 0.106 },
             { name: "USP-S | Jawbreaker", maxVal: 12.59, minVal: 5.89, color: "#d32ce6", chance: 0.159 },
@@ -139,6 +139,19 @@ function autoLinkImages() {
     console.log("✅ Imagens sincronizadas com as fases corretas!");
 }
 
+const getConditionForItem = (item) => {
+    // 1. Verifica se você definiu uma condição fixa no caseData (ex: "FN")
+    if (item.fixedCondition) {
+        const found = CONDITIONS.find(c => c.short === item.fixedCondition.toUpperCase());
+        if (found) return found; // Se encontrou (FN, MW, etc), retorna ela
+    }
+
+    // 2. Se não houver fixedCondition, faz o sorteio aleatório normal
+    return rollCondition();
+};
+
+// A generateTrack e a rota /api/open-case devem usar a getConditionForItem atualizada
+
 async function loadSkinDatabase() {
     try {
         console.log("file_download Baixando base de dados de skins...");
@@ -170,6 +183,9 @@ async function loadSkinDatabase() {
         console.log("🎨 Vinculando imagens às caixas...");
         for (let caseKey in caseData) {
             caseData[caseKey].items.forEach(item => {
+                 if (item.img && item.img !== "" && !item.img.includes("via.placeholder")) {
+            return; // Se já tem imagem manual, pula para o próximo item e não substitui
+        }
                 const searchKey = simplify(item.name);
                 
                 if (skinLookup[searchKey]) {
@@ -206,9 +222,32 @@ const rollItem = (items) => {
     return items[0];
 };
 
+const calculateValue = (item, condition) => {
+    const min = Number(item.minVal) || 0;
+    const max = Number(item.maxVal) || min;
+    return parseFloat((min + ((max - min) * condition.multiplier)).toFixed(2));
+};
+
 const generateTrack = (winner, items) => {
     let track = [];
-    for(let i=0; i<60; i++) track.push(i === 50 ? winner : items[Math.floor(Math.random() * items.length)]);
+    for(let i=0; i<60; i++) {
+        if (i === 50) {
+            track.push(winner);
+        } else {
+            const baseItem = items[Math.floor(Math.random() * items.length)];
+            
+            // Verifica a regra de fixedCondition para cada item do rolete
+            const cond = getConditionForItem(baseItem); 
+            const finalPrice = calculateValue(baseItem, cond);
+            
+            track.push({
+                ...baseItem,
+                condition: cond.name,
+                conditionShort: cond.short,
+                value: finalPrice
+            });
+        }
+    }
     return track;
 };
 
@@ -256,19 +295,31 @@ app.post('/api/open-case', async (req, res) => {
         if (!user || !selectedCase || user.balance < selectedCase.price) return res.status(400).json({ error: "Saldo insuficiente" });
 
         const baseItem = rollItem(selectedCase.items);
-        const cond = rollCondition();
+        const cond = getConditionForItem(baseItem);
         
-        // Proteção contra NaN: Converter para número ou usar 0
         const min = Number(baseItem.minVal) || 0;
         const max = Number(baseItem.maxVal) || min;
-        const priceGap = max - min;
-        const finalValue = parseFloat((min + (priceGap * cond.multiplier)).toFixed(2));
+        
+        // BETTER PRICING: min price + (range * multiplier)
+       const finalValue = calculateValue(baseItem, cond);
         
         user.balance = parseFloat(((user.balance - selectedCase.price) + finalValue).toFixed(2));
         await user.save();
 
-        const winner = { ...baseItem, name: `${baseItem.name} (${cond.short})`, value: finalValue };
-        res.json({ winner, track: generateTrack(winner, selectedCase.items), balanceAfterDeduction: user.balance - finalValue, finalBalance: user.balance });
+        // FIX: Keep name original, add condition as a separate property
+        const winner = { 
+    ...baseItem, 
+    condition: cond.name, 
+    conditionShort: cond.short, 
+    value: finalValue 
+};
+
+        res.json({ 
+            winner, 
+            track: generateTrack(winner, selectedCase.items), 
+            balanceAfterDeduction: user.balance - finalValue, 
+            finalBalance: user.balance 
+        });
     } catch (e) { res.status(500).json({ error: "Erro interno" }); }
 });
 
@@ -278,78 +329,95 @@ io.on('connection', (socket) => {
     socket.on('chatMessage', (data) => io.emit('chatMessage', data));
 
     socket.on('createBattle', async (data) => {
-        const user = await User.findById(data.userId);
-        const price = caseData[data.caseId].price;
+    const user = await User.findById(data.userId);
+    const price = caseData[data.caseId].price;
 
-        if (!user || user.balance < price) return;
+    if (!user || user.balance < price) return;
 
-        user.balance -= price;
-        await user.save();
+    user.balance -= price;
+    await user.save();
 
-        const b = {
-            id: Math.random().toString(36).substr(2, 9),
-            player1: { 
-                username: user.username, 
-                id: user._id, 
-                avatar: user.avatar,
-                socketId: socket.id // <-- Store the creator's socket ID
-            },
-            player2: null, 
-            caseId: data.caseId, 
-            price: price
-        };
-        
-        activeBattles.push(b);
-        
-        io.emit('updateBattles', activeBattles); // Everyone still needs to see the lobby update
-        socket.emit('balanceUpdate', user.balance);
-    });
+    const battleId = Math.random().toString(36).substr(2, 9);
+    
+    // Player 1 entra na sala da batalha
+    socket.join(battleId);
+
+    const b = {
+        id: battleId,
+        player1: { 
+            username: user.username, 
+            id: user._id.toString(), // Salva como string
+            avatar: user.avatar
+        },
+        player2: null, 
+        caseId: data.caseId, 
+        price: price
+    };
+    
+    activeBattles.push(b);
+    io.emit('updateBattles', activeBattles);
+    socket.emit('balanceUpdate', user.balance);
+});
 
     socket.on('joinBattle', async (data) => {
-        const idx = activeBattles.findIndex(b => b.id === data.battleId);
-        const b = activeBattles[idx];
+    const idx = activeBattles.findIndex(b => b.id === data.battleId);
+    const b = activeBattles[idx];
 
-        if (b && !b.player2 && b.player1.id.toString() !== data.userId) {
-            const user = await User.findById(data.userId);
-            if (!user || user.balance < b.price) return;
+    // Garante comparação de string para evitar erros do MongoDB
+    if (b && !b.player2 && b.player1.id !== data.userId.toString()) {
+        const user = await User.findById(data.userId);
+        if (!user || user.balance < b.price) return;
 
-            user.balance -= b.price;
-            await user.save();
+        user.balance -= b.price;
+        await user.save();
 
-            // Store the joiner's info and socket ID
-            b.player2 = { 
-                username: user.username, 
-                id: user._id, 
-                avatar: user.avatar,
-                socketId: socket.id // <-- Store the joiner's socket ID
-            };
+        // Player 2 entra na sala da batalha
+        socket.join(b.id);
 
-            const its = caseData[b.caseId].items;
-            const r1 = rollItem(its); 
-            const r2 = rollItem(its);
-            const winId = r1.value >= r2.value ? b.player1.id : b.player2.id;
-            
-            const winner = await User.findById(winId);
-            winner.balance += (r1.value + r2.value);
-            await winner.save();
+        b.player2 = { 
+            username: user.username, 
+            id: user._id.toString(),
+            avatar: user.avatar
+        };
 
-            // --- THE FIX: Send ONLY to the two players involved ---
-            const battlePayload = { 
-                battle: b, 
-                track1: generateTrack(r1, its), 
-                track2: generateTrack(r2, its), 
-                winnerId: winId 
-            };
+        const its = caseData[b.caseId].items;
+        
+        // Lógica de sorteio (mantive a sua)
+        const r1 = rollItem(its); 
+        const r2 = rollItem(its);
+        
+        // Cálculo de valor para decidir o vencedor da batalha
+        // Note: usei calculateValue para ser justo com as condições
+        const cond1 = getConditionForItem(r1);
+        const cond2 = getConditionForItem(r2);
+        const val1 = calculateValue(r1, cond1);
+        const val2 = calculateValue(r2, cond2);
 
-            io.to(b.player1.socketId).emit('startBattleSpin', battlePayload);
-            io.to(b.player2.socketId).emit('startBattleSpin', battlePayload);
-            // -------------------------------------------------------
+        const res1 = { ...r1, conditionShort: cond1.short, value: val1 };
+        const res2 = { ...r2, conditionShort: cond2.short, value: val2 };
 
-            activeBattles.splice(idx, 1);
-            io.emit('updateBattles', activeBattles);
-            socket.emit('balanceUpdate', user.balance);
-        }
-    });
+        const winId = val1 >= val2 ? b.player1.id : b.player2.id;
+        
+        const winner = await User.findById(winId);
+        winner.balance = parseFloat((winner.balance + val1 + val2).toFixed(2));
+        await winner.save();
+
+        const battlePayload = { 
+            battle: b, 
+            track1: generateTrack(res1, its), 
+            track2: generateTrack(res2, its), 
+            winnerId: winId 
+        };
+
+        // --- AQUI ESTÁ A MUDANÇA ---
+        // Envia para TODOS na sala da batalha (Player 1 e Player 2)
+        io.to(b.id).emit('startBattleSpin', battlePayload);
+
+        activeBattles.splice(idx, 1);
+        io.emit('updateBattles', activeBattles);
+        socket.emit('balanceUpdate', user.balance);
+    }
+});
 });
 
 let crashState = {

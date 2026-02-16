@@ -173,26 +173,20 @@ function selectCase(id) {
     const sortedItems = [...caseInfo.items].sort((a, b) => a.chance - b.chance);
 
     preview.innerHTML = sortedItems.map(item => {
-    let priceDisplay = "$0,00";
-    
-    if (item.minVal !== undefined && item.maxVal !== undefined) {
-        priceDisplay = (item.minVal === item.maxVal) 
-            ? `$${formatCurrency(item.minVal)}` 
-            : `$${formatCurrency(item.minVal)} - $${formatCurrency(item.maxVal)}`;
-    } 
-    else if (item.value !== undefined) {
-        priceDisplay = `$${formatCurrency(item.value)}`;
-    }
+    let priceDisplay = formatCurrency(item.minVal) + " - " + formatCurrency(item.maxVal);
+    if (item.minVal === item.maxVal) priceDisplay = formatCurrency(item.minVal);
 
-        return `
-            <div class="preview-item" style="border-color: ${item.color}">
-                <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
+    return `
+        <div class="preview-item" style="border-color: ${item.color}">
+            <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
+            <div class="preview-info">
                 <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
-                <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">${priceDisplay}</span>
+                <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">$${priceDisplay}</span>
                 <small style="color: #666; display: block; margin-top: 5px;">${item.chance}% Drop</small>
             </div>
-        `;
-    }).join('');
+        </div>
+    `;
+}).join('');
 }
 
 function switchTab(id, el) {
@@ -208,13 +202,18 @@ function renderTrack(trackId, trackData) {
 
     track.innerHTML = trackData.map(item => {
         const val = item.value || item.maxVal || item.minVal || 0;
-        // UPDATED: Use formatCurrency for spinner items
         const formattedVal = formatCurrency(val);
         
+        // Show condition short text if it exists (for the winner/track items)
+        const conditionHtml = item.conditionShort 
+            ? `<div class="item-cond">${item.conditionShort}</div>` 
+            : '';
+
         return `
             <div class="item-node" style="border-bottom: 4px solid ${item.color}">
+                ${conditionHtml}
                 <img src="${item.img || 'https://via.placeholder.com/110x80?text=Skin'}" style="width: 110px; height: 80px; object-fit: contain; margin-bottom: 5px;">
-                <b style="font-size: 11px; text-align: center; display: block; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${item.name}</b>
+                <b title="${item.name}">${item.name}</b>
                 <span style="color: var(--accent); font-weight: 800; font-size: 14px;">$${formattedVal}</span>
             </div>
         `;
@@ -289,13 +288,20 @@ function createBattle() {
 
 // main.js - Update joinBattle slightly for safety
 function joinBattle(id, price) {
-    // Check balance locally before even telling the server
-    if(currentUser.balance < price) return alert("Low balance");
+    if (!currentUser) return alert("Please log in first!");
     
-    // Find the button and show loading
+    // Verificação básica de saldo no front-end
+    if (currentUser.balance < price) return alert("Low balance!");
+
+    // Mostra feedback visual no botão que foi clicado
     const btn = event.target;
-    if(btn && btn.classList) btn.classList.add('btn-loading');
-    
+    if (btn && btn.tagName === 'BUTTON') {
+        btn.classList.add('btn-loading');
+        btn.innerText = "JOINING...";
+        btn.disabled = true;
+    }
+
+    // Envia para o servidor. O servidor vai validar se você pode entrar ou não.
     socket.emit('joinBattle', { battleId: id, userId: currentUser._id });
 }
 
