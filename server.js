@@ -51,7 +51,8 @@ const rollCondition = () => {
 const caseData = {
     bronze: {
         name: "Recoil Box", 
-        price: 1.00, 
+        price: 1.00,
+        img: "https://img.clash.gg/standard/2baff90986532bdaf70802fd3aeacf4e.png",
         items: [
             { name: "Gut Knife | Doppler Ruby", maxVal: 672.74, minVal: 672.74, color: "#ffb703", chance: 0.005, fixedCondition: "FN", img: "https://cs2-cdn.pricempire.com/panorama/images/econ/default_generated/weapon_knife_gut_am_ruby_marbleized_light_png.png" },
             { name: "AK-47 | Nightwish", maxVal: 108.45, minVal: 102.44, color: "#eb4b4b", chance: 0.018 },
@@ -81,7 +82,8 @@ const caseData = {
     },
     phoenix: {
         name: "Phoenix Vault",
-        price: 3.00, // Preço sugerido para a caixa
+        price: 3.00,
+        img: "https://img.clash.gg/standard/23379c598b6ad75fba36a055843a156b.png#hash=lsWJHQg7aLmXWHB7qIpfqrv2CCiHh3WIVw==",
         items: [
             { name: "Talon Knife | Tiger Tooth", maxVal: 750.37, minVal: 750.37, color: "#ffb703", chance: 0.005, fixedCondition: "FN" },
             { name: "Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.016, fixedCondition: "FN" },
@@ -411,7 +413,7 @@ io.on('connection', (socket) => {
         avatar: user.avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=player1' 
     },
     player2: data.isBot ? { 
-        username: "TOBY BOT 🤖", 
+        username: "BOT", 
         id: "bot", 
         avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=TobyBot" // Avatar fixo para o Bot
     } : null,

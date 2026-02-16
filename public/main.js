@@ -5,7 +5,10 @@ const NODE_WIDTH = 180;
 
 const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
 winSound.volume = 0.25; // Set volume to 50%
-
+const spinSound = new Audio('/assets/spin.mp3');
+const landSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+spinSound.volume = 0.3;
+landSound.volume = 0.4;
 // No topo do main.js
 let itemsData = {}; 
 let cases = {}; 
@@ -86,8 +89,11 @@ function openBattleModal() {
     const container = document.getElementById('modal-available-cases');
     container.innerHTML = Object.keys(itemsData).map(id => `
         <div class="modal-case-item" onclick="addCaseToBattle('${id}')">
-            <b>${itemsData[id].name}</b>
-            <span>$${formatCurrency(itemsData[id].price)}</span>
+            <img src="${itemsData[id].img}" style="width: 40px; height: 30px; object-fit: contain;">
+            <div style="flex: 1; text-align: left; margin-left: 10px;">
+                <b>${itemsData[id].name}</b><br>
+                <span>$${formatCurrency(itemsData[id].price)}</span>
+            </div>
         </div>
     `).join('');
 }
@@ -107,7 +113,12 @@ function updateModalSelected() {
     let total = 0;
     container.innerHTML = selectedCasesForBattle.map((id, index) => {
         total += itemsData[id].price;
-        return `<div class="selected-item">${itemsData[id].name} <span onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">×</span></div>`;
+        return `
+            <div class="selected-item">
+                <img src="${itemsData[id].img}" style="width: 20px; margin-right: 5px;">
+                ${itemsData[id].name} 
+                <span onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">×</span>
+            </div>`;
     }).join('');
     document.getElementById('total-battle-price').innerText = `$${formatCurrency(total)}`;
 }
@@ -128,18 +139,23 @@ function confirmCreateBattle() {
     });
     closeBattleModal();
 }
-
+function renderHomeCases() {
+    const grid = document.getElementById('home-case-grid');
+    grid.innerHTML = Object.keys(itemsData).map(id => `
+        <div class="case-card" onclick="selectCase('${id}')">
+            <img src="${itemsData[id].img}" class="case-card-img">
+            <h3>${itemsData[id].name}</h3>
+            <p>$${formatCurrency(itemsData[id].price)}</p>
+        </div>
+    `).join('');
+}
 async function init() {
-    // 1. Ir buscar os dados das caixas ao Servidor
     const caseRes = await fetch('/api/cases');
     itemsData = await caseRes.json();
     
-    // 2. Preencher o objeto cases automaticamente para o menu
-    for (let id in itemsData) {
-        cases[id] = { name: itemsData[id].name, price: itemsData[id].price };
-    }
+    // Desenha as caixas na página inicial
+    renderHomeCases();
 
-    // 3. Verificar login do utilizador
     const res = await fetch('/api/me');
     const data = await res.json();
     if (data.loggedIn) {
@@ -186,7 +202,58 @@ function showBalanceAnimation(amount) {
     container.appendChild(el);
     setTimeout(() => el.remove(), 1500);
 }
+function showBattleGain(playerNum, amount) {
+    const balanceSpan = document.getElementById(`p${playerNum}-total-val`);
+    const rect = balanceSpan.getBoundingClientRect();
 
+    const el = document.createElement('div');
+    el.className = 'battle-floating-gain';
+    el.innerText = `+ $${formatCurrency(amount)}`;
+    
+    // Posiciona dinamicamente ao lado do elemento
+    document.body.appendChild(el);
+    el.style.left = `${rect.right + 10}px`;
+    el.style.top = `${rect.top - 5}px`;
+
+    landSound.currentTime = 0;
+    landSound.play();
+
+    setTimeout(() => el.remove(), 1500);
+}
+function parseSkinName(fullName) {
+    const parts = fullName.split(' | ');
+    return {
+        weapon: parts[0] || "",
+        skin: parts[1] || fullName
+    };
+}
+
+function addWonItemToArena(playerNum, item) {
+    const inv = document.getElementById(`p${playerNum}-inventory`);
+    const nameData = parseSkinName(item.name);
+    
+    const itemCard = document.createElement('div');
+    // Adicionamos a classe 'anim-entry' para disparar o CSS
+    itemCard.className = 'won-item-card anim-entry';
+    itemCard.style.borderLeft = `4px solid ${item.color}`;
+    
+    // Efeito de brilho baseado na cor da skin
+    itemCard.style.boxShadow = `inset 50px 0 30px -30px ${item.color}22`; 
+
+    itemCard.innerHTML = `
+        <div class="card-img-wrap">
+            <img src="${item.img || ''}">
+        </div>
+        <div class="card-details">
+            <div class="weapon-type">${nameData.weapon}</div>
+            <div class="skin-name">${nameData.skin}</div>
+            <div class="skin-meta">${item.conditionShort}</div>
+        </div>
+        <div class="card-value">$${formatCurrency(item.value)}</div>
+    `;
+    
+    inv.prepend(itemCard); 
+}
 
 function updateUI() {
     if(!currentUser) return;
@@ -217,7 +284,12 @@ function selectCase(id) {
     document.getElementById('opening-tab').style.display = 'block';
     
     const caseInfo = itemsData[id]; 
-    document.getElementById('case-title').innerText = caseInfo.name.toUpperCase();
+    document.getElementById('case-title').innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+            <img src="${caseInfo.img}" style="width: 80px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5))">
+            ${caseInfo.name.toUpperCase()}
+        </div>
+    `;
     document.getElementById('open-btn').innerText = `OPEN FOR $${caseInfo.price}`;
     
     const preview = document.getElementById('preview-items');
@@ -288,6 +360,9 @@ async function openCase() {
         });
         
         const data = await res.json();
+
+        spinSound.currentTime = 0; 
+        spinSound.play().catch(e => console.log("Erro ao tocar som:", e));
 
         // Se o servidor devolver erro (ex: 404, 500)
         if (!res.ok) {
@@ -400,19 +475,36 @@ socket.on('updateBattles', (battles) => {
 });
 socket.on('startBattleSpin', async (data) => {
     switchTab('arena-tab');
-      document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
-    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
-    // Reset visual
-    document.getElementById('p1-name').innerText = data.battle.player1.username;
-    document.getElementById('p2-name').innerText = data.battle.player2.username;
     
+     const timeline = document.getElementById('battle-case-timeline');
+    timeline.innerHTML = data.battle.caseIds.map((cid, idx) => {
+        const caseImg = itemsData[cid] ? itemsData[cid].img : 'https://via.placeholder.com/40';
+        return `
+            <div class="timeline-case" id="step-${idx}">
+                <img src="${caseImg}" title="${itemsData[cid].name}"> 
+            </div>
+        `;
+    }).join('');
+    // Configuração inicial
+    document.getElementById('p1-inventory').innerHTML = '';
+    document.getElementById('p2-inventory').innerHTML = '';
+    document.getElementById('total-rounds').innerText = data.p1Rolls.length;
+    document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
+    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
+    document.getElementById('p1-username').innerText = data.battle.player1.username;
+    document.getElementById('p2-username').innerText = data.battle.player2.username;
+
     let p1Acc = 0;
     let p2Acc = 0;
 
-    // Loop das Caixas
     for (let i = 0; i < data.p1Rolls.length; i++) {
-        document.getElementById('battle-msg').innerText = `ROUND ${i + 1} / ${data.p1Rolls.length}`;
-        
+        document.querySelectorAll('.timeline-case').forEach(el => el.classList.remove('active'));
+        const currentStep = document.getElementById(`step-${i}`);
+        currentStep.classList.add('active');
+        currentStep.classList.add('passed');
+        document.getElementById('current-round').innerText = i + 1;
+        spinSound.currentTime = 0; 
+        spinSound.play().catch(e => console.log("Erro ao tocar som:", e));
         renderTrack('p1-spinner', data.p1Rolls[i].track);
         renderTrack('p2-spinner', data.p2Rolls[i].track);
 
@@ -428,30 +520,28 @@ socket.on('startBattleSpin', async (data) => {
             t.style.transform = `translateX(-${finalX}px)`;
         });
 
-        await new Promise(r => setTimeout(r, 4500)); // Espera a roleta parar
+        await new Promise(r => setTimeout(r, 4200));
+
+        // Animações de Dinheiro e Inventário
+        showBattleGain(1, data.p1Rolls[i].value);
+        showBattleGain(2, data.p2Rolls[i].value);
+        addWonItemToArena(1, data.p1Rolls[i]);
+        addWonItemToArena(2, data.p2Rolls[i]);
 
         p1Acc += data.p1Rolls[i].value;
         p2Acc += data.p2Rolls[i].value;
 
-        // Atualiza os parciais embaixo dos nomes
-        document.getElementById('p1-name').innerHTML = `${data.battle.player1.username}<br><span style="color:var(--accent);font-size:18px;">$${formatCurrency(p1Acc)}</span>`;
-        document.getElementById('p2-name').innerHTML = `${data.battle.player2.username}<br><span style="color:var(--accent);font-size:18px;">$${formatCurrency(p2Acc)}</span>`;
+        document.getElementById('p1-total-val').innerText = formatCurrency(p1Acc);
+        document.getElementById('p2-total-val').innerText = formatCurrency(p2Acc);
+        
+        await new Promise(r => setTimeout(r, 800));
     }
 
-    // --- FINAL DA BATALHA ---
     const winnerName = data.winnerId === data.battle.player1.id ? data.battle.player1.username : data.battle.player2.username;
     document.getElementById('battle-msg').innerText = `${winnerName.toUpperCase()} WINS!`;
 
-    // SÓ AGORA ATUALIZAMOS O SALDO REAL
-    setTimeout(() => {
-        const isP1 = currentUser._id === data.battle.player1.id;
-        const myFinalBalance = isP1 ? data.p1FinalBalance : data.p2FinalBalance;
-        
-        if (myFinalBalance !== undefined) {
-            // Isso vai disparar a animação verde de dinheiro entrando
-            updateBalanceUI(myFinalBalance); 
-        }
-    }, 800);
+    const myFinalBalance = (currentUser._id === data.battle.player1.id) ? data.p1FinalBalance : data.p2FinalBalance;
+    if (myFinalBalance !== undefined) updateBalanceUI(myFinalBalance);
 });
 // Chat
 document.getElementById('chat-input').addEventListener('keypress', (e) => {

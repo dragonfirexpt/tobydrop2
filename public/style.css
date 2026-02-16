@@ -273,3 +273,183 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .bot-toggle label { cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 13px; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* Layout da Arena */
+.arena-wrapper { max-width: 1200px; margin: 0 auto; width: 100%; }
+.arena-header { text-align: center; margin-bottom: 30px; }
+.round-counter { color: #555; font-weight: 800; letter-spacing: 2px; font-size: 14px; }
+
+.arena-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+
+/* Header de cada Jogador na Arena */
+.lane-user-header { 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: var(--card); padding: 15px 20px; border-radius: 12px; margin-bottom: 15px;
+    position: relative; border: 1px solid var(--border);
+}
+.user-main { display: flex; align-items: center; gap: 15px; }
+.arena-avatar { width: 50px; height: 50px; border-radius: 8px; border: 2px solid var(--accent); }
+.arena-balance { color: var(--accent); font-weight: 800; font-size: 20px; }
+
+/* Cards do Inventário de Batalha */
+.arena-inventory { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; height: 500px; overflow-y: auto; padding-right: 5px; }
+
+.won-item-card {
+    display: grid; grid-template-columns: 60px 1fr 100px; align-items: center;
+    background: #0a0b0e; padding: 10px; border-radius: 8px; gap: 15px;
+    transition: transform 0.2s; border: 1px solid #1a1d26;
+}
+.won-item-card:hover { background: #11141b; }
+
+.card-img-wrap img { width: 100%; height: 40px; object-fit: contain; }
+
+.weapon-type { font-size: 10px; color: #555; font-weight: 800; text-transform: uppercase; }
+.skin-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skin-meta { font-size: 10px; color: var(--accent); opacity: 0.8; }
+
+.card-value { text-align: right; font-weight: 800; color: var(--accent); font-size: 14px; }
+
+/* Indicadores de Ganho (Animação) */
+.indicator-container { position: absolute; top: -20px; right: 20px; }
+
+/* Custom Scrollbar para o inventário */
+.arena-inventory::-webkit-scrollbar { width: 4px; }
+.arena-inventory::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+.case-timeline {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(0,0,0,0.4);
+    padding: 15px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+}
+
+.timeline-case {
+    width: 50px;
+    height: 40px;
+    opacity: 0.2;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-case.passed {
+    opacity: 0.5;
+}
+
+.timeline-case.active {
+    opacity: 1;
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 10px var(--accent));
+}
+
+.timeline-case img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Animação Flutuante ao lado do dinheiro */
+.battle-floating-gain {
+    position: fixed;
+    color: #00ff88;
+    font-weight: 800;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: slideOutRight 1.5s ease-out forwards;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+@keyframes slideOutRight {
+    0% { transform: translate(0, 0); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(30px, -40px); opacity: 0; }
+}
+
+/* Ajuste no saldo da arena */
+.arena-balance {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.won-item-card.anim-entry {
+    animation: itemReveal 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    transform-origin: top;
+}
+
+@keyframes itemReveal {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.8);
+        filter: brightness(3);
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+        filter: brightness(1);
+    }
+}
+
+/* Brilho extra para facas ou itens vermelhos */
+.won-item-card[style*="#ffb703"] { /* Amarelo/Gold */
+    background: linear-gradient(90deg, rgba(255, 183, 3, 0.1) 0%, #0a0b0e 100%);
+    border: 1px solid rgba(255, 183, 3, 0.3);
+}
+
+/* Ajuste na Timeline para as imagens das caixas */
+.timeline-case img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+
+.timeline-case.active img {
+    filter: drop-shadow(0 0 15px var(--accent));
+    transform: scale(1.1);
+}
+
+/* Timeline scrollable se houver muitas caixas */
+.case-timeline {
+    overflow-x: auto;
+    justify-content: flex-start; /* Alinha à esquerda se transbordar */
+    padding: 10px 30px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.case-timeline::-webkit-scrollbar {
+    height: 3px;
+}
+
+.case-card-img {
+    width: 150px;
+    height: 110px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.case-card:hover .case-card-img {
+    transform: scale(1.1) translateY(-10px);
+}
+
+/* Ajuste no Modal para aceitar imagens */
+.modal-case-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+/* Spinner adjustment to look cleaner with case view */
+.opening-controls {
+    margin-bottom: 30px;
+}

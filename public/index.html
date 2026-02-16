@@ -49,10 +49,9 @@
             <main class="main-content">
                 <section id="home-tab" class="tab-view">
                     <div class="view-header">SELECT A CASE</div>
-                    <div class="case-grid">
-                       <div class="case-card tier-1" onclick="selectCase('bronze')"><h3>Recoil Box</h3><p>$1</p></div>
-                       <div class="case-card tier-2" onclick="selectCase('phoenix')"><h3>Phoenix Vault</h3><p>$3</p></div>
-                    </div>
+                    <div id="home-case-grid" class="case-grid">
+    <!-- As caixas serão inseridas aqui pelo JavaScript -->
+</div>
                 </section>
 
                 <section id="opening-tab" class="tab-view" style="display:none">
@@ -92,7 +91,7 @@
                     <h4>Battle Cases (<span id="total-battle-price">$0.00</span>)</h4>
                     <div id="modal-selected-cases" class="selected-list"></div>
                     <div class="bot-toggle">
-                        <label><input type="checkbox" id="bot-checkbox"> Play against BOT 🤖</label>
+                        <label><input type="checkbox" id="bot-checkbox"> Play against BOT</label>
                     </div>
                 </div>
             </div>
@@ -105,20 +104,58 @@
 </section>
 
                 <section id="arena-tab" class="tab-view" style="display:none">
-                    <div class="arena">
-                        <h1 id="battle-msg">FIGHT!</h1>
-                        <div class="battle-lanes">
-                            <div class="lane">
-                                <div class="lane-header"><img id="p1-ava" src=""> <b id="p1-name">P1</b></div>
-                                <div class="spinner-container sm"><div class="pointer"></div><div id="p1-spinner" class="spinner-track"></div></div>
-                            </div>
-                            <div class="lane">
-                                <div class="lane-header"><img id="p2-ava" src=""> <b id="p2-name">P2</b></div>
-                                <div class="spinner-container sm"><div class="pointer"></div><div id="p2-spinner" class="spinner-track"></div></div>
-                            </div>
+    <div class="arena-wrapper">
+        <div id="battle-case-timeline" class="case-timeline"></div>
+        <div class="arena-header">
+            <div class="round-counter">ROUND <span id="current-round">1</span> / <span id="total-rounds">1</span></div>
+            <h1 id="battle-msg">FIGHT!</h1>
+        </div>
+
+        <div class="arena-grid">
+            <!-- LADO ESQUERDO: CRIADOR -->
+            <div class="lane">
+                <div class="lane-user-header">
+                    <div class="user-main">
+                        <img id="p1-ava" src="" class="arena-avatar">
+                        <div class="user-text">
+                            <b id="p1-username">PLAYER 1</b>
+                            <div class="arena-balance">$ <span id="p1-total-val">0.00</span></div>
                         </div>
                     </div>
-                </section>
+                    <div id="p1-battle-indicators" class="indicator-container"></div>
+                </div>
+                
+                <div class="spinner-container sm">
+                    <div class="pointer"></div>
+                    <div id="p1-spinner" class="spinner-track"></div>
+                </div>
+
+                <div id="p1-inventory" class="arena-inventory"></div>
+            </div>
+
+            <!-- LADO DIREITO: OPONENTE -->
+            <div class="lane">
+                <div class="lane-user-header">
+                    <div class="user-main">
+                        <img id="p2-ava" src="" class="arena-avatar">
+                        <div class="user-text">
+                            <b id="p2-username">PLAYER 2</b>
+                            <div class="arena-balance">$ <span id="p2-total-val">0.00</span></div>
+                        </div>
+                    </div>
+                    <div id="p2-battle-indicators" class="indicator-container"></div>
+                </div>
+
+                <div class="spinner-container sm">
+                    <div class="pointer"></div>
+                    <div id="p2-spinner" class="spinner-track"></div>
+                </div>
+
+                <div id="p2-inventory" class="arena-inventory"></div>
+            </div>
+        </div>
+    </div>
+</section>
 
                 <section id="crash-tab" class="tab-view" style="display:none">
     <div class="crash-container">
