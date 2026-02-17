@@ -75,7 +75,10 @@
     <div class="upgrade-container">
         <!-- Left: Inventory -->
         <div class="upgrade-side">
-            <div class="side-header">YOUR INVENTORY</div>
+            <div class="side-header">
+    YOUR INVENTORY 
+    <span id="upgrade-count" style="color: var(--accent); font-size: 12px;">0/5</span>
+</div>
             <div id="upgrade-inv-grid" class="upgrade-grid"></div>
             <div class="pagination" id="inv-pagination"></div>
         </div>
@@ -164,20 +167,31 @@
 </div>
                 </section>
 
-                <section id="opening-tab" class="tab-view" style="display:none">
-                    <div class="opening-controls">
-                        <button onclick="showHome()" class="btn-back">← BACK</button>
-                        <h2 id="case-title">CASE</h2>
-                    </div>
-                    <div class="spinner-wrapper">
-                        <div class="spinner-container" id="main-view"><div class="pointer"></div><div id="spinner" class="spinner-track"></div></div>
-                        <button id="open-btn" class="btn-open" onclick="openCase()">OPEN CASE</button>
-                    </div>
-                    <div class="preview-section">
-                        <h3>CASE CONTENTS</h3>
-                        <div class="preview-list" id="preview-items"></div>
-                    </div>
-                </section>
+<section id="opening-tab" class="tab-view" style="display:none">
+    <div class="opening-controls">
+        <button onclick="showHome()" class="btn-back">← BACK</button>
+        <h2 id="case-title">CASE</h2>
+    </div>
+    
+    <div class="spinner-wrapper">
+        <!-- NOVA ESTRUTURA: spinner-frame é a borda externa -->
+        <div class="spinner-frame">
+            <div class="pointer-top"></div>
+            <div class="pointer-bottom"></div>
+            
+            <div class="spinner-container" id="main-view">
+                <div id="spinner" class="spinner-track"></div>
+            </div>
+        </div>
+        
+        <button id="open-btn" class="btn-open" onclick="openCase()">OPEN CASE</button>
+    </div>
+
+    <div class="preview-section">
+        <h3>CASE CONTENTS</h3>
+        <div class="preview-list" id="preview-items"></div>
+    </div>
+</section>
 
                 <section id="battles-tab" class="tab-view" style="display:none">
     <div class="battle-lobby">
@@ -230,48 +244,56 @@
         </div>
 
         <div class="arena-grid">
-            <!-- LADO ESQUERDO: CRIADOR -->
-            <div class="lane">
-                <div class="lane-user-header">
-                    <div class="user-main">
-                        <img id="p1-ava" src="" class="arena-avatar">
-                        <div class="user-text">
-                            <b id="p1-username">PLAYER 1</b>
-                            <div class="arena-balance">$ <span id="p1-total-val">0.00</span></div>
-                        </div>
-                    </div>
-                    <div id="p1-battle-indicators" class="indicator-container"></div>
+    <!-- LADO ESQUERDO: CRIADOR -->
+    <div class="lane">
+        <div class="lane-user-header">
+            <div class="user-main">
+                <img id="p1-ava" src="" class="arena-avatar">
+                <div class="user-text">
+                    <b id="p1-username">PLAYER 1</b>
+                    <div class="arena-balance">$ <span id="p1-total-val">0.00</span></div>
                 </div>
-                
-                <div class="spinner-container sm">
-                    <div class="pointer"></div>
-                    <div id="p1-spinner" class="spinner-track"></div>
-                </div>
-
-                <div id="p1-inventory" class="arena-inventory"></div>
             </div>
-
-            <!-- LADO DIREITO: OPONENTE -->
-            <div class="lane">
-                <div class="lane-user-header">
-                    <div class="user-main">
-                        <img id="p2-ava" src="" class="arena-avatar">
-                        <div class="user-text">
-                            <b id="p2-username">PLAYER 2</b>
-                            <div class="arena-balance">$ <span id="p2-total-val">0.00</span></div>
-                        </div>
-                    </div>
-                    <div id="p2-battle-indicators" class="indicator-container"></div>
-                </div>
-
-                <div class="spinner-container sm">
-                    <div class="pointer"></div>
-                    <div id="p2-spinner" class="spinner-track"></div>
-                </div>
-
-                <div id="p2-inventory" class="arena-inventory"></div>
+            <div id="p1-battle-indicators" class="indicator-container"></div>
+        </div>
+        
+        <!-- MOLDURA PREMIUM ADICIONADA AQUI -->
+        <div class="spinner-frame sm">
+            <div class="pointer-top"></div>
+            <div class="pointer-bottom"></div>
+            <div class="spinner-container sm" id="main-view-p1">
+                <div id="p1-spinner" class="spinner-track"></div>
             </div>
         </div>
+
+        <div id="p1-inventory" class="arena-inventory"></div>
+    </div>
+
+    <!-- LADO DIREITO: OPONENTE -->
+    <div class="lane">
+        <div class="lane-user-header">
+            <div class="user-main">
+                <img id="p2-ava" src="" class="arena-avatar">
+                <div class="user-text">
+                    <b id="p2-username">PLAYER 2</b>
+                    <div class="arena-balance">$ <span id="p2-total-val">0.00</span></div>
+                </div>
+            </div>
+            <div id="p2-battle-indicators" class="indicator-container"></div>
+        </div>
+
+        <!-- MOLDURA PREMIUM ADICIONADA AQUI -->
+        <div class="spinner-frame sm">
+            <div class="pointer-top"></div>
+            <div class="pointer-bottom"></div>
+            <div class="spinner-container sm" id="main-view-p2">
+                <div id="p2-spinner" class="spinner-track"></div>
+            </div>
+        </div>
+
+        <div id="p2-inventory" class="arena-inventory"></div>
+    </div>
+</div>
     </div>
 </section>
 

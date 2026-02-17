@@ -129,7 +129,7 @@ const caseData = {
             { name: "M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.014, fixedCondition: "FN"},
             { name: "Karambit | Tiger Tooth", maxVal: 1478.52, minVal: 1478.52, color: "#ffb703", chance: 0.028, fixedCondition: "FN"},
             { name: "Bayonet | Gamma Doppler Phase 2", maxVal: 1010.18, minVal: 1010.18, color: "#ffb703", chance: 0.028, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UyX2xpZ2h0LmIzNGRjMjdkMDUzMGRkNDNlZTJmYzFiZjE3Y2MwYzVhOWI0MWI0MjMucG5n/auto/auto/85/notrim/bd638ec178949f856962fb2cc0891044.webp"},
-            { name: "Sport Gloves | Amphibious", maxVal: 451.48, minVal: 451.48, color: "#ffb703", chance: 0.052, fixedCondition: "BW"},
+            { name: "Sport Gloves | Amphibious", maxVal: 451.48, minVal: 451.48, color: "#ffb703", chance: 0.052, fixedCondition: "BS"},
             { name: "Navaja Knife | Doppler Phase 4", maxVal: 182.23, minVal: 182.23, color: "#ffb703", chance: 0.114, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9neXBzeV9qYWNra25pZmVfYW1fZG9wcGxlcl9waGFzZTRfbGlnaHQuMDk0Y2FjZmRhMTJiOGU2Yjk1MDlmNjcxYWZjMzExZmFiM2ExZTczYS5wbmc-/auto/auto/85/notrim/8b2c3580cdd2f6e91dc75bd90d6d51e4.webp"},
             { name: "Survival Knife | Case Hardened", maxVal: 148.75, minVal: 148.75, color: "#ffb703", chance: 0.131, fixedCondition: "FT" },
             { name: "Gut Knife | Bright Water", maxVal: 124.40, minVal: 124.40, color: "#ffb703", chance: 0.222, fixedCondition: "FN" },
@@ -468,20 +468,28 @@ app.get('/api/all-skins', (req, res) => {
 });
 app.post('/api/upgrade', async (req, res) => {
     try {
-        // ADD targetCondition HERE 
-        const { inputItemId, targetSkinName, targetPrice, targetCondition } = req.body;
+        const { inputItemIds, targetSkinName, targetPrice, targetCondition } = req.body;
         const user = await User.findById(req.session.userId);
-        if (!user) return res.status(401).json({ error: "Not logged in" });
+        if (!user) return res.status(401).json({ error: "Não autorizado" });
 
-        const itemIdx = user.inventory.findIndex(i => i.id === inputItemId);
-        if (itemIdx === -1) return res.status(400).json({ error: "Item not found" });
+        if (!Array.isArray(inputItemIds) || inputItemIds.length > 5 || inputItemIds.length === 0) {
+            return res.status(400).json({ error: "Selecione entre 1 e 5 itens" });
+        }
 
-        const inputItem = user.inventory[itemIdx];
-        const chance = (inputItem.value / targetPrice) * 0.95;
+        // Filtrar itens do inventário que correspondem aos IDs enviados
+        const itemsToSacrifice = user.inventory.filter(i => inputItemIds.includes(i.id));
+        
+        if (itemsToSacrifice.length !== inputItemIds.length) {
+            return res.status(400).json({ error: "Um ou mais itens não encontrados" });
+        }
+
+        const totalInputValue = itemsToSacrifice.reduce((sum, item) => sum + item.value, 0);
+        const chance = (totalInputValue / targetPrice) * 0.95;
         const roll = Math.random();
         const win = roll < chance;
 
-        user.inventory.splice(itemIdx, 1);
+        // Remover todos os itens sacrificados
+        user.inventory = user.inventory.filter(i => !inputItemIds.includes(i.id));
 
         let wonItem = null;
         if (win) {
@@ -496,17 +504,23 @@ app.post('/api/upgrade', async (req, res) => {
                 value: targetPrice,
                 img: template.img,
                 color: template.color,
-                conditionShort: targetCondition || "FN", // USE THE PASSED CONDITION
+                conditionShort: targetCondition || "FN",
                 id: Math.random().toString(36).substr(2, 9)
             };
             user.inventory.push(wonItem);
         }
 
         await user.save();
-        res.json({ success: true, win, roll: roll * 100, chance: (chance * 100).toFixed(2), balance: user.balance });
+        res.json({ 
+            success: true, 
+            win, 
+            roll: roll * 100, 
+            chance: (chance * 100).toFixed(2), 
+            balance: user.balance 
+        });
 
     } catch (e) {
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Erro no servidor" });
     }
 });
 app.post('/api/sell-all-items', async (req, res) => {

@@ -53,10 +53,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .lane-header img { width: 50px !important; height: 50px !important; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
 
 /* Spinner */
-.spinner-container { width: 100%; height: 160px; background: #000; border: 2px solid var(--border); border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 20px; }
-.spinner-track { display: flex; position: absolute; left: 0; height: 100%; }
-.item-node { min-width: 160px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #111; }
-.item-node b { font-size: 16px; text-transform: uppercase; }
 .pointer { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: var(--accent); z-index: 10; transform: translateX(-50%); box-shadow: 0 0 15px var(--accent); }
 
 /* Auth */
@@ -182,40 +178,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 .btn-danger { background: #ff4444 !important; color: white !important; }
 
-/* Update Item Node for Images */
-.item-node {
-    min-width: 180px !important; /* Força a largura exata */
-    width: 180px !important;
-    max-width: 180px !important;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid #111;
-    background: linear-gradient(180deg, #0e1015 0%, rgba(255,255,255,0.02) 100%);
-    padding: 10px;
-    box-sizing: border-box;
-    flex-shrink: 0; /* Impede que o flexbox esmague os itens */
-    position: relative; /* Needed to position the condition badge */
-}
 
-.item-node b {
-    font-size: 11px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-    padding: 0 10px;
-    z-index: 1;
-}
-
-.item-node span {
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 800;
-}
 
 /* Update Preview items */
 .preview-item img {
@@ -227,19 +190,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     transform: scale(1.1);
 }
 
-.item-cond {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 800;
-    color: #aaa;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    text-transform: uppercase;
-}
+
 
 /* Modal de Batalhas */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -1075,4 +1026,952 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 @keyframes itemPulse {
     0%, 100% { transform: scale(1); filter: drop-shadow(0 10px 20px rgba(0, 242, 255, 0.2)); }
     50% { transform: scale(1.05); filter: drop-shadow(0 15px 30px rgba(0, 242, 255, 0.4)); }
+}
+
+
+
+
+
+/* Container da Roleta */
+.spinner-container {
+    display: flex;
+    align-items: center; /* Alinha os itens verticalmente no centro */
+    height: 180px; /* Aumentado para dar espaço ao zoom */
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    position: relative;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+
+/* Track onde os itens correm */
+.spinner-track {
+    display: flex !important;
+    gap: 0 !important; 
+    align-items: center !important;
+    padding: 0 !important;
+}
+
+
+
+/* As Setas (Substituindo a linha) */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    z-index: 100;
+    filter: drop-shadow(0 0 5px var(--accent));
+}
+
+.pointer-top {
+    top: 0;
+    border-top: 15px solid var(--accent); /* Seta aponta para baixo */
+}
+
+.pointer-bottom {
+    bottom: 0;
+    border-bottom: 15px solid var(--accent); /* Seta aponta para cima */
+}
+
+/* --- ROLETA CLEAN & MINIMALISTA --- */
+.spinner-wrapper {
+    margin: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spinner-container {
+    width: 100%;
+    height: 180px;
+    background: #000;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    /* Efeito de fade nas laterais para focar no centro */
+    mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent);
+}
+
+
+
+
+/* SETAS DO PONTEIRO */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    z-index: 100;
+}
+.pointer-top { top: 0; border-top: 20px solid var(--accent); }
+.pointer-bottom { bottom: 0; border-bottom: 20px solid var(--accent); }
+
+/* --- NOVA ROLETA PREMIUM --- */
+.spinner-wrapper {
+    margin: 50px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* A Moldura (Borda) Externa */
+.spinner-frame {
+    position: relative;
+    padding: 10px; /* Espaço da borda */
+    background: linear-gradient(180deg, #1e222d 0%, #0a0b0e 100%);
+    border: 2px solid #2d3241;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 15px rgba(255,255,255,0.02);
+    width: 100%;
+    max-width: 900px;
+}
+
+/* O Fundo do Spinner (Agora não é preto puro) */
+.spinner-container {
+    width: 100%;
+    height: 190px;
+    background: #0d0f14; /* Cinza muito escuro azulado */
+    background-image: 
+        radial-gradient(circle at center, #161922 0%, #0d0f14 100%),
+        url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); /* Textura sutil */
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+/* Pointers ajustados para ficarem NA BORDA */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    z-index: 100;
+}
+
+.pointer-top { 
+    top: -5px; /* Sai um pouco para fora da borda */
+    border-top: 25px solid var(--accent); 
+    filter: drop-shadow(0 0 10px var(--accent));
+}
+
+.pointer-bottom { 
+    bottom: -5px; 
+    border-bottom: 25px solid var(--accent); 
+    filter: drop-shadow(0 0 10px var(--accent));
+}
+
+
+
+/* --- IMAGENS DE RARIDADE ATRÁS DOS ITENS --- */
+/* Substitua os links abaixo pelas imagens que você tem */
+
+.rarity-gold { background-image: url('LINK_DA_SUA_IMAGEM_GOLD'); }
+.rarity-red { background-image: url('LINK_DA_SUA_IMAGEM_VERMELHA'); }
+.rarity-pink { background-image: url('https://clash.gg/_next/image?url=%2F_next%2Fstatic…Fmedia%2Fgraphic_legendary.47fcd7a2.png&w=96&q=75'); }
+.rarity-purple { background-image: url('LINK_DA_SUA_IMAGEM_ROXA'); }
+.rarity-blue { background-image: url('LINK_DA_SUA_IMAGEM_AZUL'); }
+
+
+
+/* --- ROLETA PREMIUM AJUSTADA --- */
+.spinner-wrapper {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Moldura mais larga e com borda fina */
+.spinner-frame {
+    position: relative;
+    padding: 6px; /* Borda externa mais fina */
+    background: #1a1d23;
+    border: 1px solid #323846; /* Linha de borda bem fina */
+    border-radius: 12px;
+    width: 95%; /* Ocupa quase a largura toda */
+    max-width: 1200px; /* Bem mais largo para os lados */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+/* Fundo do spinner sem filtros que escondem as skins */
+.spinner-container {
+    width: 100%;
+    height: 200px;
+    background: #0b0d11; 
+    background-image: radial-gradient(circle at center, #161922 0%, #0b0d11 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+
+}
+
+/* Setas menores e mais discretas */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 10px solid transparent;  /* Menor: era 15px */
+    border-right: 10px solid transparent; /* Menor: era 15px */
+    z-index: 100;
+}
+.pointer-top { 
+    top: -2px; 
+    border-top: 15px solid var(--accent); /* Menor: era 25px */
+}
+.pointer-bottom { 
+    bottom: -2px; 
+    border-bottom: 15px solid var(--accent); 
+}
+
+
+
+/* Classes para as tuas imagens em ./public/assets/ */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* --- SPINNER CLEAN & SIMPLE --- */
+.spinner-wrapper {
+    margin: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Moldura fina e elegante */
+.spinner-frame {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    background: #0e1015;
+    border: 1px solid #1e222d;
+    border-radius: 10px;
+    padding: 0; /* Tiramos o padding para ficar colado */
+    overflow: hidden;
+}
+
+/* Container do spinner - Fundo liso */
+.spinner-container {
+    width: 100%;
+    height: 160px; /* Mais baixo para ser mais elegante */
+    background: #090a0d;
+    position: relative;
+    overflow: hidden;
+    /* Sombreamento suave nas pontas */
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+/* Setas minimalistas */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    z-index: 100;
+}
+.pointer-top { top: 0; border-top: 12px solid var(--accent); }
+.pointer-bottom { bottom: 0; border-bottom: 12px solid var(--accent); }
+
+
+
+/* Caminhos para as tuas imagens em ./public/assets/ */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* --- SPINNER CLEAN V3 --- */
+.spinner-wrapper {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.spinner-frame {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    background: #11131a;
+    border: 1px solid #252935;
+    border-radius: 12px;
+    padding: 0; 
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.spinner-container {
+    width: 100%;
+    height: 190px; /* Aumentado ligeiramente para cima */
+    background: #090a0d;
+    position: relative;
+    overflow: hidden;
+    /* Fade lateral elegante */
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    z-index: 100;
+}
+.pointer-top { top: 0; border-top: 14px solid var(--accent); }
+.pointer-bottom { bottom: 0; border-bottom: 14px solid var(--accent); }
+
+
+/* Imagens em ./public/assets/ */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+/* --- SPINNER FINAL POLIDO --- */
+.spinner-container {
+    width: 100%;
+    height: 180px; /* Altura fixa para controle total */
+    background: #090a0d;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center; /* Centraliza a track verticalmente */
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+
+
+
+/* SETAS AJUSTADAS */
+.pointer-top, .pointer-bottom {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    z-index: 1000;
+}
+.pointer-top { top: 0; border-top: 12px solid var(--accent); }
+.pointer-bottom { bottom: 0; border-bottom: 12px solid var(--accent); }
+
+/* --- REMOÇÃO TOTAL DA BARRA INFERIOR --- */
+.spinner-wrapper {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Moldura colada no container */
+.spinner-frame {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    background: #11131a;
+    border: 1px solid #252935;
+    border-radius: 12px;
+    padding: 0 !important; /* ZERA QUALQUER ESPAÇO INTERNO */
+    overflow: hidden; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* Container do Spinner */
+.spinner-container {
+    width: 100%;
+    height: 160px; /* Reduzi um pouco a altura para ficar mais compacto */
+    background: #090a0d;
+    position: relative;
+    overflow: hidden;
+    display: block; /* Mudado para block para evitar bugs de flex */
+    margin: 0;
+    padding: 0;
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+
+
+
+
+/* Classes de raridade */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* SETAS DENTRO DO CONTAINER */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    z-index: 1000;
+}
+.pointer-top { top: 0; border-top: 10px solid var(--accent); }
+.pointer-bottom { bottom: 0; border-bottom: 10px solid var(--accent); }
+
+
+/* --- SPINNER GRANDE E AMPLO --- */
+.spinner-wrapper {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.spinner-frame {
+    position: relative;
+    width: 95%; /* Ocupa quase a tela toda horizontalmente */
+    max-width: 1200px; /* Bem mais largo para os lados */
+    background: #11131a;
+    border: 1px solid #252935;
+    border-radius: 14px;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.spinner-container {
+    width: 100%;
+    height: 240px; /* Aumentado para cima (Vertical) */
+    background: #090a0d;
+    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    /* Fade lateral mais suave para aproveitar a largura */
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+
+
+
+/* Raridades locais */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* Setas maiores para o novo tamanho */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    z-index: 1000;
+}
+.pointer-top { top: 0; border-top: 18px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+.pointer-bottom { bottom: 0; border-bottom: 18px solid var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+
+
+
+/* Imagens locais em ./public/assets/ */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* --- SPINNER V5 - CENTRALIZAÇÃO TOTAL --- */
+.spinner-container {
+    width: 100%;
+    height: 240px; /* Altura mantida conforme pedido */
+    background: #090a0d;
+    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+}
+
+
+
+
+/* CLASSES DE RARIDADE - Verifique se os nomes dos arquivos no PC estão corretos */
+.rarity-gold { background-image: url('/assets/gold.png'); }
+.rarity-red { background-image: url('/assets/red.png'); }
+.rarity-pink { background-image: url('/assets/pink.png'); }
+.rarity-purple { background-image: url('/assets/purple.png'); }
+.rarity-blue { background-image: url('/assets/blue.png'); }
+
+
+
+/* --- CONTAINER DE TEXTOS DO ITEM --- */
+.node-texts {
+    position: absolute;
+    bottom: 25px; /* Distância do fundo do spinner */
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza tudo horizontalmente */
+    justify-content: center;
+    opacity: 0; /* Escondido por padrão */
+    transform: translateY(15px);
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 10;
+    pointer-events: none;
+}
+
+
+
+/* Estilo da Condição (FN, MW, etc) */
+.node-condition {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Estilo do Nome */
+.node-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+/* Estilo do Preço */
+.node-price {
+    font-size: 12px;
+    font-weight: 800;
+    color: #00ff88; /* Verde para o preço final */
+    margin-top: 2px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+/* --- CONTAINER DE TEXTOS DO ITEM (VENCEDOR) --- */
+
+
+/* Estilo da Condição (FN, MW, etc) */
+.win-condition {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    display: block;
+    text-align: center;
+}
+
+/* Estilo do Nome da Skin */
+.win-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    display: block;
+    text-align: center; /* FORÇA O TEXTO NO CENTRO */
+}
+
+/* Estilo do Preço */
+.win-price {
+    font-size: 12px;
+    font-weight: 800;
+    color: #00ff88; /* Verde */
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    display: block;
+    text-align: center;
+}
+
+/* AJUSTE DA ARMA PARA NÃO TAPAR OS TEXTOS */
+/* ============================================================
+   CORREÇÃO DEFINITIVA DA ROLETA (SPINNER)
+   ============================================================ */
+
+
+
+
+
+/* Estilo da Condição (FN, MW...) */
+.win-condition {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    color: var(--accent) !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px !important;
+    display: block !important;
+}
+
+/* Estilo do Nome da Skin */
+.win-name {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    display: block !important;
+    width: 90% !important; /* Evita que o nome encoste nas bordas */
+    margin: 0 auto !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 10px rgba(0,0,0,1) !important;
+}
+
+/* Estilo do Preço */
+.win-price {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #00ff88 !important; /* Cor verde para dinheiro */
+    margin-top: 3px !important;
+    display: block !important;
+}
+
+/* ============================================================
+   CORREÇÃO DO TAMANHO DOS ITENS NA ROLETA (SPINNER)
+
+
+
+
+
+/* Ajustes finos nos textos para não ocuparem muito espaço */
+.win-condition { font-size: 9px !important; }
+.win-name { font-size: 12px !important; max-width: 160px !important; }
+.win-price { font-size: 11px !important; }
+
+/* ============================================================
+   SOLUÇÃO DEFINITIVA: SKINS COLADAS E GRANDES
+   ============================================================ */
+
+
+
+
+
+
+/* Estilo dos textos internos */
+.win-condition { font-size: 9px !important; font-weight: 900 !important; color: var(--accent) !important; text-transform: uppercase; }
+.win-name { 
+    font-size: 11px !important; 
+    font-weight: 800 !important; 
+    color: #fff !important; 
+    width: 120px !important; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    text-shadow: 0 2px 10px #000 !important;
+}
+.win-price { font-size: 11px !important; font-weight: 800 !important; color: #00ff88 !important; }
+
+/* ============================================================
+   SISTEMA DE SPINNER UNIFICADO (170px)
+   ============================================================ */
+
+/* 1. Trilha onde as skins correm */
+.spinner-track {
+    display: flex !important;
+    gap: 0 !important; 
+    align-items: center !important;
+    padding: 0 !important;
+    will-change: transform;
+}
+
+/* 2. O bloco de cada skin (Node) */
+.item-node {
+    min-width: 170px !important; 
+    max-width: 170px !important;
+    width: 170px !important;
+    height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    opacity: 0.25; /* Mais apagadas quando longe do centro */
+    transition: 
+        transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.4s ease,
+        background-position 0.6s cubic-bezier(0.25, 1, 0.5, 1), /* Transição lenta da subida */
+        background-size 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+        filter 0.3s ease;
+    
+    /* Brilho de raridade inicial */
+    background-repeat: no-repeat !important;
+    background-position: center 45% !important; 
+    background-size: 70px auto !important;
+}
+
+/* 3. A arma (imagem) */
+.item-node img {
+    width: 135px !important;
+    height: 90px !important;
+    object-fit: contain !important;
+    z-index: 5 !important;
+    transform: translateY(-5px) !important;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.6));
+    transition: all 0.4s ease;
+}
+
+/* 4. HIGHLIGHT: Quando passa no meio (Seta) */
+.item-node.active-center {
+    opacity: 1 !important;
+    filter: brightness(1.2);
+    /* Se quiser que ela aumente um pouco ao passar no meio: */
+    transform: scale(1.15); 
+}
+
+/* 5. VENCEDOR: Quando a roleta para no item 50 */
+.item-node.is-winner {
+    opacity: 1 !important;
+    transform: scale(1.12) !important;
+    z-index: 100 !important;
+    background-position: center 30% !important; 
+}
+
+.item-node.is-winner img {
+    transform: translateY(-25px) scale(1.05) !important;
+}
+
+/* 6. Informações do Item (Só aparecem no vencedor) */
+.winner-info-box {
+    position: absolute !important;
+    bottom: 25px !important;
+    left: 0;
+    right: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.5s ease;
+    z-index: 10 !important;
+}
+
+.item-node.is-winner .winner-info-box {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Textos dentro da box */
+.win-condition { font-size: 10px !important; color: var(--accent) !important; font-weight: 900 !important; text-transform: uppercase; }
+.win-name { 
+    font-size: 12px !important; 
+    font-weight: 800 !important; 
+    color: #fff !important; 
+    width: 150px !important; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    text-align: center;
+}
+.win-price { font-size: 12px !important; font-weight: 800; color: #00ff88 !important; }
+
+/* Ajuste do container das Battles para suportar o zoom premium */
+.spinner-container.sm {
+    height: 200px !important; /* Aumentado para o zoom não cortar */
+    background: #090a0d;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 10px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Garante que o track da battle também use gap 0 */
+.spinner-container.sm .spinner-track {
+    display: flex !important;
+    gap: 0 !important;
+    align-items: center;
+}
+
+/* Ajuste das setas para a arena (Battles) */
+.spinner-container.sm .pointer-top { border-top-width: 12px; }
+.spinner-container.sm .pointer-bottom { border-bottom-width: 12px; }
+
+.spinner-container.sm {
+    width: 100%;
+    max-width: 450px !important; /* Janela pequena para caberem os dois spinners */
+    height: 200px !important;    /* Altura mantida para o zoom não cortar */
+    background: #090a0d;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 10px auto;
+    position: relative;
+    overflow: hidden;
+    /* Fade lateral idêntico ao Case Opening */
+}
+
+/* Garante que os itens na arena não tenham espaços vazios */
+.spinner-container.sm .spinner-track {
+    display: flex !important;
+    gap: 0 !important;
+    align-items: center !important;
+}
+
+/* --- MOLDURA PREMIUM (Igual para os dois) --- */
+.spinner-frame {
+    position: relative;
+    padding: 6px; 
+    background: #1a1d23;
+    border: 1px solid #323846;
+    border-radius: 14px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    width: 100%;
+}
+
+/* Moldura específica da Arena (Estreita) */
+.spinner-frame.sm {
+    max-width: 480px; /* Largura reduzida para caber os dois na arena */
+    margin: 10px auto;
+}
+
+/* --- CONTAINER DO SPIN (O Visor) --- */
+.spinner-container {
+    width: 100%;
+    height: 200px;
+    background: #0b0d11; 
+    background-image: radial-gradient(circle at center, #161922 0%, #0b0d11 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+/* Container específico da Arena */
+.spinner-container.sm {
+    height: 180px !important; /* Ligeiramente mais baixo para a arena */
+}
+
+/* --- SETAS (Pointers) --- */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    z-index: 100;
+}
+.pointer-top { top: -2px; border-top: 15px solid var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
+.pointer-bottom { bottom: -2px; border-bottom: 15px solid var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
+
+/* --- AJUSTE DOS ITENS PARA O TAMANHO DA ARENA --- */
+.spinner-container.sm .item-node {
+    height: 180px !important; /* Ajustado à altura do container da arena */
+}
+
+/* --- MOLDURA PREMIUM (Geral) --- */
+.spinner-frame {
+    position: relative;
+    padding: 6px; 
+    background: #1a1d23;
+    border: 1px solid #323846;
+    border-radius: 14px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    width: 100%;
+}
+
+/* --- MOLDURA DA ARENA (Aumentada horizontalmente) --- */
+.spinner-frame.sm {
+    max-width: 580px !important; /* Aumentado de 480px para 580px */
+    margin: 10px auto;
+}
+
+/* --- CONTAINER DO SPIN (Visor) --- */
+.spinner-container {
+    width: 100%;
+    height: 200px;
+    background: #090a0d; 
+    /* Gradiente ajustado para não criar manchas pretas no centro */
+    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+
+    /* Ajuste da Máscara: black 5% e 95% garante que o meio seja 100% visível sem sombras */
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* Container específico da Arena */
+.spinner-container.sm {
+    height: 180px !important; 
+}
+
+/* Garante que o track na arena use a mesma lógica de gap 0 */
+.spinner-container.sm .spinner-track {
+    display: flex !important;
+    gap: 0 !important;
+    align-items: center !important;
+    height: 100%;
+}
+
+/* --- SETAS (Pointers) --- */
+.pointer-top, .pointer-bottom {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    z-index: 100;
+}
+/* Sincronizado com a borda da moldura */
+.pointer-top { top: -2px; border-top: 18px solid var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
+.pointer-bottom { bottom: -2px; border-bottom: 18px solid var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
+
+/* Ajuste das Skins na Arena */
+.spinner-container.sm .item-node {
+    height: 180px !important;
 }

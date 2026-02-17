@@ -1,14 +1,20 @@
 const socket = io();
 let currentUser = null;
 let activeCaseId = 'gold';
-const NODE_WIDTH = 180;
+const NODE_WIDTH = 170;
 
 const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
 winSound.volume = 0.25; // Set volume to 50%
-const spinSound = new Audio('/assets/spin.mp3');
+const spinSound = new Audio('/assets/spinner.mp3');
 const landSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
-spinSound.volume = 0.3;
-landSound.volume = 0.4;
+const upgradeStartSound = new Audio('/assets/upgrade.mp3');
+const upgradeWinSound = new Audio('/assets/upgrade_win.mp3');
+const upgradeLossSound = new Audio('/assets/upgrade_lose.mp3');
+upgradeLossSound.volume = 0.3;
+upgradeWinSound.volume = 0.3;
+upgradeStartSound.volume = 0.3;
+spinSound.volume = 0.5;
+landSound.volume = 0.3;
 // No topo do main.js
 let itemsData = {}; 
 let cases = {}; 
@@ -17,7 +23,7 @@ let currentCrashState = null;
 let selectedCasesForBattle = [];
 let upgraderState = {
     allSkins: [],
-    selectedInput: null,
+    selectedInputs: [], // DEVE ser um array vazio
     selectedTarget: null
 };
 
@@ -27,18 +33,19 @@ let upgraderPageTargets = 0;
 const UP_PAGE_SIZE = 9; // 3x3 Grid
 function renderTargets() {
     const search = document.getElementById('target-search').value.toLowerCase();
-    
-    // Filter by search
     let filtered = upgraderState.allSkins.filter(s => s.name.toLowerCase().includes(search));
     
     const grid = document.getElementById('upgrade-target-grid');
     const start = upgraderPageTargets * UP_PAGE_SIZE;
     const pageItems = filtered.slice(start, start + UP_PAGE_SIZE);
     
+    // PEGA O VALOR TOTAL SOMADO AQUI
+    const totalInputValue = getTotalSelectedValue();
+
     grid.innerHTML = pageItems.map(item => {
-        // Can't upgrade to cheaper items
-        const isTooCheap = upgraderState.selectedInput && item.price <= upgraderState.selectedInput.value;
-        // Check if selected by comparing Name + Condition
+        // COMPARA COM O VALOR TOTAL
+        const isTooCheap = totalInputValue > 0 && item.price <= totalInputValue;
+        
         const isSelected = upgraderState.selectedTarget && 
                            upgraderState.selectedTarget.name === item.name && 
                            upgraderState.selectedTarget.displayCond === item.displayCond;
@@ -61,25 +68,32 @@ function renderTargets() {
 }
 function renderInventory() {
     const grid = document.getElementById('upgrade-inv-grid');
-    const pagin = document.getElementById('inv-pagination');
-    
     const start = upgraderPageInv * UP_PAGE_SIZE;
     const pageItems = upgraderInv.slice(start, start + UP_PAGE_SIZE);
     
-    grid.innerHTML = pageItems.map(item => `
-        <div class="up-card ${upgraderState.selectedInput?.id === item.id ? 'selected' : ''}" onclick="selectUpInput(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
-            <div class="badge">${item.conditionShort}</div>
-            <img src="${item.img}">
-            <b>${item.name}</b>
-            <span>$${formatCurrency(item.value)}</span>
-        </div>
-    `).join('');
+    // Atualiza o contador visual
+    document.getElementById('upgrade-count').innerText = `${upgraderState.selectedInputs.length}/5`;
+
+    grid.innerHTML = pageItems.map(item => {
+        const isSelected = upgraderState.selectedInputs.some(i => i.id === item.id);
+        return `
+            <div class="up-card ${isSelected ? 'selected' : ''}" onclick="selectUpInput(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                <div class="badge">${item.conditionShort}</div>
+                <img src="${item.img}">
+                <b>${item.name}</b>
+                <span>$${formatCurrency(item.value)}</span>
+            </div>
+        `;
+    }).join('');
 
     renderPagination('inv-pagination', upgraderInv.length, upgraderPageInv, (p) => {
         upgraderPageInv = p;
         renderInventory();
     });
 }
+const getTotalSelectedValue = () => {
+    return upgraderState.selectedInputs.reduce((sum, item) => sum + item.value, 0);
+};
 async function initUpgrader() {
     if (upgraderState.allSkins.length === 0) {
         const res = await fetch('/api/all-skins');
@@ -117,19 +131,22 @@ function renderPagination(id, totalItems, current, callback) {
     };
 }
 function jumpToMult(m) {
-    if (!upgraderState.selectedInput) return alert("Select an item from your inventory first!");
+    const totalVal = getTotalSelectedValue();
     
-    const targetVal = upgraderState.selectedInput.value * m;
+    if (totalVal === 0) {
+        return alert("Select at least one item from your inventory first!");
+    }
     
-    // Find index in the fully sorted global list
+    const targetVal = totalVal * m;
+    
+    // Encontra o índice na lista global baseada no valor total somado
     const index = upgraderState.allSkins.findIndex(s => s.price >= targetVal);
     
     if (index !== -1) {
         upgraderPageTargets = Math.floor(index / UP_PAGE_SIZE);
-        // Clear search to ensure we are looking at the main list
         document.getElementById('target-search').value = "";
         
-        // Auto-select the first item that meets the multiplier
+        // Auto-seleciona o primeiro item que atende ao multiplicador
         upgraderState.selectedTarget = upgraderState.allSkins[index];
         
         renderTargets();
@@ -137,29 +154,39 @@ function jumpToMult(m) {
     }
 }
 function selectUpInput(el, item) {
-    // If clicking the same item, unselect it
-    if (upgraderState.selectedInput?.id === item.id) {
-        upgraderState.selectedInput = null;
+    const index = upgraderState.selectedInputs.findIndex(i => i.id === item.id);
+    
+    if (index > -1) {
+        // Se já estiver selecionado, remove
+        upgraderState.selectedInputs.splice(index, 1);
     } else {
-        upgraderState.selectedInput = item;
+        // Se não estiver, adiciona se houver espaço
+        if (upgraderState.selectedInputs.length < 5) {
+            upgraderState.selectedInputs.push(item);
+        } else {
+            // Feedback visual opcional: alert("Max 5 items!")
+            return;
+        }
     }
     
-    // If the currently selected target is now cheaper than the new input, unselect target
-    if (upgraderState.selectedInput && upgraderState.selectedTarget && 
-        upgraderState.selectedTarget.price <= upgraderState.selectedInput.value) {
+    // Resetar alvo se o valor total agora for maior que o alvo
+    const totalInputVal = upgraderState.selectedInputs.reduce((sum, i) => sum + i.value, 0);
+    if (upgraderState.selectedTarget && upgraderState.selectedTarget.price <= totalInputVal) {
         upgraderState.selectedTarget = null;
     }
 
     renderInventory();
-    renderTargets(); // Re-render to update price-disabled states
+    renderTargets();
     calcUpgradeChance();
 }
 
 function selectUpTarget(el, item) {
-    // 1. Prevent selecting if too cheap
-    if (upgraderState.selectedInput && item.price <= upgraderState.selectedInput.value) return;
+    const totalInputValue = getTotalSelectedValue();
 
-    // 2. Toggle selection: If already selected, unselect it
+    // 1. Impede seleção se for mais barato que o total selecionado
+    if (totalInputValue > 0 && item.price <= totalInputValue) return;
+
+    // 2. Toggle selection
     if (upgraderState.selectedTarget && 
         upgraderState.selectedTarget.name === item.name && 
         upgraderState.selectedTarget.displayCond === item.displayCond) {
@@ -178,17 +205,17 @@ function calcUpgradeChance() {
     const display = document.getElementById('chance-display');
     const btn = document.getElementById('btn-do-upgrade');
 
-    if (!upgraderState.selectedInput || !upgraderState.selectedTarget) {
+    if (upgraderState.selectedInputs.length === 0 || !upgraderState.selectedTarget) {
         slice.style.strokeDasharray = `0 283`;
         display.innerText = "0.00%";
         btn.disabled = true;
         return;
     }
     
-    const inputVal = upgraderState.selectedInput.value;
+    const totalInputVal = upgraderState.selectedInputs.reduce((sum, i) => sum + i.value, 0);
     const targetVal = upgraderState.selectedTarget.price;
     
-    let chance = (inputVal / targetVal) * 95;
+    let chance = (totalInputVal / targetVal) * 95;
     if (chance > 95) chance = 95;
 
     const dash = (chance / 100) * 283;
@@ -248,10 +275,12 @@ function closeUpgradeModal() {
     initUpgrader();
 }
 async function startUpgrade() {
-    if (!upgraderState.selectedInput || !upgraderState.selectedTarget) return;
+    if (upgraderState.selectedInputs.length === 0 || !upgraderState.selectedTarget) return;
 
     const btn = document.getElementById('btn-do-upgrade');
     btn.disabled = true;
+
+    // Toca o som de início
 
     const wrapper = document.getElementById('upgrade-needle-wrapper');
     wrapper.style.transition = 'none';
@@ -262,10 +291,9 @@ async function startUpgrade() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                inputItemId: upgraderState.selectedInput.id,
+                inputItemIds: upgraderState.selectedInputs.map(i => i.id), // Array de IDs
                 targetSkinName: upgraderState.selectedTarget.name,
                 targetPrice: upgraderState.selectedTarget.price,
-                // ADD THIS LINE TO FIX THE FN BUG:
                 targetCondition: upgraderState.selectedTarget.displayCond 
             })
         });
@@ -278,38 +306,34 @@ async function startUpgrade() {
         const totalRotation = (randomSpins * 360) + finalDeg;
 
         setTimeout(() => {
-            wrapper.style.transition = 'transform 4.5s cubic-bezier(0.15, 0, 0.15, 1)';
+            wrapper.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)';
             wrapper.style.transform = `rotate(${totalRotation}deg)`;
+                upgradeStartSound.currentTime = 0;
+    upgradeStartSound.play();
         }, 50);
 
-        // AFTER THE SPIN FINISHES
         setTimeout(() => {
             if (data.win) {
-                // Only play the win sound if they actually won
-                if (typeof winSound !== 'undefined') {
-                    winSound.currentTime = 0;
-                    winSound.play();
-                }
+                upgradeWinSound.currentTime = 0;
+                upgradeWinSound.play();
                 showUpgradeResult(true, upgraderState.selectedTarget);
             } else {
-                // REMOVED landSound.play() from here
-                // We just show the result modal silently or you could add a 'fail' sound
+                upgradeLossSound.currentTime = 0;
+                upgradeLossSound.play();
                 showUpgradeResult(false, upgraderState.selectedTarget);
             }
 
-            // Update user balance UI globally
             if (data.balance !== undefined) updateBalanceUI(data.balance);
             
-            // Clear current selections
-            upgraderState.selectedInput = null;
+            // Resetar seleção
+            upgraderState.selectedInputs = [];
             upgraderState.selectedTarget = null;
             btn.disabled = false;
 
-            // Reset needle wrapper for next time
             wrapper.style.transition = 'none';
             wrapper.style.transform = 'rotate(0deg)';
 
-        }, 5000);
+        }, 5500);
 
     } catch (e) {
         console.error(e);
@@ -698,26 +722,29 @@ function renderTrack(trackId, trackData) {
     const track = document.getElementById(trackId);
     if(!track) return;
 
-    track.innerHTML = trackData.map(item => {
+    track.innerHTML = trackData.map((item, index) => {
         const val = item.value || item.maxVal || item.minVal || 0;
-        const formattedVal = formatCurrency(val);
         
-        // Show condition short text if it exists (for the winner/track items)
-        const conditionHtml = item.conditionShort 
-            ? `<div class="item-cond">${item.conditionShort}</div>` 
-            : '';
+        let rarityClass = '';
+        const color = item.color ? item.color.toLowerCase() : '';
+        if (color === '#ffb703') rarityClass = 'rarity-gold';
+        else if (color === '#eb4b4b') rarityClass = 'rarity-red';
+        else if (color === '#d32ce6') rarityClass = 'rarity-pink';
+        else if (color === '#8847ff') rarityClass = 'rarity-purple';
+        else if (color === '#4b69ff') rarityClass = 'rarity-blue';
 
         return `
-            <div class="item-node" style="border-bottom: 4px solid ${item.color}">
-                ${conditionHtml}
-                <img src="${item.img || 'https://via.placeholder.com/110x80?text=Skin'}" style="width: 110px; height: 80px; object-fit: contain; margin-bottom: 5px;">
-                <b title="${item.name}">${item.name}</b>
-                <span style="color: var(--accent); font-weight: 800; font-size: 14px;">$${formattedVal}</span>
+            <div class="item-node ${rarityClass}" data-index="${index}">
+                <img src="${item.img || ''}" alt="">
+                <div class="winner-info-box">
+                    <span class="win-condition">${item.conditionShort || ''}</span>
+                    <b class="win-name">${item.name}</b>
+                    <span class="win-price">$${formatCurrency(val)}</span>
+                </div>
             </div>
         `;
     }).join('');
 }
-
 async function openCase() {
     const btn = document.getElementById('open-btn');
     const caseInfo = itemsData[activeCaseId];
@@ -733,45 +760,58 @@ async function openCase() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ caseId: activeCaseId })
         });
-        
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
 
-        // SOM E ANIMAÇÃO DE DESCIDA DE SALDO (Pagar a caixa)
-        // Aqui usamos o balanceAfterDeduction que agora o servidor envia
         updateBalanceUI(data.balanceAfterDeduction);
-
-        // Inicia o som da roleta
-        spinSound.playbackRate = 0.65; // Som lento para animação longa
-        spinSound.currentTime = 0; 
-        spinSound.play().catch(e => {});
-
         renderTrack('spinner', data.track);
+        
         const spinner = document.getElementById('spinner');
         const containerWidth = document.getElementById('main-view').offsetWidth;
-        const finalX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
-        const targetX = finalX - (Math.floor(Math.random() * (NODE_WIDTH * 0.8)) - (NODE_WIDTH * 0.4));
+
+        // CÁLCULO DO CENTRO EXATO
+        const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+
+        // CÁLCULO DO OFFSET ALEATÓRIO (para cair fora do centro inicialmente)
+        const randomLandingOffset = (Math.random() * (NODE_WIDTH * 0.7)) - (NODE_WIDTH * 0.35);
+        const targetX = centerPrecisionX + randomLandingOffset;
+        spinSound.currentTime = 0;
+        spinSound.play();
 
         spinner.style.transition = 'none'; 
         spinner.style.transform = 'translateX(0)';
         
         setTimeout(() => {
-            spinner.style.transition = 'transform 9s cubic-bezier(0.05, 0, 0, 1)';
+            // Giro principal (9 segundos)
+            spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
             spinner.style.transform = `translateX(-${targetX}px)`;
+            trackCenterItem('spinner'); 
         }, 50);
 
-        // FINAL DA ROLETA
+        // --- MOMENTO DO SNAP E REVELAÇÃO SIMULTÂNEA ---
         setTimeout(() => {
+            // 1. Iniciamos o ajuste para o centro exato (Snap)
+            spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+            spinner.style.transform = `translateX(-${centerPrecisionX}px)`;
+
+            // 2. No MESMO instante, adicionamos a classe de vencedor
+            // Isso vai fazer o nome, preço e a imagem de raridade (pequena) aparecerem via CSS
+            const winnerNode = spinner.querySelector('.item-node[data-index="50"]');
+            if(winnerNode) {
+                winnerNode.classList.add('is-winner');
+            }
+
             landSound.currentTime = 0;
             landSound.play();
-            
-            // ATUALIZAÇÃO FINAL
-            updateBalanceUI(data.finalBalance);
-            loadInventory(); // Atualiza a aba de inventário automaticamente
-            
-            btn.disabled = false;
-            btn.classList.remove('btn-loading');
-        }, 9500);
+
+            // 3. Finaliza os dados após a animação de 0.6s
+            setTimeout(() => {
+                updateBalanceUI(data.finalBalance);
+                loadInventory();
+                btn.disabled = false;
+                btn.classList.remove('btn-loading');
+            }, 600);
+
+        }, 5000); 
 
     } catch (e) {
         btn.classList.remove('btn-loading');
@@ -938,57 +978,89 @@ async function sellItem(event, id) {
 }
 socket.on('startBattleSpin', async (data) => {
     switchTab('arena-tab');
-    document.getElementById('battle-msg').innerText = ""; // Reseta o texto de vitória
-    document.getElementById('p1-total-val').innerText = "0,00"; // Reseta o saldo do P1
-    document.getElementById('p2-total-val').innerText = "0,00"; // Reseta o saldo do P2
-    document.getElementById('current-round').innerText = "1"; // Reseta o contador de rondas
-    // Configuração inicial
+    
+    // Reset de UI
+    document.getElementById('battle-msg').innerText = "FIGHT!"; 
+    document.getElementById('p1-total-val').innerText = "0,00"; 
+    document.getElementById('p2-total-val').innerText = "0,00"; 
     document.getElementById('p1-inventory').innerHTML = '';
     document.getElementById('p2-inventory').innerHTML = '';
     document.getElementById('total-rounds').innerText = data.p1Rolls.length;
-    document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
-    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
+    
+    // Timeline das caixas
+    const timeline = document.getElementById('battle-case-timeline');
+    timeline.innerHTML = data.battle.caseIds.map((cid, idx) => {
+        const caseImg = itemsData[cid] ? itemsData[cid].img : '';
+        return `<div class="timeline-case" id="step-${idx}"><img src="${caseImg}"></div>`;
+    }).join('');
+
     document.getElementById('p1-username').innerText = data.battle.player1.username;
     document.getElementById('p2-username').innerText = data.battle.player2.username;
-     const timeline = document.getElementById('battle-case-timeline');
-    timeline.innerHTML = data.battle.caseIds.map((cid, idx) => {
-        const caseImg = itemsData[cid] ? itemsData[cid].img : 'https://via.placeholder.com/40';
-        return `
-            <div class="timeline-case" id="step-${idx}">
-                <img src="${caseImg}" title="${itemsData[cid].name}"> 
-            </div>
-        `;
-    }).join('');
+    document.getElementById('p1-ava').src = getSafeAvatar(data.battle.player1.avatar);
+    document.getElementById('p2-ava').src = getSafeAvatar(data.battle.player2.avatar);
 
     let p1Acc = 0;
     let p2Acc = 0;
 
+    // LOOP DAS RONDAS
     for (let i = 0; i < data.p1Rolls.length; i++) {
         document.querySelectorAll('.timeline-case').forEach(el => el.classList.remove('active'));
         const currentStep = document.getElementById(`step-${i}`);
-        currentStep.classList.add('active');
-        currentStep.classList.add('passed');
+        if(currentStep) currentStep.classList.add('active', 'passed');
         document.getElementById('current-round').innerText = i + 1;
+
         spinSound.currentTime = 0; 
-        spinSound.play().catch(e => console.log("Erro ao tocar som:", e));
+        spinSound.play().catch(e => {});
+
+        // 1. Renderizar trilhas
         renderTrack('p1-spinner', data.p1Rolls[i].track);
         renderTrack('p2-spinner', data.p2Rolls[i].track);
 
-        const tracks = [document.getElementById('p1-spinner'), document.getElementById('p2-spinner')];
-        tracks.forEach(t => { t.style.transition = 'none'; t.style.transform = 'translateX(0)'; });
+        const t1 = document.getElementById('p1-spinner');
+        const t2 = document.getElementById('p2-spinner');
 
-        await new Promise(r => setTimeout(r, 100));
+        // --- CORREÇÃO DO ERRO 't is not defined' ---
+        // Pegamos o container de um dos spinners (ambos têm o mesmo tamanho)
         const containerWidth = document.querySelector('.spinner-container.sm').offsetWidth;
-        const finalX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
-        
-        tracks.forEach(t => {
-            t.style.transition = 'transform 4s cubic-bezier(0.05, 0, 0, 1)';
-            t.style.transform = `translateX(-${finalX}px)`;
+
+        // Lógica de Cálculo exata do Case Opening
+        const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+        const randomLandingOffset = (Math.random() * (NODE_WIDTH * 0.7)) - (NODE_WIDTH * 0.35);
+        const targetX = centerPrecisionX + randomLandingOffset;
+
+        // Reset de posição
+        [t1, t2].forEach(t => { 
+            t.style.transition = 'none'; 
+            t.style.transform = 'translateX(0)'; 
         });
 
-        await new Promise(r => setTimeout(r, 4200));
+        await new Promise(r => setTimeout(r, 50));
 
-        // Animações de Dinheiro e Inventário
+        // Ativa highlight em tempo real (zoom ao passar no meio)
+        trackCenterItem('p1-spinner');
+        trackCenterItem('p2-spinner');
+
+        // 2. Giro Principal (4 segundos)
+        [t1, t2].forEach(t => {
+            t.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
+            t.style.transform = `translateX(-${targetX}px)`;
+        });
+
+        await new Promise(r => setTimeout(r, 5000));
+
+        // 3. O SNAP (Ajuste Final) + REVELAÇÃO PREMIUM
+        [t1, t2].forEach(t => {
+            t.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+            t.style.transform = `translateX(-${centerPrecisionX}px)`;
+            
+            const winnerNode = t.querySelector('.item-node[data-index="50"]');
+            if(winnerNode) winnerNode.classList.add('is-winner'); // Ativa zoom e subida da raridade
+        });
+
+        landSound.currentTime = 0;
+        landSound.play().catch(e => {});
+
+        // Atualizar valores acumulados e itens ganhos
         showBattleGain(1, data.p1Rolls[i].value);
         showBattleGain(2, data.p2Rolls[i].value);
         addWonItemToArena(1, data.p1Rolls[i]);
@@ -1000,9 +1072,10 @@ socket.on('startBattleSpin', async (data) => {
         document.getElementById('p1-total-val').innerText = formatCurrency(p1Acc);
         document.getElementById('p2-total-val').innerText = formatCurrency(p2Acc);
         
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1500)); 
     }
 
+    // Resultado Final
     const winnerName = data.winnerId === data.battle.player1.id ? data.battle.player1.username : data.battle.player2.username;
     document.getElementById('battle-msg').innerText = `${winnerName.toUpperCase()} WINS!`;
 
@@ -1072,6 +1145,43 @@ async function auth(type) {
     } finally {
         btn.classList.remove('btn-loading');
     }
+}
+
+// Função para destacar o item no centro em tempo real
+function trackCenterItem(spinnerId) {
+    const track = document.getElementById(spinnerId);
+    if (!track) return;
+    
+    const container = track.parentElement;
+    const centerPoint = container.offsetWidth / 2;
+
+    function update() {
+        // Pega a posição X atual da track (mesmo durante a transição CSS)
+        const style = window.getComputedStyle(track);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        const translateX = matrix.m41;
+
+        const nodes = track.querySelectorAll('.item-node');
+        
+        nodes.forEach((node, index) => {
+            // 180 é a largura do seu item-node definido no CSS/JS
+            const nodeLeft = (index * NODE_WIDTH) + translateX;
+            const nodeRight = nodeLeft + NODE_WIDTH;
+
+            // Se o ponto central do container estiver dentro da largura deste item
+            if (centerPoint >= nodeLeft && centerPoint <= nodeRight) {
+                node.classList.add('active-center');
+            } else {
+                node.classList.remove('active-center');
+            }
+        });
+
+        // Continua rodando enquanto a transição não acabar
+        if (style.transitionProperty !== 'none') {
+            requestAnimationFrame(update);
+        }
+    }
+    requestAnimationFrame(update);
 }
 
 async function logout() { await fetch('/api/logout', {method: 'POST'}); location.reload(); }
