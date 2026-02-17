@@ -1040,8 +1040,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
     position: relative;
     overflow: hidden;
-    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
 }
 
 /* Track onde os itens correm */
@@ -1085,20 +1083,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     align-items: center;
 }
 
-.spinner-container {
-    width: 100%;
-    height: 180px;
-    background: #000;
-    border: 1px solid var(--border);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 30px;
-    border-radius: 15px;
-    /* Efeito de fade nas laterais para focar no centro */
-    mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent);
-}
-
 
 
 
@@ -1135,20 +1119,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     max-width: 900px;
 }
 
-/* O Fundo do Spinner (Agora não é preto puro) */
-.spinner-container {
-    width: 100%;
-    height: 190px;
-    background: #0d0f14; /* Cinza muito escuro azulado */
-    background-image: 
-        radial-gradient(circle at center, #161922 0%, #0d0f14 100%),
-        url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); /* Textura sutil */
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-}
 
 /* Pointers ajustados para ficarem NA BORDA */
 .pointer-top, .pointer-bottom {
@@ -1195,29 +1165,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     width: 100%;
 }
 
-/* Moldura mais larga e com borda fina */
-.spinner-frame {
-    position: relative;
-    padding: 6px; /* Borda externa mais fina */
-    background: #1a1d23;
-    border: 1px solid #323846; /* Linha de borda bem fina */
-    border-radius: 12px;
-    width: 95%; /* Ocupa quase a largura toda */
-    max-width: 1200px; /* Bem mais largo para os lados */
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-}
-
-/* Fundo do spinner sem filtros que escondem as skins */
-.spinner-container {
-    width: 100%;
-    height: 200px;
-    background: #0b0d11; 
-    background-image: radial-gradient(circle at center, #161922 0%, #0b0d11 100%);
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-
-}
 
 /* Setas menores e mais discretas */
 .pointer-top, .pointer-bottom {
@@ -1258,29 +1205,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     width: 100%;
 }
 
-/* Moldura fina e elegante */
-.spinner-frame {
-    position: relative;
-    width: 100%;
-    max-width: 1000px;
-    background: #0e1015;
-    border: 1px solid #1e222d;
-    border-radius: 10px;
-    padding: 0; /* Tiramos o padding para ficar colado */
-    overflow: hidden;
-}
 
-/* Container do spinner - Fundo liso */
-.spinner-container {
-    width: 100%;
-    height: 160px; /* Mais baixo para ser mais elegante */
-    background: #090a0d;
-    position: relative;
-    overflow: hidden;
-    /* Sombreamento suave nas pontas */
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-}
+
 
 /* Setas minimalistas */
 .pointer-top, .pointer-bottom {
@@ -1327,16 +1253,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
-.spinner-container {
-    width: 100%;
-    height: 190px; /* Aumentado ligeiramente para cima */
-    background: #090a0d;
-    position: relative;
-    overflow: hidden;
-    /* Fade lateral elegante */
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-}
 
 .pointer-top, .pointer-bottom {
     position: absolute;
@@ -1357,21 +1273,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .rarity-pink { background-image: url('/assets/pink.png'); }
 .rarity-purple { background-image: url('/assets/purple.png'); }
 .rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-/* --- SPINNER FINAL POLIDO --- */
-.spinner-container {
-    width: 100%;
-    height: 180px; /* Altura fixa para controle total */
-    background: #090a0d;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center; /* Centraliza a track verticalmente */
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-}
-
 
 
 
@@ -1406,23 +1307,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     display: flex;
     flex-direction: column;
 }
-
-/* Container do Spinner */
-.spinner-container {
-    width: 100%;
-    height: 160px; /* Reduzi um pouco a altura para ficar mais compacto */
-    background: #090a0d;
-    position: relative;
-    overflow: hidden;
-    display: block; /* Mudado para block para evitar bugs de flex */
-    margin: 0;
-    padding: 0;
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-}
-
-
-
 
 
 /* Classes de raridade */
@@ -1471,21 +1355,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
 }
 
-.spinner-container {
-    width: 100%;
-    height: 240px; /* Aumentado para cima (Vertical) */
-    background: #090a0d;
-    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
-    position: relative;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-    /* Fade lateral mais suave para aproveitar a largura */
-    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-}
-
-
 
 
 /* Raridades locais */
@@ -1518,21 +1387,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .rarity-pink { background-image: url('/assets/pink.png'); }
 .rarity-purple { background-image: url('/assets/purple.png'); }
 .rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-
-/* --- SPINNER V5 - CENTRALIZAÇÃO TOTAL --- */
-.spinner-container {
-    width: 100%;
-    height: 240px; /* Altura mantida conforme pedido */
-    background: #090a0d;
-    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-}
 
 
 
@@ -1816,17 +1670,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 }
 .win-price { font-size: 12px !important; font-weight: 800; color: #00ff88 !important; }
 
-/* Ajuste do container das Battles para suportar o zoom premium */
-.spinner-container.sm {
-    height: 200px !important; /* Aumentado para o zoom não cortar */
-    background: #090a0d;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin: 10px 0;
-    position: relative;
-    overflow: hidden;
-}
-
 /* Garante que o track da battle também use gap 0 */
 .spinner-container.sm .spinner-track {
     display: flex !important;
@@ -1840,10 +1683,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 .spinner-container.sm {
     width: 100%;
-    max-width: 450px !important; /* Janela pequena para caberem os dois spinners */
+    max-width: 555px !important; /* Janela pequena para caberem os dois spinners */
     height: 200px !important;    /* Altura mantida para o zoom não cortar */
     background: #090a0d;
-    border: 1px solid var(--border);
+    border: 0px solid var(--border);
     border-radius: 12px;
     margin: 10px auto;
     position: relative;
@@ -1858,40 +1701,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     align-items: center !important;
 }
 
-/* --- MOLDURA PREMIUM (Igual para os dois) --- */
-.spinner-frame {
-    position: relative;
-    padding: 6px; 
-    background: #1a1d23;
-    border: 1px solid #323846;
-    border-radius: 14px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-    width: 100%;
-}
 
-/* Moldura específica da Arena (Estreita) */
-.spinner-frame.sm {
-    max-width: 480px; /* Largura reduzida para caber os dois na arena */
-    margin: 10px auto;
-}
-
-/* --- CONTAINER DO SPIN (O Visor) --- */
-.spinner-container {
-    width: 100%;
-    height: 200px;
-    background: #0b0d11; 
-    background-image: radial-gradient(circle at center, #161922 0%, #0b0d11 100%);
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-}
-
-/* Container específico da Arena */
-.spinner-container.sm {
-    height: 180px !important; /* Ligeiramente mais baixo para a arena */
-}
 
 /* --- SETAS (Pointers) --- */
 .pointer-top, .pointer-bottom {
@@ -1915,7 +1725,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .spinner-frame {
     position: relative;
     padding: 6px; 
-    background: #1a1d23;
+    background: #090A0D;
     border: 1px solid #323846;
     border-radius: 14px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.5);
@@ -1924,7 +1734,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 /* --- MOLDURA DA ARENA (Aumentada horizontalmente) --- */
 .spinner-frame.sm {
-    max-width: 580px !important; /* Aumentado de 480px para 580px */
+    max-width: 100% !important; /* Aumentado de 480px para 580px */
     margin: 10px auto;
 }
 
@@ -1934,14 +1744,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     height: 200px;
     background: #090a0d; 
     /* Gradiente ajustado para não criar manchas pretas no centro */
-    background-image: radial-gradient(circle at center, #161922 0%, #090a0d 100%);
+
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-
+ mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
     /* Ajuste da Máscara: black 5% e 95% garante que o meio seja 100% visível sem sombras */
-    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
 /* Container específico da Arena */
@@ -1975,3 +1784,4 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .spinner-container.sm .item-node {
     height: 180px !important;
 }
+
