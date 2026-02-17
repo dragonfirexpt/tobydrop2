@@ -40,6 +40,8 @@
         <button onclick="showHome()" class="nav-link active">CASES</button>
         <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
         <button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>
+        <button onclick="switchTab('upgrade-tab', this); initUpgrader()" class="nav-link">UPGRADER</button>
+
     </div>
 
     <!-- The Separator Line -->
@@ -69,6 +71,64 @@
 
         <div class="app-body">
             <main class="main-content">
+                <section id="upgrade-tab" class="tab-view" style="display:none">
+    <div class="upgrade-container">
+        <!-- Left: Inventory -->
+        <div class="upgrade-side">
+            <div class="side-header">YOUR INVENTORY</div>
+            <div id="upgrade-inv-grid" class="upgrade-grid"></div>
+            <div class="pagination" id="inv-pagination"></div>
+        </div>
+
+        <!-- Center: The Wheel -->
+        <div class="upgrade-center">
+            <div class="wheel-outer">
+                <div class="wheel-box">
+    <svg viewBox="0 0 100 100" id="upgrade-svg">
+        <defs>
+            <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#00f2ff;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#0066ff;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" class="wheel-bg" />
+        <circle cx="50" cy="50" r="45" id="win-slice" stroke="url(#glow)" />
+    </svg>
+    <div class="wheel-content">
+        <span id="chance-display">0.00%</span>
+        <small>WIN CHANCE</small>
+    </div>
+    <!-- NEW: Needle Wrapper for the outside arrow -->
+    <div id="upgrade-needle-wrapper">
+        <div id="upgrade-needle"></div>
+    </div>
+</div>
+            </div>
+
+            <div class="upgrade-controls">
+                <div class="multiplier-btns">
+                    <button onclick="jumpToMult(1.5)">1.5x</button>
+                    <button onclick="jumpToMult(2)">2x</button>
+                    <button onclick="jumpToMult(5)">5x</button>
+                    <button onclick="jumpToMult(10)">10x</button>
+                </div>
+                <button id="btn-do-upgrade" class="btn-upgrade-main" onclick="startUpgrade()" disabled>
+                    <span>UPGRADE ITEM</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Target List -->
+        <div class="upgrade-side">
+            <div class="side-header">
+                TARGET SKIN
+                <input type="text" id="target-search" placeholder="Search..." oninput="upgraderPageTargets=0; renderTargets()">
+            </div>
+            <div id="upgrade-target-grid" class="upgrade-grid"></div>
+            <div class="pagination" id="target-pagination"></div>
+        </div>
+    </div>
+</section>
                 <section id="inventory-tab" class="tab-view" style="display:none">
     <div class="inventory-header">
         <h2>MY INVENTORY</h2>
@@ -258,6 +318,27 @@
                 </div>
             </aside>
         </div>
+        <div id="upgrade-modal" class="modal-overlay" style="display: none; z-index: 5000;">
+    <div class="result-card" id="upgrade-result-card">
+        <div class="result-glow"></div>
+        <div class="result-header" id="result-title">SUCCESS</div>
+        
+        <div class="result-body">
+            <div class="result-item-box">
+                <img id="result-img" src="" alt="Skin">
+                <div class="badge" id="result-badge">FN</div>
+            </div>
+            <div class="result-info">
+                <h2 id="result-name">AK-47 | Redline</h2>
+                <p id="result-price">$0.00</p>
+            </div>
+        </div>
+
+        <div class="result-footer">
+            <button onclick="closeUpgradeModal()" class="btn-upgrade-main" style="padding: 15px 40px; font-size: 14px;">CONTINUE</button>
+        </div>
+    </div>
+</div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="main.js"></script>

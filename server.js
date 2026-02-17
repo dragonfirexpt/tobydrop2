@@ -162,7 +162,7 @@ const caseData = {
             { name: "★ Butterfly Knife | Lore", maxVal: 1070.51, minVal: 1070.51, color: "#ffb703", chance: 0.056, fixedCondition: "FT" },
             { name: "★ Skeleton Knife | Fade", maxVal: 903.96, minVal: 903.96, color: "#ffb703", chance: 0.046, fixedCondition: "FN" },
             { name: "★ Skeleton Knife | Marble Fade", maxVal: 683.56, minVal: 683.56, color: "#ffb703", chance: 0.158, fixedCondition: "FN" },
-            { name: "★ Survival Knife | Doppler Phase 4", maxVal: 302.94, minVal: 302.94, color: "#ffb703", chance: 0.148, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlNF9saWdodC5jNDQ3MThlNzQ1MDNhOGY2NTg0MzM2MzQzNDU1NDI1YjNiYTRkNTI5LnBuZw--/auto/auto/85/notrim/38f33dd23029871b7105d5753682124c.webp" },
+            { name: "★ Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.148, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlNF9saWdodC5jNDQ3MThlNzQ1MDNhOGY2NTg0MzM2MzQzNDU1NDI1YjNiYTRkNTI5LnBuZw--/auto/auto/85/notrim/38f33dd23029871b7105d5753682124c.webp" },
             { name: "★ Paracord Knife | Fade", maxVal: 258.24, minVal: 258.24, color: "#ffb703", chance: 0.207, fixedCondition: "FN" },
             { name: "★ Bayonet | Freehand", maxVal: 251.00, minVal: 251.00, color: "#ffb703", chance: 0.263, fixedCondition: "FT" },
             { name: "★ Gut Knife | Tiger Tooth", maxVal: 164.31, minVal: 164.31, color: "#ffb703", chance: 3.813, fixedCondition: "FN" },
@@ -419,6 +419,96 @@ const generateTrack = (winner, items) => {
 };
 
 let activeBattles = [];
+app.get('/api/all-skins', (req, res) => {
+    let allSkins = [];
+
+    // The standard conditions from your server.js
+    const standardConditions = [
+        { name: "Factory New", short: "FN", multiplier: 1.0 },
+        { name: "Minimal Wear", short: "MW", multiplier: 0.7 },
+        { name: "Field-Tested", short: "FT", multiplier: 0.4 },
+        { name: "Well-Worn", short: "WW", multiplier: 0.2 },
+        { name: "Battle-Scarred", short: "BS", multiplier: 0.1 } // Adjusted to 0.1 so it has some value
+    ];
+
+    for (let key in caseData) {
+        caseData[key].items.forEach(item => {
+            if (item.fixedCondition) {
+                // If the item only exists in one condition (e.g. some Knives)
+                const condObj = standardConditions.find(c => c.short === item.fixedCondition) || standardConditions[0];
+                const price = item.minVal + ((item.maxVal - item.minVal) * condObj.multiplier);
+                
+                allSkins.push({ 
+                    ...item, 
+                    price: parseFloat(price.toFixed(2)), 
+                    displayCond: item.fixedCondition 
+                });
+            } else {
+                // Generate all 5 conditions for the skin
+                standardConditions.forEach(c => {
+                    const price = item.minVal + ((item.maxVal - item.minVal) * c.multiplier);
+                    
+                    allSkins.push({ 
+                        ...item, 
+                        name: item.name,
+                        price: parseFloat(price.toFixed(2)), 
+                        displayCond: c.short 
+                    });
+                });
+            }
+        });
+    }
+
+    // Remove duplicates (same name AND same condition) and sort by price
+    const unique = allSkins.filter((v, i, a) => 
+        a.findIndex(t => t.name === v.name && t.displayCond === v.displayCond) === i
+    ).sort((a, b) => a.price - b.price);
+
+    res.json(unique);
+});
+app.post('/api/upgrade', async (req, res) => {
+    try {
+        // ADD targetCondition HERE 
+        const { inputItemId, targetSkinName, targetPrice, targetCondition } = req.body;
+        const user = await User.findById(req.session.userId);
+        if (!user) return res.status(401).json({ error: "Not logged in" });
+
+        const itemIdx = user.inventory.findIndex(i => i.id === inputItemId);
+        if (itemIdx === -1) return res.status(400).json({ error: "Item not found" });
+
+        const inputItem = user.inventory[itemIdx];
+        const chance = (inputItem.value / targetPrice) * 0.95;
+        const roll = Math.random();
+        const win = roll < chance;
+
+        user.inventory.splice(itemIdx, 1);
+
+        let wonItem = null;
+        if (win) {
+            let template = null;
+            for (let k in caseData) {
+                let found = caseData[k].items.find(i => i.name === targetSkinName);
+                if (found) { template = found; break; }
+            }
+            
+            wonItem = {
+                name: targetSkinName,
+                value: targetPrice,
+                img: template.img,
+                color: template.color,
+                conditionShort: targetCondition || "FN", // USE THE PASSED CONDITION
+                id: Math.random().toString(36).substr(2, 9)
+            };
+            user.inventory.push(wonItem);
+        }
+
+        await user.save();
+        res.json({ success: true, win, roll: roll * 100, chance: (chance * 100).toFixed(2), balance: user.balance });
+
+    } catch (e) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
 app.post('/api/sell-all-items', async (req, res) => {
     try {
         const user = await User.findById(req.session.userId);

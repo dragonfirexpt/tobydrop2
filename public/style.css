@@ -707,3 +707,372 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     border-color: var(--accent);
     outline: none;
 }
+
+.upgrade-container { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 20px; height: calc(100vh - 150px); }
+.upgrade-side { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }
+.side-header { padding: 15px; font-weight: 800; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+#target-search { background: #000; border: 1px solid var(--border); color: #fff; padding: 5px 10px; border-radius: 5px; width: 100px; }
+
+.upgrade-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    grid-auto-rows: min-content; /* Ensure rows don't stretch vertically */
+    align-content: start;        /* Keep items at the top */
+    gap: 10px; 
+    padding: 15px; 
+    overflow-y: auto; 
+    flex: 1; 
+}
+
+.up-card .badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--accent);
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    pointer-events: none;
+}
+
+.up-card { 
+    height: 140px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+}
+.up-card:hover { transform: scale(1.02); background: #15181f; }
+.up-card.selected { border-color: var(--accent); background: rgba(0, 242, 255, 0.1); }
+.up-card img { width: 100%; height: 50px; object-fit: contain; }
+.up-card b { display: block; font-size: 10px; height: 24px; overflow: hidden; margin-top: 5px; }
+.up-card span { display: block; color: var(--accent); font-size: 11px; font-weight: 800; }
+
+.upgrade-center { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.wheel-box { position: relative; width: 320px; height: 320px; }
+
+#upgrade-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.wheel-bg { fill: none; stroke: #111; stroke-width: 8; }
+#win-slice { fill: none; stroke: var(--accent); stroke-width: 8; stroke-dasharray: 0 283; transition: stroke-dasharray 0.5s ease; }
+
+.wheel-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+#chance-display { font-size: 32px; font-weight: 800; }
+
+#upgrade-needle {
+    position: absolute; top: 0; left: 50%; width: 4px; height: 50%;
+    background: #fff; transform-origin: bottom center;
+    margin-left: -2px; border-radius: 4px; z-index: 5;
+    box-shadow: 0 0 15px rgba(255,255,255,0.5);
+    transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1);
+}
+
+.multiplier-btns { display: flex; gap: 10px; margin: 20px 0; }
+.multiplier-btns button { background: #111; border: 1px solid var(--border); color: #fff; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 800; }
+.multiplier-btns button:hover { border-color: var(--accent); }
+
+
+.upgrade-container { display: grid; grid-template-columns: 320px 1fr 320px; gap: 30px; height: 750px; padding: 10px; }
+
+.upgrade-side { 
+    background: rgba(13, 15, 20, 0.8); 
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.05); 
+    border-radius: 24px; 
+    display: flex; flex-direction: column; 
+}
+
+.upgrade-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    grid-template-rows: repeat(3, 1fr); /* 3x3 Grid */
+    gap: 12px; padding: 15px; flex: 1; 
+}
+
+.up-card { 
+    background: rgba(255,255,255,0.03); 
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 12px; padding: 10px; text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; height: 130px; display: flex; flex-direction: column; justify-content: center;
+}
+
+.up-card:hover { 
+    background: rgba(255,255,255,0.07); 
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.up-card.selected { 
+    border-color: var(--accent); 
+    background: rgba(0, 242, 255, 0.15);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+}
+
+.up-card .badge { 
+    position: absolute; top: 6px; right: 6px; font-size: 8px; font-weight: 900;
+    padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,0.5); color: var(--accent);
+}
+
+.up-card img { width: 100%; height: 60px; object-fit: contain; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
+.up-card b { font-size: 10px; margin-top: 8px; height: 24px; overflow: hidden; opacity: 0.8; }
+.up-card span { color: var(--accent); font-weight: 800; font-size: 12px; margin-top: 4px; }
+
+/* Wheel Polish */
+.wheel-outer { 
+    padding: 30px; background: radial-gradient(circle, rgba(0, 242, 255, 0.05) 0%, transparent 70%); 
+    border-radius: 50%;
+}
+.wheel-box { position: relative; width: 340px; height: 340px; }
+.wheel-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 6; }
+#win-slice { 
+    fill: none; stroke-width: 6; stroke-linecap: round; 
+    filter: drop-shadow(0 0 8px var(--accent));
+}
+
+.wheel-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.wheel-content span { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 0 20px var(--accent); }
+.wheel-content small { letter-spacing: 3px; color: var(--accent); font-weight: 800; margin-top: -5px; }
+
+#upgrade-needle {
+    position: absolute; top: -10px; left: 50%; width: 4px; height: 180px;
+    background: #fff; transform-origin: center 180px; margin-left: -2px;
+    border-radius: 10px; z-index: 10;
+    box-shadow: 0 0 20px #fff;
+}
+
+/* Main Upgrade Button */
+.btn-upgrade-main {
+    background: linear-gradient(135deg, var(--accent) 0%, #0066ff 100%);
+    border: none; padding: 20px 60px; border-radius: 50px; color: #000;
+    font-size: 18px; font-weight: 900; cursor: pointer;
+    transition: all 0.3s; box-shadow: 0 10px 30px rgba(0, 242, 255, 0.3);
+}
+.btn-upgrade-main:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
+.btn-upgrade-main:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 242, 255, 0.5); }
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; gap: 8px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+.pagination button { 
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+    color: #fff; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 11px;
+}
+.pagination button.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 800; }
+
+.pagination button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pagination button:hover:not(.active) {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+.pagination button:active { transform: scale(0.9); }
+
+/* Grid Entry Animation */
+.upgrade-grid > div {
+    animation: fadeInScale 0.3s ease-out forwards;
+}
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Fix Circle Lighting - The Wheel Container */
+.wheel-outer { 
+    padding: 40px; 
+    /* Remove any background that might be boxy */
+    background: transparent; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wheel-box { 
+    position: relative; 
+    width: 340px; 
+    height: 340px;
+    border-radius: 50%;
+    /* This creates a circular glow that doesn't look like a square */
+    box-shadow: inset 0 0 50px rgba(0, 242, 255, 0.05), 0 0 30px rgba(0, 242, 255, 0.05);
+}
+
+#upgrade-svg { 
+    overflow: visible; /* CRITICAL: Prevents glow from being cut into a square */
+}
+
+/* Style for Disabled Target Cards (Lower Price) */
+.up-card.disabled-target {
+    opacity: 0.3;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.up-card.disabled-target::after {
+    content: "LOWER PRICE";
+    position: absolute;
+    bottom: 10px;
+    font-size: 8px;
+    color: #ff4444;
+    font-weight: 900;
+}
+
+/* Color-coded condition badges */
+.up-card .badge.cond-FN { color: #00ff88; border-color: #00ff88; } /* Green */
+.up-card .badge.cond-MW { color: #a2ff00; border-color: #a2ff00; } /* Lime */
+.up-card .badge.cond-FT { color: #fbff00; border-color: #fbff00; } /* Yellow */
+.up-card .badge.cond-WW { color: #ff9100; border-color: #ff9100; } /* Orange */
+.up-card .badge.cond-BS { color: #ff4444; border-color: #ff4444; } /* Red */
+
+/* Pagination Animation */
+@keyframes paginFade {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pagination button {
+    animation: paginFade 0.3s ease forwards;
+}
+
+/* Fix for the upgrade button to make it more prominent */
+.btn-upgrade-main {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-upgrade-main::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: btnShine 3s infinite;
+}
+
+@keyframes btnShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.up-card { 
+    cursor: pointer; /* Makes it look like a button */
+    user-select: none;
+}
+
+/* Fix for the needle to be an outside arrow */
+.wheel-outer {
+    padding: 60px; /* Increased padding to give the arrow space to spin */
+}
+
+#upgrade-needle-wrapper {
+    position: absolute;
+    inset: -35px; /* Pushes the boundary outside the circle */
+    pointer-events: none;
+    z-index: 10;
+    transition: transform 4.5s cubic-bezier(0.15, 0, 0.15, 1);
+    transform: rotate(0deg);
+}
+
+#upgrade-needle {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 20px;
+    background: #fff;
+    /* This creates a triangle pointing DOWN (inside) */
+    clip-path: polygon(50% 100%, 0 0, 100% 0); 
+    box-shadow: 0 10px 15px rgba(255,255,255,0.5);
+    filter: drop-shadow(0 0 10px #fff);
+}
+
+/* Optional: Add a little glow line leading from the arrow to the circle */
+#upgrade-needle::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    width: 2px;
+    height: 15px;
+    background: linear-gradient(to bottom, #fff, transparent);
+    transform: translateX(-50%);
+}
+
+/* Ensure the SVG doesn't cut off the glow */
+#upgrade-svg {
+    overflow: visible;
+}
+/* Result Modal Styling */
+.result-card {
+    background: rgba(10, 12, 16, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 450px;
+    border-radius: 30px;
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.8) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.result-glow {
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.result-header {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Win/Loss Variations */
+.result-win .result-header { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+.result-win .result-glow { background: radial-gradient(circle, rgba(0, 242, 255, 0.2) 0%, transparent 60%); }
+
+.result-loss .result-header { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
+.result-loss .result-glow { background: radial-gradient(circle, rgba(255, 68, 68, 0.2) 0%, transparent 60%); }
+.result-loss .result-item-box { filter: grayscale(1) opacity(0.3); }
+
+.result-item-box {
+    position: relative;
+    background: rgba(255,255,255,0.03);
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.result-item-box img {
+    width: 200px;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+}
+
+.result-info h2 { margin: 0; font-size: 20px; font-weight: 800; }
+.result-info p { color: var(--accent); font-weight: 800; font-size: 24px; margin: 10px 0 30px; }
+
+/* Pulse animation for winning item */
+.result-win #result-img {
+    animation: itemPulse 2s infinite ease-in-out;
+}
+
+@keyframes itemPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 10px 20px rgba(0, 242, 255, 0.2)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 15px 30px rgba(0, 242, 255, 0.4)); }
+}

@@ -15,7 +15,307 @@ let cases = {};
 
 let currentCrashState = null;
 let selectedCasesForBattle = [];
+let upgraderState = {
+    allSkins: [],
+    selectedInput: null,
+    selectedTarget: null
+};
 
+let upgraderInv = [];
+let upgraderPageInv = 0;
+let upgraderPageTargets = 0;
+const UP_PAGE_SIZE = 9; // 3x3 Grid
+function renderTargets() {
+    const search = document.getElementById('target-search').value.toLowerCase();
+    
+    // Filter by search
+    let filtered = upgraderState.allSkins.filter(s => s.name.toLowerCase().includes(search));
+    
+    const grid = document.getElementById('upgrade-target-grid');
+    const start = upgraderPageTargets * UP_PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + UP_PAGE_SIZE);
+    
+    grid.innerHTML = pageItems.map(item => {
+        // Can't upgrade to cheaper items
+        const isTooCheap = upgraderState.selectedInput && item.price <= upgraderState.selectedInput.value;
+        // Check if selected by comparing Name + Condition
+        const isSelected = upgraderState.selectedTarget && 
+                           upgraderState.selectedTarget.name === item.name && 
+                           upgraderState.selectedTarget.displayCond === item.displayCond;
+
+        return `
+            <div class="up-card ${isSelected ? 'selected' : ''} ${isTooCheap ? 'disabled-target' : ''}" 
+                 onclick="selectUpTarget(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                <div class="badge cond-${item.displayCond}">${item.displayCond}</div>
+                <img src="${item.img}">
+                <b>${item.name}</b>
+                <span>$${formatCurrency(item.price)}</span>
+            </div>
+        `;
+    }).join('');
+
+    renderPagination('target-pagination', filtered.length, upgraderPageTargets, (p) => {
+        upgraderPageTargets = p;
+        renderTargets();
+    });
+}
+function renderInventory() {
+    const grid = document.getElementById('upgrade-inv-grid');
+    const pagin = document.getElementById('inv-pagination');
+    
+    const start = upgraderPageInv * UP_PAGE_SIZE;
+    const pageItems = upgraderInv.slice(start, start + UP_PAGE_SIZE);
+    
+    grid.innerHTML = pageItems.map(item => `
+        <div class="up-card ${upgraderState.selectedInput?.id === item.id ? 'selected' : ''}" onclick="selectUpInput(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+            <div class="badge">${item.conditionShort}</div>
+            <img src="${item.img}">
+            <b>${item.name}</b>
+            <span>$${formatCurrency(item.value)}</span>
+        </div>
+    `).join('');
+
+    renderPagination('inv-pagination', upgraderInv.length, upgraderPageInv, (p) => {
+        upgraderPageInv = p;
+        renderInventory();
+    });
+}
+async function initUpgrader() {
+    if (upgraderState.allSkins.length === 0) {
+        const res = await fetch('/api/all-skins');
+        let rawSkins = await res.json();
+        // ALWAYS SORT BY PRICE LOW TO HIGH
+        upgraderState.allSkins = rawSkins.sort((a,b) => a.price - b.price);
+    }
+    
+    const invRes = await fetch('/api/me');
+    const invData = await invRes.json();
+    upgraderInv = invData.user.inventory || [];
+    
+    renderInventory();
+    renderTargets();
+}
+function renderPagination(id, totalItems, current, callback) {
+    const totalPages = Math.ceil(totalItems / UP_PAGE_SIZE);
+    const container = document.getElementById(id);
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    let html = '';
+    // Show max 5 page buttons
+    let start = Math.max(0, current - 2);
+    let end = Math.min(totalPages, start + 5);
+    
+    for (let i = start; i < end; i++) {
+        html += `<button class="${i === current ? 'active' : ''}" onclick="window.upEvent(${i}, ${id === 'inv-pagination' ? 1 : 0})">${i + 1}</button>`;
+    }
+    container.innerHTML = html;
+    
+    // Global helper for pagination clicks
+    window.upEvent = (page, isInv) => {
+        if (isInv) { upgraderPageInv = page; renderInventory(); }
+        else { upgraderPageTargets = page; renderTargets(); }
+    };
+}
+function jumpToMult(m) {
+    if (!upgraderState.selectedInput) return alert("Select an item from your inventory first!");
+    
+    const targetVal = upgraderState.selectedInput.value * m;
+    
+    // Find index in the fully sorted global list
+    const index = upgraderState.allSkins.findIndex(s => s.price >= targetVal);
+    
+    if (index !== -1) {
+        upgraderPageTargets = Math.floor(index / UP_PAGE_SIZE);
+        // Clear search to ensure we are looking at the main list
+        document.getElementById('target-search').value = "";
+        
+        // Auto-select the first item that meets the multiplier
+        upgraderState.selectedTarget = upgraderState.allSkins[index];
+        
+        renderTargets();
+        calcUpgradeChance();
+    }
+}
+function selectUpInput(el, item) {
+    // If clicking the same item, unselect it
+    if (upgraderState.selectedInput?.id === item.id) {
+        upgraderState.selectedInput = null;
+    } else {
+        upgraderState.selectedInput = item;
+    }
+    
+    // If the currently selected target is now cheaper than the new input, unselect target
+    if (upgraderState.selectedInput && upgraderState.selectedTarget && 
+        upgraderState.selectedTarget.price <= upgraderState.selectedInput.value) {
+        upgraderState.selectedTarget = null;
+    }
+
+    renderInventory();
+    renderTargets(); // Re-render to update price-disabled states
+    calcUpgradeChance();
+}
+
+function selectUpTarget(el, item) {
+    // 1. Prevent selecting if too cheap
+    if (upgraderState.selectedInput && item.price <= upgraderState.selectedInput.value) return;
+
+    // 2. Toggle selection: If already selected, unselect it
+    if (upgraderState.selectedTarget && 
+        upgraderState.selectedTarget.name === item.name && 
+        upgraderState.selectedTarget.displayCond === item.displayCond) {
+        upgraderState.selectedTarget = null;
+    } else {
+        upgraderState.selectedTarget = item;
+    }
+    
+    renderTargets();
+    calcUpgradeChance();
+}
+
+
+function calcUpgradeChance() {
+    const slice = document.getElementById('win-slice');
+    const display = document.getElementById('chance-display');
+    const btn = document.getElementById('btn-do-upgrade');
+
+    if (!upgraderState.selectedInput || !upgraderState.selectedTarget) {
+        slice.style.strokeDasharray = `0 283`;
+        display.innerText = "0.00%";
+        btn.disabled = true;
+        return;
+    }
+    
+    const inputVal = upgraderState.selectedInput.value;
+    const targetVal = upgraderState.selectedTarget.price;
+    
+    let chance = (inputVal / targetVal) * 95;
+    if (chance > 95) chance = 95;
+
+    const dash = (chance / 100) * 283;
+    slice.style.strokeDasharray = `${dash} 283`;
+    display.innerText = chance.toFixed(2) + "%";
+    btn.disabled = false;
+}
+
+function filterByMult(m) {
+    if (!upgraderState.selectedInput) return alert("Select an item from your inventory first!");
+    const targetPrice = upgraderState.selectedInput.value * m;
+    
+    // Find skins that are +/- 20% of the target price
+    const filtered = upgraderState.allSkins.filter(s => 
+        s.price >= targetPrice * 0.8 && s.price <= targetPrice * 1.2
+    ).sort((a,b) => a.price - b.price);
+
+    renderTargets(filtered);
+}
+function showUpgradeResult(win, item) {
+    const modal = document.getElementById('upgrade-modal');
+    const card = document.getElementById('upgrade-result-card');
+    const title = document.getElementById('result-title');
+    const img = document.getElementById('result-img');
+    const name = document.getElementById('result-name');
+    const price = document.getElementById('result-price');
+    const badge = document.getElementById('result-badge');
+
+    modal.style.display = 'flex';
+    
+    // Use .price (targets) or .value (inventory) to avoid NaN
+    const displayPrice = item.price || item.value || 0;
+    // Use displayCond (targets) or conditionShort (inventory)
+    const displayCond = item.displayCond || item.conditionShort || "FN";
+
+    if (win) {
+        card.className = 'result-card result-win';
+        title.innerText = "UPGRADED";
+        img.src = item.img;
+        name.innerText = item.name;
+        price.innerText = `$${formatCurrency(displayPrice)}`; // FIXES NaN
+        badge.innerText = displayCond;
+        badge.className = `badge cond-${displayCond}`;
+    } else {
+        card.className = 'result-card result-loss';
+        title.innerText = "FAILED";
+        img.src = item.img;
+        name.innerText = item.name;
+        price.innerText = `$${formatCurrency(displayPrice)}`; // FIXES NaN
+        badge.innerText = displayCond;
+        badge.className = `badge cond-${displayCond}`;
+    }
+}
+function closeUpgradeModal() {
+    document.getElementById('upgrade-modal').style.display = 'none';
+    // Refresh lists
+    initUpgrader();
+}
+async function startUpgrade() {
+    if (!upgraderState.selectedInput || !upgraderState.selectedTarget) return;
+
+    const btn = document.getElementById('btn-do-upgrade');
+    btn.disabled = true;
+
+    const wrapper = document.getElementById('upgrade-needle-wrapper');
+    wrapper.style.transition = 'none';
+    wrapper.style.transform = 'rotate(0deg)';
+
+    try {
+        const res = await fetch('/api/upgrade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                inputItemId: upgraderState.selectedInput.id,
+                targetSkinName: upgraderState.selectedTarget.name,
+                targetPrice: upgraderState.selectedTarget.price,
+                // ADD THIS LINE TO FIX THE FN BUG:
+                targetCondition: upgraderState.selectedTarget.displayCond 
+            })
+        });
+
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const randomSpins = 7 + Math.floor(Math.random() * 5);
+        const finalDeg = (data.roll / 100) * 360;
+        const totalRotation = (randomSpins * 360) + finalDeg;
+
+        setTimeout(() => {
+            wrapper.style.transition = 'transform 4.5s cubic-bezier(0.15, 0, 0.15, 1)';
+            wrapper.style.transform = `rotate(${totalRotation}deg)`;
+        }, 50);
+
+        // AFTER THE SPIN FINISHES
+        setTimeout(() => {
+            if (data.win) {
+                // Only play the win sound if they actually won
+                if (typeof winSound !== 'undefined') {
+                    winSound.currentTime = 0;
+                    winSound.play();
+                }
+                showUpgradeResult(true, upgraderState.selectedTarget);
+            } else {
+                // REMOVED landSound.play() from here
+                // We just show the result modal silently or you could add a 'fail' sound
+                showUpgradeResult(false, upgraderState.selectedTarget);
+            }
+
+            // Update user balance UI globally
+            if (data.balance !== undefined) updateBalanceUI(data.balance);
+            
+            // Clear current selections
+            upgraderState.selectedInput = null;
+            upgraderState.selectedTarget = null;
+            btn.disabled = false;
+
+            // Reset needle wrapper for next time
+            wrapper.style.transition = 'none';
+            wrapper.style.transform = 'rotate(0deg)';
+
+        }, 5000);
+
+    } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+    }
+}
 function formatCurrency(num) {
     return Number(num).toLocaleString('pt-PT', { 
         minimumFractionDigits: 2, 
