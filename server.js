@@ -29,13 +29,7 @@ const sqlConnection = mysql.createPool({
     host: 'mysql-2e9dbd1e-nottyastobusiness-6048.k.aivencloud.com',
     user: 'avnadmin',
     password: 'AVNS_kPJXVEI34RWcxvS3bnl',
-    database: 'defaultdb',
-    port: 23869,
-    ssl: {
-        rejectUnauthorized: false // NECESSÁRIO para o Aiven
-    },
-    waitForConnections: true,
-    connectionLimit: 10
+    database: 'defaultdb'
 }).promise();
 
 // Teste de conexão para não derrubar o site
@@ -53,9 +47,9 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', 
-    realm: 'https://tobydrop2.onrender.com/',
-    apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
+    returnURL: 'https://https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'https://https://tobydrop2.onrender.com/',
+    apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
     // Aqui procuramos ou criamos o usuário no MongoDB pelo SteamID
@@ -223,30 +217,30 @@ const caseData = {
         price: 20.00,
         img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/AWP-Heaven.webp",
         items: [
-            { name: "AWP | Medusa", maxVal: 3281.48, minVal: 3281.48, color: "#eb4b4b", chance: 0.012, fixedCondition: "FT"},
-            { name: "Nomad Knife | Doppler Ruby", maxVal: 2220.06, minVal: 2220.06, color: "#ffb703", chance: 0.016, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9vdXRkb29yX2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5hMDUxYWE3MmEwNzEwMzllMGY2MTYyMjRkNDY5ZmY3MDViZmNlOTI5LnBuZw--/auto/auto/85/notrim/9b21cf901c664ad3fc824d11a2fd005d.webp"},
-            { name: "M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.014, fixedCondition: "FN"},
-            { name: "Karambit | Tiger Tooth", maxVal: 1478.52, minVal: 1478.52, color: "#ffb703", chance: 0.028, fixedCondition: "FN"},
-            { name: "Bayonet | Gamma Doppler Phase 2", maxVal: 1010.18, minVal: 1010.18, color: "#ffb703", chance: 0.028, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UyX2xpZ2h0LmIzNGRjMjdkMDUzMGRkNDNlZTJmYzFiZjE3Y2MwYzVhOWI0MWI0MjMucG5n/auto/auto/85/notrim/bd638ec178949f856962fb2cc0891044.webp"},
-            { name: "Sport Gloves | Amphibious", maxVal: 451.48, minVal: 451.48, color: "#ffb703", chance: 0.052, fixedCondition: "BS"},
-            { name: "Navaja Knife | Doppler Phase 4", maxVal: 182.23, minVal: 182.23, color: "#ffb703", chance: 0.114, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9neXBzeV9qYWNra25pZmVfYW1fZG9wcGxlcl9waGFzZTRfbGlnaHQuMDk0Y2FjZmRhMTJiOGU2Yjk1MDlmNjcxYWZjMzExZmFiM2ExZTczYS5wbmc-/auto/auto/85/notrim/8b2c3580cdd2f6e91dc75bd90d6d51e4.webp"},
-            { name: "Survival Knife | Case Hardened", maxVal: 148.75, minVal: 148.75, color: "#ffb703", chance: 0.131, fixedCondition: "FT" },
-            { name: "Gut Knife | Bright Water", maxVal: 124.40, minVal: 124.40, color: "#ffb703", chance: 0.222, fixedCondition: "FN" },
-            { name: "Shadow Daggers | Lore", maxVal: 94.45, minVal: 94.45, color: "#ffb703", chance: 0.147, fixedCondition: "FT" },
-            { name: "AWP | Printstream", maxVal: 84.20, minVal: 70.31, color: "#eb4b4b", chance: 0.919 },
-            { name: "AK-47 | Neon Rider", maxVal: 71.39, minVal: 70.17, color: "#eb4b4b", chance: 1.005 },
-            { name: "AK-47 | Asiimov", maxVal: 61.01, minVal: 61.01, color: "#eb4b4b", chance: 1.079, fixedCondition: "FT" },
-            { name: "USP-S | Printstream", maxVal: 55.63, minVal: 55.63, color: "#eb4b4b", chance: 1.011, fixedCondition: "FT" },
-            { name: "AWP | Chrome Cannon", maxVal: 51.86, minVal: 39.82, color: "#eb4b4b", chance: 8.375 },
-            { name: "SG 553 | Integrale", maxVal: 41.70, minVal: 5.72, color: "#d32ce6", chance: 11.984 },
-            { name: "M4A4 | Tooth Fairy", maxVal: 27.22, minVal: 5.54, color: "#d32ce6", chance: 9.782 },
-            { name: "AK-47 | Frontside Misty", maxVal: 25.92, minVal: 25.92, color: "#d32ce6", chance: 6.871, fixedCondition: "BS" },
-            { name: "AWP | Mortis", maxVal: 23.91, minVal: 6.03, color: "#d32ce6", chance: 11.782 },
-            { name: "AK-47 | Point Disarray", maxVal: 22.67, minVal: 22.67, color: "#d32ce6", chance: 7.560, fixedCondition: "FT" },
-            { name: "M4A1-S | Stratosphere", maxVal: 15.61, minVal: 13.66, color: "#8847ff", chance: 7.966 },
-            { name: "AK-47 | Phantom Disruptor", maxVal: 13.96, minVal: 8.67, color: "#8847ff", chance: 10.545 },
-            { name: "AWP | Duality", maxVal: 10.07, minVal: 5.08, color: "#8847ff", chance: 9.786 },
-            { name: "M4A1-S | Solitude", maxVal: 8.15, minVal: 2.04, color: "#8847ff", chance: 10.571 }
+            { name: "AWP | Medusa", maxVal: 3281.48, minVal: 3281.48, color: "#eb4b4b", chance: 0.012, fixedCondition: "FT", weaponId: 9, paintKit: 446},
+            { name: "Nomad Knife | Doppler Ruby", maxVal: 2220.06, minVal: 2220.06, color: "#ffb703", chance: 0.016, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9vdXRkb29yX2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5hMDUxYWE3MmEwNzEwMzllMGY2MTYyMjRkNDY5ZmY3MDViZmNlOTI5LnBuZw--/auto/auto/85/notrim/9b21cf901c664ad3fc824d11a2fd005d.webp", weaponId: 521, paintKit: 415},
+            { name: "M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.014, fixedCondition: "FN", weaponId: 508, paintKit: 38},
+            { name: "Karambit | Tiger Tooth", maxVal: 1478.52, minVal: 1478.52, color: "#ffb703", chance: 0.028, fixedCondition: "FN", weaponId: 507, paintKit: 409},
+            { name: "Bayonet | Gamma Doppler Phase 2", maxVal: 1010.18, minVal: 1010.18, color: "#ffb703", chance: 0.028, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UyX2xpZ2h0LmIzNGRjMjdkMDUzMGRkNDNlZTJmYzFiZjE3Y2MwYzVhOWI0MWI0MjMucG5n/auto/auto/85/notrim/bd638ec178949f856962fb2cc0891044.webp", weaponId: 500, paintKit: 570},
+            { name: "Sport Gloves | Amphibious", maxVal: 451.48, minVal: 451.48, color: "#ffb703", chance: 0.052, fixedCondition: "BS", weaponId: 5030, paintKit: 10045},
+            { name: "Navaja Knife | Doppler Phase 4", maxVal: 182.23, minVal: 182.23, color: "#ffb703", chance: 0.114, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9neXBzeV9qYWNra25pZmVfYW1fZG9wcGxlcl9waGFzZTRfbGlnaHQuMDk0Y2FjZmRhMTJiOGU2Yjk1MDlmNjcxYWZjMzExZmFiM2ExZTczYS5wbmc-/auto/auto/85/notrim/8b2c3580cdd2f6e91dc75bd90d6d51e4.webp", weaponId: 5030, paintKit: 10045},
+            { name: "Survival Knife | Case Hardened", maxVal: 148.75, minVal: 148.75, color: "#ffb703", chance: 0.131, fixedCondition: "FT", weaponId: 520, paintKit: 421 },
+            { name: "Gut Knife | Bright Water", maxVal: 124.40, minVal: 124.40, color: "#ffb703", chance: 0.222, fixedCondition: "FN", weaponId: 506, paintKit: 578 },
+            { name: "Shadow Daggers | Lore", maxVal: 94.45, minVal: 94.45, color: "#ffb703", chance: 0.147, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
+            { name: "AWP | Printstream", maxVal: 84.20, minVal: 70.31, color: "#eb4b4b", chance: 0.919, weaponId: 9, paintKit: 1206 },
+            { name: "AK-47 | Neon Rider", maxVal: 71.39, minVal: 70.17, color: "#eb4b4b", chance: 1.005, weaponId: 7, paintKit: 707 },
+            { name: "AK-47 | Asiimov", maxVal: 61.01, minVal: 61.01, color: "#eb4b4b", chance: 1.079, fixedCondition: "FT", weaponId: 7, paintKit: 801 },
+            { name: "USP-S | Printstream", maxVal: 55.63, minVal: 55.63, color: "#eb4b4b", chance: 1.011, fixedCondition: "FT", weaponId: 61, paintKit: 1142 },
+            { name: "AWP | Chrome Cannon", maxVal: 51.86, minVal: 39.82, color: "#eb4b4b", chance: 8.375, weaponId: 9, paintKit: 1170 },
+            { name: "SG 553 | Integrale", maxVal: 41.70, minVal: 5.72, color: "#d32ce6", chance: 11.984, weaponId: 39, paintKit: 750 },
+            { name: "M4A4 | Tooth Fairy", maxVal: 27.22, minVal: 5.54, color: "#d32ce6", chance: 9.782, weaponId: 16, paintKit: 971 },
+            { name: "AK-47 | Frontside Misty", maxVal: 25.92, minVal: 25.92, color: "#d32ce6", chance: 6.871, fixedCondition: "BS", weaponId: 7, paintKit: 490 },
+            { name: "AWP | Mortis", maxVal: 23.91, minVal: 6.03, color: "#d32ce6", chance: 11.782, weaponId: 9, paintKit: 691 },
+            { name: "AK-47 | Point Disarray", maxVal: 22.67, minVal: 22.67, color: "#d32ce6", chance: 7.560, fixedCondition: "FT", weaponId: 7, paintKit: 506 },
+            { name: "M4A1-S | Stratosphere", maxVal: 15.61, minVal: 13.66, color: "#8847ff", chance: 7.966, weaponId: 60, paintKit: 1216 },
+            { name: "AK-47 | Phantom Disruptor", maxVal: 13.96, minVal: 8.67, color: "#8847ff", chance: 10.545, weaponId: 7, paintKit: 941 },
+            { name: "AWP | Duality", maxVal: 10.07, minVal: 5.08, color: "#8847ff", chance: 9.786, weaponId: 9, paintKit: 1222 },
+            { name: "M4A1-S | Solitude", maxVal: 8.15, minVal: 2.04, color: "#8847ff", chance: 10.571, weaponId: 60, paintKit: 1338 }
         ]
     },
     dragon_hoard: {
@@ -281,67 +275,73 @@ const caseData = {
         ]
     },
     neon_blade: {
-        name: "Neon Blade Box",
-        price: 2.50,
-        img: "https://img.clash.gg/cases?q=https%3A%2F%2Fmedia.discordapp.net%2Fattachments%2F449030703426961418%2F1230909108526383204%2FSurvival_Guide.png%3Fex%3D66350870%26is%3D66229370%26hm%3Dce48650d53dbcc8f318b65e8f5c13dffdc971d5842d2052368d79fc54adca2e9%26%3D%26format%3Dwebp%26quality%3Dlossless%26width%3D924%26height%3D978",
-        items: [
-            { name: "★ Survival Knife | Doppler Phase 3", maxVal: 309.73, minVal: 309.73, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlM19saWdodC5kOGFkZTQ2ZWQ0ZmY3MGY4YjcxMzI3MDMyZTM1NDE5MjhhYWIxYTA5LnBuZw--/auto/auto/85/notrim/d62bb8ac23e9ff4da34f8e74ddb2fbc9.webp" },
-            { name: "★ Flip Knife | Autotronic", maxVal: 252.51, minVal: 252.51, color: "#ffb703", chance: 0.010, fixedCondition: "FT" },
-            { name: "★ Ursus Knife | Tiger Tooth", maxVal: 227.18, minVal: 227.18, color: "#ffb703", chance: 0.010, fixedCondition: "FN" },
-            { name: "AK-47 | Neon Rider", maxVal: 127.36, minVal: 127.36, color: "#eb4b4b", chance: 0.011, fixedCondition: "MW" },
-            { name: "M4A4 | Full Throttle", maxVal: 83.20, minVal: 83.20, color: "#eb4b4b", chance: 0.029, fixedCondition: "FT" },
-            { name: "AWP | Wildfire", maxVal: 74.74, minVal: 74.74, color: "#eb4b4b", chance: 0.047, fixedCondition: "FT" },
-            { name: "AK-47 | Asiimov", maxVal: 65.90, minVal: 61.01, color: "#eb4b4b", chance: 0.061 },
-            { name: "AK-47 | Point Disarray", maxVal: 37.66, minVal: 37.66, color: "#d32ce6", chance: 0.099, fixedCondition: "MW" },
-            { name: "M4A1-S | Party Animal", maxVal: 34.97, minVal: 34.97, color: "#d32ce6", chance: 0.124, fixedCondition: "FT" },
-            { name: "AK-47 | Searing Rage", maxVal: 14.40, minVal: 14.40, color: "#d32ce6", chance: 0.108, fixedCondition: "MW" },
-            { name: "AK-47 | Ice Coaled", maxVal: 11.33, minVal: 6.43, color: "#d32ce6", chance: 3.032 },
-            { name: "MAG-7 | Monster Call", maxVal: 8.81, minVal: 0.66, color: "#8847ff", chance: 10.958 },
-            { name: "R8 Revolver | Banana Cannon", maxVal: 8.66, minVal: 0.63, color: "#8847ff", chance: 10.197 },
-            { name: "P250 | Inferno", maxVal: 8.36, minVal: 0.98, color: "#8847ff", chance: 9.583 },
-            { name: "Dual Berettas | Twin Turbo", maxVal: 8.11, minVal: 2.89, color: "#8847ff", chance: 6.817 },
-            { name: "Glock-18 | Shinobu", maxVal: 7.08, minVal: 6.98, color: "#8847ff", chance: 2.628 },
-            { name: "Glock-18 | Vogue", maxVal: 5.93, minVal: 5.89, color: "#8847ff", chance: 2.408 },
-            { name: "AWP | Duality", maxVal: 5.08, minVal: 5.08, color: "#8847ff", chance: 3.394, fixedCondition: "FT" },
-            { name: "M4A1-S | Night Terror", maxVal: 4.12, minVal: 1.01, color: "#4b69ff", chance: 9.921 },
-            { name: "AWP | Phobos", maxVal: 3.45, minVal: 3.45, color: "#4b69ff", chance: 5.614, fixedCondition: "FT" },
-            { name: "P250 | Franklin", maxVal: 3.30, minVal: 3.30, color: "#4b69ff", chance: 6.037, fixedCondition: "MW" },
-            { name: "M4A1-S | Rose Hex", maxVal: 2.88, minVal: 0.51, color: "#4b69ff", chance: 10.015 },
-            { name: "G3SG1 | Dream Glade", maxVal: 1.73, minVal: 0.91, color: "#4b69ff", chance: 8.344 },
-            { name: "Glock-18 | Ocean Topo", maxVal: 0.91, minVal: 0.08, color: "#4b69ff", chance: 10.543 }
-        ]
-    },
+    name: "Neon Blade Box",
+    price: 2.50,
+    img: "https://img.clash.gg/cases?q=https%3A%2F%2Fmedia.discordapp.net%2Fattachments%2F449030703426961418%2F1230909108526383204%2FSurvival_Guide.png%3Fex%3D66350870%26is%3D66229370%26hm%3Dce48650d53dbcc8f318b65e8f5c13dffdc971d5842d2052368d79fc54adca2e9%26%3D%26format%3Dwebp%26quality%3Dlossless%26width%3D924%26height%3D978",
+    items: [
+        { name: "★ Survival Knife | Doppler Phase 3", maxVal: 309.73, minVal: 309.73, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlM19saWdodC5kOGFkZTQ2ZWQ0ZmY3MGY4YjcxMzI3MDMyZTM1NDE5MjhhYWIxYTA5LnBuZw--/auto/auto/85/notrim/d62bb8ac23e9ff4da34f8e74ddb2fbc9.webp", weaponId: 518, paintKit: 420 },
+        { name: "★ Flip Knife | Autotronic", maxVal: 252.51, minVal: 252.51, color: "#ffb703", chance: 0.010, fixedCondition: "FT", weaponId: 505, paintKit: 1116 },
+        { name: "★ Ursus Knife | Tiger Tooth", maxVal: 227.18, minVal: 227.18, color: "#ffb703", chance: 0.010, fixedCondition: "FN", weaponId: 519, paintKit: 409 },
+
+        { name: "AK-47 | Neon Rider", maxVal: 127.36, minVal: 127.36, color: "#eb4b4b", chance: 0.011, fixedCondition: "MW", weaponId: 7, paintKit: 707 },
+        { name: "M4A4 | Full Throttle", maxVal: 83.20, minVal: 83.20, color: "#eb4b4b", chance: 0.029, fixedCondition: "FT", weaponId: 16, paintKit: 631 },
+        { name: "AWP | Wildfire", maxVal: 74.74, minVal: 74.74, color: "#eb4b4b", chance: 0.047, fixedCondition: "FT", weaponId: 9, paintKit: 917 },
+        { name: "AK-47 | Asiimov", maxVal: 65.90, minVal: 61.01, color: "#eb4b4b", chance: 0.061, weaponId: 7, paintKit: 801 },
+
+        { name: "AK-47 | Point Disarray", maxVal: 37.66, minVal: 37.66, color: "#d32ce6", chance: 0.099, fixedCondition: "MW", weaponId: 7, paintKit: 506 },
+        { name: "M4A1-S | Party Animal", maxVal: 34.97, minVal: 34.97, color: "#d32ce6", chance: 0.124, fixedCondition: "FT", weaponId: 60, paintKit: 680 },
+        { name: "AK-47 | Searing Rage", maxVal: 14.40, minVal: 14.40, color: "#d32ce6", chance: 0.108, fixedCondition: "MW", weaponId: 7, paintKit: 1024 },
+
+        { name: "AK-47 | Ice Coaled", maxVal: 11.33, minVal: 6.43, color: "#d32ce6", chance: 3.032, weaponId: 7, paintKit: 1143 },
+        { name: "MAG-7 | Monster Call", maxVal: 8.81, minVal: 0.66, color: "#8847ff", chance: 10.958, weaponId: 27, paintKit: 577 },
+        { name: "R8 Revolver | Banana Cannon", maxVal: 8.66, minVal: 0.63, color: "#8847ff", chance: 10.197, weaponId: 64, paintKit: 1230 },
+        { name: "P250 | Inferno", maxVal: 8.36, minVal: 0.98, color: "#8847ff", chance: 9.583, weaponId: 36, paintKit: 516 },
+        { name: "Dual Berettas | Twin Turbo", maxVal: 8.11, minVal: 2.89, color: "#8847ff", chance: 6.817, weaponId: 2, paintKit: 747 },
+        { name: "Glock-18 | Shinobu", maxVal: 7.08, minVal: 6.98, color: "#8847ff", chance: 2.628, weaponId: 4, paintKit: 988 },
+        { name: "Glock-18 | Vogue", maxVal: 5.93, minVal: 5.89, color: "#8847ff", chance: 2.408, weaponId: 4, paintKit: 785 },
+        { name: "AWP | Duality", maxVal: 5.08, minVal: 5.08, color: "#8847ff", chance: 3.394, fixedCondition: "FT", weaponId: 9, paintKit: 1079 },
+
+        { name: "M4A1-S | Night Terror", maxVal: 4.12, minVal: 1.01, color: "#4b69ff", chance: 9.921, weaponId: 60, paintKit: 1148 },
+        { name: "AWP | Phobos", maxVal: 3.45, minVal: 3.45, color: "#4b69ff", chance: 5.614, fixedCondition: "FT", weaponId: 9, paintKit: 584 },
+        { name: "P250 | Franklin", maxVal: 3.30, minVal: 3.30, color: "#4b69ff", chance: 6.037, fixedCondition: "MW", weaponId: 36, paintKit: 295 },
+        { name: "M4A1-S | Rose Hex", maxVal: 2.88, minVal: 0.51, color: "#4b69ff", chance: 10.015, weaponId: 60, paintKit: 803 },
+        { name: "G3SG1 | Dream Glade", maxVal: 1.73, minVal: 0.91, color: "#4b69ff", chance: 8.344, weaponId: 11, paintKit: 1477 },
+        { name: "Glock-18 | Ocean Topo", maxVal: 0.91, minVal: 0.08, color: "#4b69ff", chance: 10.543, weaponId: 4, paintKit: 680 }
+    ]
+},
     sapphire_elite: {
-        name: "Sapphire Elite",
-        price: 45.00,
-        img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/Elixir.webp",
-        items: [
-            { name: "★ Karambit | Doppler - Sapphire", maxVal: 7437.61, minVal: 7437.61, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9rYXJhbWJpdF9hbV9zYXBwaGlyZV9tYXJibGVpemVkX2xpZ2h0LmE2NjEzZWQxMTRmNTM1NDdjYzE0ZjUyMjU1ZWI0OTkzMzEzNTM4OTcucG5n/auto/auto/85/notrim/ced533af9158e96f3a99b160c4104177.webp"},
-            { name: "★ Butterfly Knife | Gamma Doppler - Phase 4", maxVal: 3310.91, minVal: 3310.91, color: "#ffb703", chance: 0.031, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTRfbGlnaHQuMDUyMDJlMTQxZmM0MWUyM2VkY2ViYzQ1MmZkODhlMzEzMTIxZDY4NC5wbmc-/auto/auto/85/notrim/d6629ea568700f1e918d73522e5c6abe.webp" },
-            { name: "★ Bayonet | Doppler - Ruby", maxVal: 3061.20, minVal: 3061.20, color: "#ffb703", chance: 0.046, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5lOWQyNDdlNmY0NTBhMDkyYzkzOTUzYmZmOTNkYjQyNmI4MmYyMDY5LnBuZw--/auto/auto/85/notrim/90c16f77c63d454c11d43a74e1d96906.webp" },
-            { name: "★ Butterfly Knife | Lore", maxVal: 1690.34, minVal: 1690.34, color: "#ffb703", chance: 0.107, fixedCondition: "MW" },
-            { name: "★ M9 Bayonet | Doppler - Phase 3", maxVal: 1539.84, minVal: 1539.84, color: "#ffb703", chance: 0.099, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9tOV9iYXlvbmV0X2FtX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LjQzZTQ1MDdhMmZlOWI2MDg4OWYzZTUwM2M2NDVlZDkzNjE1N2EwMTcucG5n/auto/auto/85/notrim/0b9af664b7a9d66df0840a13cc36b439.webp" },
-            { name: "★ M9 Bayonet | Tiger Tooth", maxVal: 1105.55, minVal: 1105.55, color: "#ffb703", chance: 0.149, fixedCondition: "FN" },
-            { name: "★ Bayonet | Marble Fade", maxVal: 556.44, minVal: 556.44, color: "#ffb703", chance: 0.386, fixedCondition: "FN" },
-            { name: "★ Bayonet | Crimson Web", maxVal: 289.78, minVal: 289.78, color: "#ffb703", chance: 0.389, fixedCondition: "FT" },
-            { name: "★ Nomad Knife | Case Hardened", maxVal: 234.98, minVal: 234.98, color: "#ffb703", chance: 0.532, fixedCondition: "FT" },
-            { name: "★ Falchion Knife | Tiger Tooth", maxVal: 233.53, minVal: 233.53, color: "#ffb703", chance: 0.619, fixedCondition: "FN" },
-            { name: "★ Gut Knife | Doppler - Phase 3", maxVal: 200.58, minVal: 200.58, color: "#ffb703", chance: 0.479, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9ndXRfYW1fZG9wcGxlcl9waGFzZTNfbGlnaHQuNWJkODU2ODBiYmJjZGI1MmNmNmJiNGIyZTVjZmQwODNhZDMxMGE0OC5wbmc-/auto/auto/85/notrim/818534d69159488590295645514388b3.webp" },
-            { name: "★ Flip Knife | Bright Water", maxVal: 183.92, minVal: 183.92, color: "#ffb703", chance: 0.913, fixedCondition: "FT" },
-            { name: "★ Survival Knife | Urban Masked", maxVal: 96.28, minVal: 96.28, color: "#ffb703", chance: 3.482, fixedCondition: "MW" },
-            { name: "★ Shadow Daggers | Lore", maxVal: 95.52, minVal: 95.52, color: "#ffb703", chance: 3.356, fixedCondition: "FT" },
-            { name: "★ Gut Knife | Bright Water", maxVal: 91.44, minVal: 91.44, color: "#ffb703", chance: 3.684, fixedCondition: "FT" },
-            { name: "★ Shadow Daggers | Autotronic", maxVal: 85.46, minVal: 85.46, color: "#ffb703", chance: 3.702, fixedCondition: "FT" },
-            { name: "AK-47 | Frontside Misty", maxVal: 29.29, minVal: 29.29, color: "#eb4b4b", chance: 9.415, fixedCondition: "FT" },
-            { name: "AWP | Elite Build", maxVal: 27.52, minVal: 27.52, color: "#eb4b4b", chance: 10.002, fixedCondition: "FT" },
-            { name: "Glock-18 | Ramese's Reach", maxVal: 25.46, minVal: 25.46, color: "#d32ce6", chance: 9.618, fixedCondition: "FT" },
-            { name: "Galil AR | Chromatic Aberration", maxVal: 6.28, minVal: 6.28, color: "#d32ce6", chance: 8.966, fixedCondition: "FT" },
-            { name: "M4A4 | Tooth Fairy", maxVal: 5.92, minVal: 5.92, color: "#d32ce6", chance: 7.912, fixedCondition: "FT" },
-            { name: "AWP | PAW", maxVal: 5.14, minVal: 5.14, color: "#8847ff", chance: 10.647, fixedCondition: "MW" },
-            { name: "M4A4 | Evil Daimyo", maxVal: 4.74, minVal: 4.74, color: "#8847ff", chance: 10.072, fixedCondition: "FT" },
-            { name: "AK-47 | Safety Net", maxVal: 4.32, minVal: 4.32, color: "#8847ff", chance: 15.384, fixedCondition: "FT" }
-        ]
-    },
+    name: "Sapphire Elite",
+    price: 45.00,
+    img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/Elixir.webp",
+    items: [
+        { name: "★ Karambit | Doppler - Sapphire", maxVal: 7437.61, minVal: 7437.61, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9rYXJhbWJpdF9hbV9zYXBwaGlyZV9tYXJibGVpemVkX2xpZ2h0LmE2NjEzZWQxMTRmNTM1NDdjYzE0ZjUyMjU1ZWI0OTkzMzEzNTM4OTcucG5n/auto/auto/85/notrim/ced533af9158e96f3a99b160c4104177.webp", weaponId: 507, paintKit: 416 },
+        { name: "★ Butterfly Knife | Gamma Doppler - Phase 4", maxVal: 3310.91, minVal: 3310.91, color: "#ffb703", chance: 0.031, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTRfbGlnaHQuMDUyMDJlMTQxZmM0MWUyM2VkY2ViYzQ1MmZkODhlMzEzMTIxZDY4NC5wbmc-/auto/auto/85/notrim/d6629ea568700f1e918d73522e5c6abe.webp", weaponId: 515, paintKit: 573 },
+        { name: "★ Bayonet | Doppler - Ruby", maxVal: 3061.20, minVal: 3061.20, color: "#ffb703", chance: 0.046, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5lOWQyNDdlNmY0NTBhMDkyYzkzOTUzYmZmOTNkYjQyNmI4MmYyMDY5LnBuZw--/auto/auto/85/notrim/90c16f77c63d454c11d43a74e1d96906.webp", weaponId: 500, paintKit: 415 },
+
+        { name: "★ Butterfly Knife | Lore", maxVal: 1690.34, minVal: 1690.34, color: "#ffb703", chance: 0.107, fixedCondition: "MW", weaponId: 515, paintKit: 1104 },
+        { name: "★ M9 Bayonet | Doppler - Phase 3", maxVal: 1539.84, minVal: 1539.84, color: "#ffb703", chance: 0.099, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9tOV9iYXlvbmV0X2FtX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LjQzZTQ1MDdhMmZlOWI2MDg4OWYzZTUwM2M2NDVlZDkzNjE1N2EwMTcucG5n/auto/auto/85/notrim/0b9af664b7a9d66df0840a13cc36b439.webp", weaponId: 508, paintKit: 420 },
+        { name: "★ M9 Bayonet | Tiger Tooth", maxVal: 1105.55, minVal: 1105.55, color: "#ffb703", chance: 0.149, fixedCondition: "FN", weaponId: 508, paintKit: 409 },
+        { name: "★ Bayonet | Marble Fade", maxVal: 556.44, minVal: 556.44, color: "#ffb703", chance: 0.386, fixedCondition: "FN", weaponId: 500, paintKit: 413 },
+        { name: "★ Bayonet | Crimson Web", maxVal: 289.78, minVal: 289.78, color: "#ffb703", chance: 0.389, fixedCondition: "FT", weaponId: 500, paintKit: 12 },
+        { name: "★ Nomad Knife | Case Hardened", maxVal: 234.98, minVal: 234.98, color: "#ffb703", chance: 0.532, fixedCondition: "FT", weaponId: 521, paintKit: 44 },
+        { name: "★ Falchion Knife | Tiger Tooth", maxVal: 233.53, minVal: 233.53, color: "#ffb703", chance: 0.619, fixedCondition: "FN", weaponId: 512, paintKit: 409 },
+        { name: "★ Gut Knife | Doppler - Phase 3", maxVal: 200.58, minVal: 200.58, color: "#ffb703", chance: 0.479, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9ndXRfYW1fZG9wcGxlcl9waGFzZTNfbGlnaHQuNWJkODU2ODBiYmJjZGI1MmNmNmJiNGIyZTVjZmQwODNhZDMxMGE0OC5wbmc-/auto/auto/85/notrim/818534d69159488590295645514388b3.webp", weaponId: 506, paintKit: 420 },
+        { name: "★ Flip Knife | Bright Water", maxVal: 183.92, minVal: 183.92, color: "#ffb703", chance: 0.913, fixedCondition: "FT", weaponId: 505, paintKit: 578 },
+        { name: "★ Survival Knife | Urban Masked", maxVal: 96.28, minVal: 96.28, color: "#ffb703", chance: 3.482, fixedCondition: "MW", weaponId: 518, paintKit: 143 },
+        { name: "★ Shadow Daggers | Lore", maxVal: 95.52, minVal: 95.52, color: "#ffb703", chance: 3.356, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
+        { name: "★ Gut Knife | Bright Water", maxVal: 91.44, minVal: 91.44, color: "#ffb703", chance: 3.684, fixedCondition: "FT", weaponId: 506, paintKit: 578 },
+        { name: "★ Shadow Daggers | Autotronic", maxVal: 85.46, minVal: 85.46, color: "#ffb703", chance: 3.702, fixedCondition: "FT", weaponId: 516, paintKit: 1116 },
+
+        { name: "AK-47 | Frontside Misty", maxVal: 29.29, minVal: 29.29, color: "#eb4b4b", chance: 9.415, fixedCondition: "FT", weaponId: 7, paintKit: 490 },
+        { name: "AWP | Elite Build", maxVal: 27.52, minVal: 27.52, color: "#eb4b4b", chance: 10.002, fixedCondition: "FT", weaponId: 9, paintKit: 525 },
+        { name: "Glock-18 | Ramese's Reach", maxVal: 25.46, minVal: 25.46, color: "#d32ce6", chance: 9.618, fixedCondition: "FT", weaponId: 4, paintKit: 1185 },
+        { name: "Galil AR | Chromatic Aberration", maxVal: 6.28, minVal: 6.28, color: "#d32ce6", chance: 8.966, fixedCondition: "FT", weaponId: 13, paintKit: 1038 },
+        { name: "M4A4 | Tooth Fairy", maxVal: 5.92, minVal: 5.92, color: "#d32ce6", chance: 7.912, fixedCondition: "FT", weaponId: 16, paintKit: 971 },
+        { name: "AWP | PAW", maxVal: 5.14, minVal: 5.14, color: "#8847ff", chance: 10.647, fixedCondition: "MW", weaponId: 9, paintKit: 718 },
+        { name: "M4A4 | Evil Daimyo", maxVal: 4.74, minVal: 4.74, color: "#8847ff", chance: 10.072, fixedCondition: "FT", weaponId: 16, paintKit: 480 },
+        { name: "AK-47 | Safety Net", maxVal: 4.32, minVal: 4.32, color: "#8847ff", chance: 15.384, fixedCondition: "FT", weaponId: 7, paintKit: 608 }
+    ]
+},
 };
 
 const axios = require('axios'); // Você pode precisar instalar: npm install axios
@@ -688,11 +688,6 @@ app.get('/api/cases', (req, res) => {
     res.json(caseData);
 });
 
-app.post('/api/update-avatar', async (req, res) => {
-    const user = await User.findByIdAndUpdate(req.session.userId, { avatar: req.body.avatar }, { new: true });
-    res.json({ success: true, user });
-});
-
 app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ success: true })));
 
 app.post('/api/sell-item', async (req, res) => {
@@ -1032,81 +1027,90 @@ app.post('/api/equip-item', async (req, res) => {
         const item = user.inventory.find(i => i.id === itemId);
         if (!item) return res.status(404).json({ error: "Item não encontrado" });
 
-        const isKnife = item.weaponId >= 500;
-        const teamsToOccupy = (team === 4) ? [2, 3] : [team];
+        const weaponId = parseInt(item.weaponId);
+        const paintKit = parseInt(item.paintKit);
+        const wear = parseFloat(item.wear) || 0.15;
+        const oldTeamStatus = item.equippedTeam; // Estado antes da mudança
 
+        const isKnife = weaponId >= 500 && weaponId <= 999;
+        const isGlove = (weaponId >= 5027 && weaponId <= 5035) || weaponId === 4725;
+        
         // --- 1. AÇÃO: DESEQUIPAR ---
         if (action === 'unequip') {
-            // Se for faca, removemos as entradas deste item específico nas duas tabelas
-            if (isKnife) {
-                await sqlConnection.query(
-                    `DELETE FROM wp_player_knife WHERE steamid = ? AND knife = ?`,
-                    [user.steamId, KNIFE_NAMES[item.weaponId]]
-                );
+            if (isGlove) {
+                await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+                await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+            } else if (isKnife) {
+                await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ?", [user.steamId]);
+                await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex BETWEEN 500 AND 999", [user.steamId]);
+            } else {
+                await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
             }
-            await sqlConnection.query(
-                `DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?`,
-                [user.steamId, item.weaponId]
-            );
             item.equippedTeam = 0;
         } 
         
         // --- 2. AÇÃO: EQUIPAR ---
         else {
-            // 2.1 Limpeza de conflitos no MongoDB e MySQL por Equipa
-            for (let tId of teamsToOccupy) {
+            // LÓGICA DE EXCLUSIVIDADE DO ITEM:
+            // Se estou a equipar APENAS num lado (2 ou 3) e este item estava no lado oposto ou em AMBOS,
+            // temos de o remover do lado onde ele não vai estar mais.
+            if (team === 2 || team === 3) {
+                const oppositeTeam = (team === 2) ? 3 : 2;
                 
+                // SÓ APAGA DO SQL SE FOR O MESMO ITEM A SER MOVIDO
+                if (oldTeamStatus === oppositeTeam || oldTeamStatus === 4) {
+                    if (isGlove) {
+                        await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_team = ?", [user.steamId, oppositeTeam]);
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex = ?", [user.steamId, oppositeTeam, weaponId]);
+                    } else if (isKnife) {
+                        await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ? AND weapon_team = ?", [user.steamId, oppositeTeam]);
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex BETWEEN 500 AND 999", [user.steamId, oppositeTeam]);
+                    } else {
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex = ?", [user.steamId, oppositeTeam, weaponId]);
+                    }
+                }
+            }
+
+            const teamsToOccupy = (team === 4) ? [2, 3] : [team];
+
+            for (let tId of teamsToOccupy) {
+                // RESOLUÇÃO DE CONFLITOS NO MONGODB
+                // Se eu equipar a Skin B no CT, a Skin A (que estava no CT) tem de perder o CT.
                 user.inventory.forEach(i => {
-                    const iIsKnife = i.weaponId >= 500;
-                    
-                    // Lógica para FACAS (Qualquer ID >= 500 conflita com outro ID >= 500 no mesmo lado)
-                    if (isKnife && iIsKnife) {
-                        if (i.equippedTeam === tId) i.equippedTeam = 0;
-                        else if (i.equippedTeam === 4) i.equippedTeam = (tId === 2 ? 3 : 2);
-                    } 
-                    // Lógica para ARMAS (AK conflita com AK, M4 com M4)
-                    else if (i.weaponId === item.weaponId) {
-                        if (i.equippedTeam === tId) i.equippedTeam = 0;
-                        else if (i.equippedTeam === 4) i.equippedTeam = (tId === 2 ? 3 : 2);
+                    const iId = parseInt(i.weaponId);
+                    const iIsGlove = (iId >= 5027 && iId <= 5035) || iId === 4725;
+                    const iIsKnife = iId >= 500 && iId <= 999;
+
+                    const isSameWeapon = (iId === weaponId);
+                    const isConflictGlove = (isGlove && iIsGlove);
+                    const isConflictKnife = (isKnife && iIsKnife);
+
+                    if (i.id !== item.id && (isSameWeapon || isConflictGlove || isConflictKnife)) {
+                        if (i.equippedTeam === tId) {
+                            i.equippedTeam = 0;
+                        } else if (i.equippedTeam === 4) {
+                            i.equippedTeam = (tId === 2 ? 3 : 2); // Mantém o lado oposto
+                        }
                     }
                 });
 
-                // Limpeza no MySQL específica para o LADO (tId)
-                if (isKnife) {
-                    // Remove QUALQUER faca que esteja no lado que vamos ocupar
-                    await sqlConnection.query(
-                        `DELETE FROM wp_player_knife WHERE steamid = ? AND weapon_team = ?`,
-                        [user.steamId, tId]
-                    );
-                    // Remove a pintura de QUALQUER faca (ID >= 500) nesse lado
-                    await sqlConnection.query(
-                        `DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex >= 500`,
-                        [user.steamId, tId]
-                    );
+                // SINCRONIZAÇÃO SQL (Substitui o que quer que esteja no slot de destino)
+                if (isGlove) {
+                    await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_team = ?", [user.steamId, tId]);
+                    await sqlConnection.query("INSERT INTO wp_player_gloves (steamid, weapon_team, weapon_defindex) VALUES (?, ?, ?)", [user.steamId, tId, weaponId]);
+                    await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex = ?", [user.steamId, tId, weaponId]);
+                    await sqlConnection.query("INSERT INTO wp_player_skins (steamid, weapon_team, weapon_defindex, weapon_paint_id, weapon_wear, weapon_seed) VALUES (?, ?, ?, ?, ?, ?)", [user.steamId, tId, weaponId, paintKit, wear, 123]);
+                } else if (isKnife) {
+                    await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ? AND weapon_team = ?", [user.steamId, tId]);
+                    const knifeName = KNIFE_NAMES[weaponId] || "weapon_knife";
+                    await sqlConnection.query("INSERT INTO wp_player_knife (steamid, weapon_team, knife) VALUES (?, ?, ?)", [user.steamId, tId, knifeName]);
+                    await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex BETWEEN 500 AND 999", [user.steamId, tId]);
+                    await sqlConnection.query("INSERT INTO wp_player_skins (steamid, weapon_team, weapon_defindex, weapon_paint_id, weapon_wear, weapon_seed) VALUES (?, ?, ?, ?, ?, ?)", [user.steamId, tId, weaponId, paintKit, wear, 123]);
                 } else {
-                    // Remove a skin desta arma específica nesse lado
-                    await sqlConnection.query(
-                        `DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex = ?`,
-                        [user.steamId, tId, item.weaponId]
-                    );
+                    await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_team = ? AND weapon_defindex = ?", [user.steamId, tId, weaponId]);
+                    await sqlConnection.query("INSERT INTO wp_player_skins (steamid, weapon_team, weapon_defindex, weapon_paint_id, weapon_wear, weapon_seed) VALUES (?, ?, ?, ?, ?, ?)", [user.steamId, tId, weaponId, paintKit, wear, 123]);
                 }
-
-                // 2.2 Inserção no MySQL
-                if (isKnife) {
-                    const knifeName = KNIFE_NAMES[item.weaponId] || "weapon_knife";
-                    await sqlConnection.query(
-                        `INSERT INTO wp_player_knife (steamid, weapon_team, knife) VALUES (?, ?, ?)`,
-                        [user.steamId, tId, knifeName]
-                    );
-                }
-
-                await sqlConnection.query(
-                    `INSERT INTO wp_player_skins (steamid, weapon_team, weapon_defindex, weapon_paint_id, weapon_wear, weapon_seed) VALUES (?, ?, ?, ?, ?, ?)`,
-                    [user.steamId, tId, item.weaponId, item.paintKit, item.wear || 0.0001, 123]
-                );
             }
-
-            // 2.3 Atualiza o estado do item atual
             item.equippedTeam = team;
         }
 
@@ -1115,8 +1119,8 @@ app.post('/api/equip-item', async (req, res) => {
         res.json({ success: true, inventory: user.inventory });
 
     } catch (e) {
-        console.error("ERRO AO GERIR LOADOUT:", e);
-        res.status(500).json({ error: "Erro no banco de dados" });
+        console.error("ERRO LOADOUT:", e);
+        res.status(500).json({ error: "Erro interno" });
     }
 });
 // ROTA PÚBLICA PARA O PLUGIN DO SERVIDOR CS2

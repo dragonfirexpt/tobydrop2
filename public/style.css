@@ -2202,13 +2202,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .stats-box span {
     font-size: 18px;
     font-weight: 800;
-    color: #fff;
+    color: var(--accent);
     font-family: 'Outfit', sans-serif;
 }
 
-.stats-box b {
-    color: var(--accent); /* Destaca os números */
-}
 
 .round-side { text-align: left; }
 .value-side { text-align: right; }
@@ -2983,3 +2980,331 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .l-badge.ct { background: #5d79ae; } /* Azul CT */
 .l-badge.t { background: #de9b35; }  /* Laranja T */
 
+/* Container lateral na Arena */
+.arena-inventory {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    height: 500px;
+    overflow-y: auto;
+}
+
+/* O CARD - Layout exato do print da Dragon Lore */
+.won-item-card {
+    display: grid;
+    grid-template-columns: 60px 1fr auto; /* Imagem | Texto | Preço */
+    align-items: center;
+    background: #0a0c10;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 10px 15px;
+    gap: 15px;
+    min-height: 65px; /* Altura compacta */
+    position: relative;
+    border-left: 4px solid var(--rarity-color); /* A linha colorida na esquerda */
+}
+
+/* Container da Imagem */
+.card-img-wrap {
+    width: 60px;
+    display: flex;
+    justify-content: center;
+}
+
+.card-img-wrap img {
+    width: 100%;
+    max-height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+
+/* Coluna de Texto (Weapon, Name e FT) */
+.card-details {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    min-width: 0;
+}
+
+.weapon-type {
+    font-size: 10px;
+    color: #555;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: -2px;
+}
+
+.skin-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A Condição (FT) - Agora colada por baixo do nome */
+.skin-meta {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--rarity-color); /* Cor da raridade como no print */
+    margin-top: 1px;
+}
+
+/* Preço na Direita */
+.card-value {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--accent); /* Cor azulada do print */
+    text-align: right;
+    min-width: 80px;
+}
+
+/* Animação de entrada */
+.anim-entry {
+    animation: itemSlide 0.3s ease-out forwards;
+}
+
+@keyframes itemSlide {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Container lateral - Ajuste de espaçamento */
+.arena-inventory {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+/* O CARD - Layout Dragon Lore */
+.won-item-card {
+    display: grid;
+    /* 80px para imagem | 1fr para o texto | auto para o preço */
+    grid-template-columns: 80px 1fr auto; 
+    align-items: center;
+    background: #090a0d; /* Fundo escuro como o print */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px 20px;
+    min-height: 70px;
+    position: relative;
+    border-left: 4px solid var(--rarity-color); /* A barra colorida na esquerda */
+    gap: 15px;
+}
+
+/* Imagem na esquerda */
+.card-img-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-img-wrap img {
+    width: 65px;
+    height: auto;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+
+/* COLUNA DE TEXTO - Aqui é onde o WW fica debaixo do nome */
+.card-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left; /* TUDO alinhado à esquerda */
+}
+
+.weapon-type {
+    font-size: 10px;
+    color: #555; /* Cinzento como o print */
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.skin-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin: 1px 0;
+}
+
+.skin-meta {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--rarity-color); /* Cor da raridade (ex: roxo ou azul) */
+    text-transform: uppercase;
+}
+
+/* PREÇO NA DIREITA */
+.card-value {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--accent); /* Cor azul claro/cyan do seu site */
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Animação de entrada */
+.anim-entry {
+    animation: arenaPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes arenaPop {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* O CARD - Estilo Dragon Lore com Brilho */
+.won-item-card {
+    display: grid !important;
+    /* 80px Imagem | 1fr Texto (ocupa o resto) | auto Preço */
+    grid-template-columns: 80px 1fr auto !important; 
+    align-items: center !important;
+    background: #090a0d !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    margin-bottom: 10px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    position: relative !important;
+    gap: 15px !important;
+    overflow: hidden !important;
+
+    /* A BARRA COLORIDA NA ESQUERDA */
+    border-left: 5px solid var(--rarity-color) !important;
+
+    /* O BRILHO (GLOW) INTERNO */
+
+}
+.won-item-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0;
+    width: 80px; height: 100%;
+    background: linear-gradient(to right, var(--rarity-color), transparent) !important;
+    opacity: 0.08 !important; 
+    pointer-events: none;
+    z-index: 1;
+}
+/* CONTAINER DA IMAGEM */
+.card-img-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.card-img-wrap img {
+    width: 65px !important;
+    height: auto !important;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8)) !important;
+}
+
+/* COLUNA DE TEXTO - AQUI É ONDE SE RESOLVE O ALINHAMENTO */
+.card-details {
+    display: flex !important;
+    flex-direction: column !important;
+    /* FORÇA TUDO PARA A ESQUERDA */
+    align-items: flex-start !important; 
+    justify-content: center !important;
+    text-align: left !important;
+    min-width: 0 !important;
+    gap: 5px !important; 
+}
+
+.weapon-type {
+    font-size: 10px !important;
+    color: #666 !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+}
+
+.skin-name {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 1px 0 !important;
+}
+
+/* A CONDIÇÃO (WW, FT) - AGORA COLADA NA ESQUERDA */
+.skin-meta {
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    color: var(--accent) !important; /* Cor da skin */
+    text-transform: uppercase !important;
+    display: block !important;
+    /* Remove qualquer margem automática que o flex possa herdar */
+    margin-right: auto !important; 
+}
+
+/* PREÇO NA DIREITA */
+.card-value {
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    color: var(--accent) !important;
+    text-align: right !important;
+    padding-left: 10px !important;
+}
+/* COLUNA DE TEXTO - Espaçamento aumentado e centrada verticalmente */
+.card-details {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important; 
+    align-items: flex-start !important; 
+    height: 100% !important;
+    min-width: 0 !important;
+    z-index: 2;
+    
+    /* AUMENTA O ESPAÇO ENTRE AS LINHAS (TIPO | NOME | CONDIÇÃO) */
+    gap: 3px !important; 
+}
+
+.weapon-type {
+    font-size: 8px !important;
+    color: #555 !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+    line-height: 1 !important; /* Reseta a altura da linha para o gap controlar o espaço */
+}
+
+.skin-name {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+.skin-meta {
+    font-size: 9px !important;
+    font-weight: 900 !important;
+    color: var(--accent) !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+.arena-balance span {
+    font-variant-numeric: tabular-nums;
+    display: inline-block;
+    min-width: 80px; /* Evita que o layout se mova se o número for pequeno */
+}
+
+/* Opcional: Adicionar um efeito de brilho enquanto o valor sobe */
+@keyframes balancePulse {
+    0% { filter: brightness(1); transform: scale(1); }
+    50% { filter: brightness(1.5); transform: scale(1.05); }
+    100% { filter: brightness(1); transform: scale(1); }
+}
+
+.value-counting {
+    animation: balancePulse 0.5s ease-in-out;
+}

@@ -196,19 +196,23 @@ const getTotalSelectedValue = () => {
     return upgraderState.selectedInputs.reduce((sum, item) => sum + item.value, 0);
 };
 async function initUpgrader() {
+    // 1. Carrega as skins do sistema apenas UMA vez
     if (upgraderState.allSkins.length === 0) {
         const res = await fetch('/api/all-skins');
         let rawSkins = await res.json();
-        // ALWAYS SORT BY PRICE LOW TO HIGH
         upgraderState.allSkins = rawSkins.sort((a,b) => a.price - b.price);
     }
     
+    // 2. Chama a função de atualizar o inventário (que criamos abaixo)
+    await refreshUpgraderInventory();
+    
+    renderTargets();
+}
+async function refreshUpgraderInventory() {
     const invRes = await fetch('/api/me');
     const invData = await invRes.json();
     upgraderInv = invData.user.inventory || [];
-    
     renderInventory();
-    renderTargets();
 }
 function renderPagination(id, totalItems, current, callback) {
     const totalPages = Math.ceil(totalItems / UP_PAGE_SIZE);
@@ -418,7 +422,7 @@ async function startUpgrade() {
         }, 50);
 
         // 4. Mostrar o resultado após a agulha parar (5.5 segundos)
-        setTimeout(() => {
+        setTimeout(async () => { // Adicionamos async aqui para o await funcionar
             if (data.win) {
                 if (upgradeWinSound) upgradeWinSound.play().catch(e => {});
                 showUpgradeResult(true, upgraderState.selectedTarget);
@@ -429,13 +433,14 @@ async function startUpgrade() {
 
             if (data.balance !== undefined) updateBalanceUI(data.balance);
             
-            // Resetar estados
+            // Resetar estados de seleção
             upgraderState.selectedInputs = [];
             upgraderState.selectedTarget = null;
             btn.disabled = false;
             
-            // Renderiza novamente para limpar as seleções
-            renderInventory();
+            // --- CORREÇÃO AQUI ---
+            // Recarrega o inventário do servidor para remover os itens usados e adicionar o novo (se ganhou)
+            await refreshUpgraderInventory(); 
             renderTargets();
         }, 5500);
 
@@ -789,12 +794,10 @@ function addWonItemToArena(playerNum, item) {
     const nameData = parseSkinName(item.name);
     
     const itemCard = document.createElement('div');
-    // Adicionamos a classe 'anim-entry' para disparar o CSS
     itemCard.className = 'won-item-card anim-entry';
-    itemCard.style.borderLeft = `4px solid ${item.color}`;
     
-    // Efeito de brilho baseado na cor da skin
-    itemCard.style.boxShadow = `inset 50px 0 30px -30px ${item.color}22`; 
+    // Define a cor para o CSS usar no brilho e na borda
+    itemCard.style.setProperty('--rarity-color', item.color); 
 
     itemCard.innerHTML = `
         <div class="card-img-wrap">
@@ -810,13 +813,43 @@ function addWonItemToArena(playerNum, item) {
     
     inv.prepend(itemCard); 
 }
+function animateBattleValue(elementId, start, end, duration) {
+    const obj = document.getElementById(elementId);
+    if (!obj) return;
 
+    let startTime = null;
+
+    function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        // Calcula o valor atual baseado no progresso (0 a 1)
+        const current = start + (end - start) * progress;
+        
+        obj.innerText = formatCurrency(current);
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    }
+
+    window.requestAnimationFrame(step);
+}
 function updateUI() {
     if(!currentUser) return;
-    // UPDATED: Use formatCurrency
+    
+    // Atualiza o saldo
     document.getElementById('balance').innerText = `$${formatCurrency(currentUser.balance)}`;
+    
+    // Atualiza o avatar na barra superior
     document.getElementById('user-avatar-top').src = currentUser.avatar;
-    document.getElementById('settings-avatar-prev').src = currentUser.avatar;
+    
+    // ATUALIZAÇÃO: Novos IDs da aba Settings
+    const settingsImg = document.getElementById('steam-avatar-display');
+    const settingsName = document.getElementById('steam-username-display');
+    
+    if(settingsImg) settingsImg.src = currentUser.avatar;
+    if(settingsName) settingsName.innerText = currentUser.username;
 }
 
 function showHome() {
@@ -1180,7 +1213,35 @@ async function loadInventory() {
     currentUser = data.user;
     const grid = document.getElementById('inventory-grid');
     
-    grid.innerHTML = data.user.inventory.map(item => {
+    // 1. Pegar os valores dos filtros do HTML
+    const sortBy = document.getElementById('sort-price').value;
+    const filterRarity = document.getElementById('filter-rarity').value;
+
+    // 2. Criar uma cópia do inventário para não alterar o original
+    let items = [...data.user.inventory];
+
+    // 3. Aplicar Filtro de Raridade
+    if (filterRarity !== 'all') {
+        items = items.filter(item => item.color === filterRarity);
+    }
+
+    // 4. Aplicar Ordenação
+    if (sortBy === 'low') {
+        items.sort((a, b) => a.value - b.value);
+    } else if (sortBy === 'high') {
+        items.sort((a, b) => b.value - a.value);
+    } else if (sortBy === 'newest') {
+        // Assume que os últimos itens adicionados estão no fim do array
+        items.reverse();
+    }
+
+    // 5. Renderizar a lista filtrada/ordenada
+    if (items.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #555; padding: 40px;">No items found with these filters.</div>`;
+        return;
+    }
+
+    grid.innerHTML = items.map(item => {
         const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
         
         let badgesHtml = '<div class="loadout-badges">';
@@ -1311,13 +1372,15 @@ socket.on('startBattleSpin', async (data) => {
             executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true),
             executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true)
         ]);
-
+        const oldP1 = p1Acc;
+        const oldP2 = p2Acc;
         p1Acc += data.p1Rolls[i].value;
         p2Acc += data.p2Rolls[i].value;
         document.getElementById('p1-total-val').innerText = formatCurrency(p1Acc);
         document.getElementById('p2-total-val').innerText = formatCurrency(p2Acc);
-        
-        await new Promise(r => setTimeout(r, 1000)); 
+        animateBattleValue('p1-total-val', oldP1, p1Acc, 1000); // 1000ms = 1 segundo de animação
+        animateBattleValue('p2-total-val', oldP2, p2Acc, 1000);
+        await new Promise(r => setTimeout(r, 500)); 
     }
 
     // Resultado Final
@@ -1344,30 +1407,7 @@ socket.on('chatMessage', (data) => {
 });
 
 // Settings & Auth
-document.getElementById('avatar-input').onchange = function(e) {
-    const reader = new FileReader();
-    reader.onload = function() { document.getElementById('settings-avatar-prev').src = reader.result; };
-    reader.readAsDataURL(e.target.files[0]);
-};
 
-async function uploadAvatar() {
-    const btn = event.target;
-    btn.classList.add('btn-loading');
-    try {
-        const res = await fetch('/api/update-avatar', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ avatar: document.getElementById('settings-avatar-prev').src })
-        });
-        const data = await res.json();
-        if(data.success) { 
-            currentUser = data.user; 
-            updateUI(); 
-            alert("Saved!"); 
-        }
-    } finally {
-        btn.classList.remove('btn-loading');
-    }
-}
 
 async function auth(type) {
     const btn = event.target; // Get the clicked button

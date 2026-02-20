@@ -302,16 +302,18 @@
 </section>
 
                 <section id="settings-tab" class="tab-view" style="display:none">
-                    <div class="settings-card">
-                        <h2>SETTINGS</h2>
-                        <div class="settings-avatar">
-                            <img id="settings-avatar-prev" src="">
-                            <button class="btn-secondary" onclick="document.getElementById('avatar-input').click()">CHANGE IMAGE</button>
-                            <input type="file" id="avatar-input" accept="image/*" hidden>
-                        </div>
-                        <button class="btn-primary" onclick="uploadAvatar()" style="width: 100%">SAVE PROFILE</button>
-                    </div>
-                </section>
+    <div class="settings-card">
+        <h2>STEAM ACCOUNT</h2>
+        <div class="settings-avatar">
+            <img id="steam-avatar-display" src="" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 20px;">
+            <h3 id="steam-username-display" style="margin: 0; color: #fff;">Username</h3>
+            <p style="color: #555; font-size: 12px; margin-top: 10px;">Your profile information is synced with Steam.</p>
+        </div>
+        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <button class="btn-secondary" onclick="logout()" style="width: 100%">LOGOUT FROM STEAM</button>
+        </div>
+    </div>
+</section>
             </main>
 
             <aside class="chat-sidebar">
