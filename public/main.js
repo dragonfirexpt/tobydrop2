@@ -7,6 +7,8 @@ const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/201
 winSound.volume = 0.25; // Set volume to 50%
 const spinSound = new Audio('/assets/spinner.mp3');
 const landSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+const superLandSound = new Audio('/assets/super_spin_land.mp3');
+superLandSound.volume = 0.5;
 const upgradeStartSound = new Audio('/assets/upgrade.mp3');
 const upgradeWinSound = new Audio('/assets/upgrade_win.mp3');
 const upgradeLossSound = new Audio('/assets/upgrade_lose.mp3');
@@ -26,7 +28,44 @@ let upgraderState = {
     selectedInputs: [], // DEVE ser um array vazio
     selectedTarget: null
 };
+const WEAPON_TEAMS = {
+    // Terroristas (TR) Only
+    4: 'tr',   // Glock-18
+    7: 'tr',   // AK-47
+    11: 'tr',  // G3SG1
+    13: 'tr',  // Galil AR
+    17: 'tr',  // Mac-10
+    29: 'tr',  // Sawed-Off
+    30: 'tr',  // Tec-9
+    39: 'tr',  // SG 553
 
+    // Counter-Terrorists (CT) Only
+    3: 'ct',   // Five-SeveN
+    8: 'ct',   // AUG
+    10: 'ct',  // FAMAS
+    16: 'ct',  // M4A4
+    27: 'ct',  // Mag-7
+    32: 'ct',  // P2000
+    34: 'ct',  // MP9
+    38: 'ct',  // Scar-20
+    60: 'ct',  // M4A1-S
+    61: 'ct',  // USP-S
+};
+
+function getWeaponTeamType(weaponId) {
+    const id = parseInt(weaponId); // Força ser um número inteiro
+    console.log("Checking weaponId:", id); // Veja isto no F12 do navegador
+
+    if (id >= 500) return 'both'; // Facas
+    
+    // Se o ID estiver na lista de TR, retorna 'tr'
+    if (WEAPON_TEAMS[id]) {
+        return WEAPON_TEAMS[id];
+    }
+
+    // Se não estiver na lista (ex: AWP, Deagle, P250, Scouts), é para ambos
+    return 'both'; 
+}
 let upgraderInv = [];
 let upgraderPageInv = 0;
 let upgraderPageTargets = 0;
@@ -66,6 +105,68 @@ function renderTargets() {
         renderTargets();
     });
 }
+function openSkinModal(item) {
+    const modal = document.getElementById('skin-action-modal');
+    const container = document.getElementById('modal-actions-container');
+    
+    document.getElementById('modal-skin-img').src = item.img;
+    document.getElementById('modal-skin-name').innerText = item.name;
+    document.getElementById('modal-skin-cond').innerText = item.conditionShort;
+    document.getElementById('modal-skin-price').innerText = `$${formatCurrency(item.value)}`;
+    
+    const teamType = getWeaponTeamType(item.weaponId);
+    let html = '';
+
+    // Botões inteligentes baseados no lado
+    if (teamType === 'tr' || teamType === 'both') 
+        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 2)">Equip Terrorist</button>`;
+    
+    if (teamType === 'ct' || teamType === 'both') 
+        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 3)">Equip Counter-Terrorist</button>`;
+    
+    if (teamType === 'both') 
+        html += `<button class="btn-action btn-full" onclick="executeSkinAction('${item.id}', 4)">Equip Both Sides</button>`;
+
+    // Só aparece Unequip se estiver equipado em algum lado
+    if (item.equippedTeam > 0) {
+        html += `<button class="btn-action btn-unequip-action btn-full" onclick="executeSkinAction('${item.id}', 0, 'unequip')">Unequip from Loadout</button>`;
+    }
+
+    html += `<button class="btn-action btn-sell-action btn-full" onclick="executeSellFromModal('${item.id}')">Sell Skin</button>`;
+
+    container.innerHTML = html;
+    modal.style.display = 'flex';
+}
+async function executeSkinAction(itemId, team, action = 'equip') {
+    const res = await fetch('/api/equip-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, team, action })
+    });
+    const data = await res.json();
+    if (data.success) {
+        closeSkinModal();
+        loadInventory();
+    }
+}
+async function executeSellFromModal(itemId) {
+    // Usar a função de venda que já tens no main.js
+    const res = await fetch('/api/sell-item', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ itemId })
+    });
+    const data = await res.json();
+    if(data.success) {
+        updateBalanceUI(data.balance);
+        closeSkinModal();
+        loadInventory();
+    }
+}
+function closeSkinModal() {
+    closeModalWithAnim('skin-action-modal');
+}
+
 function renderInventory() {
     const grid = document.getElementById('upgrade-inv-grid');
     const start = upgraderPageInv * UP_PAGE_SIZE;
@@ -270,8 +371,7 @@ function showUpgradeResult(win, item) {
     }
 }
 function closeUpgradeModal() {
-    document.getElementById('upgrade-modal').style.display = 'none';
-    // Refresh lists
+    closeModalWithAnim('upgrade-modal');
     initUpgrader();
 }
 async function startUpgrade() {
@@ -280,9 +380,9 @@ async function startUpgrade() {
     const btn = document.getElementById('btn-do-upgrade');
     btn.disabled = true;
 
-    // Toca o som de início
-
     const wrapper = document.getElementById('upgrade-needle-wrapper');
+    
+    // 1. Reset IMEDIATO da agulha (sem animação)
     wrapper.style.transition = 'none';
     wrapper.style.transform = 'rotate(0deg)';
 
@@ -291,7 +391,7 @@ async function startUpgrade() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                inputItemIds: upgraderState.selectedInputs.map(i => i.id), // Array de IDs
+                inputItemIds: upgraderState.selectedInputs.map(i => i.id),
                 targetSkinName: upgraderState.selectedTarget.name,
                 targetPrice: upgraderState.selectedTarget.price,
                 targetCondition: upgraderState.selectedTarget.displayCond 
@@ -301,42 +401,46 @@ async function startUpgrade() {
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
 
-        const randomSpins = 7 + Math.floor(Math.random() * 5);
+        // 2. Cálculo da rotação (7 voltas completas + a posição do roll)
+        const randomSpins = 7 + Math.floor(Math.random() * 3);
         const finalDeg = (data.roll / 100) * 360;
         const totalRotation = (randomSpins * 360) + finalDeg;
 
+        // 3. Iniciar a animação com um pequeno delay para o navegador processar o reset
         setTimeout(() => {
             wrapper.style.transition = 'transform 5s cubic-bezier(0.15, 0, 0.15, 1)';
             wrapper.style.transform = `rotate(${totalRotation}deg)`;
+            
+            if (upgradeStartSound) {
                 upgradeStartSound.currentTime = 0;
-    upgradeStartSound.play();
+                upgradeStartSound.play().catch(e => {});
+            }
         }, 50);
 
+        // 4. Mostrar o resultado após a agulha parar (5.5 segundos)
         setTimeout(() => {
             if (data.win) {
-                upgradeWinSound.currentTime = 0;
-                upgradeWinSound.play();
+                if (upgradeWinSound) upgradeWinSound.play().catch(e => {});
                 showUpgradeResult(true, upgraderState.selectedTarget);
             } else {
-                upgradeLossSound.currentTime = 0;
-                upgradeLossSound.play();
+                if (upgradeLossSound) upgradeLossSound.play().catch(e => {});
                 showUpgradeResult(false, upgraderState.selectedTarget);
             }
 
             if (data.balance !== undefined) updateBalanceUI(data.balance);
             
-            // Resetar seleção
+            // Resetar estados
             upgraderState.selectedInputs = [];
             upgraderState.selectedTarget = null;
             btn.disabled = false;
-
-            wrapper.style.transition = 'none';
-            wrapper.style.transform = 'rotate(0deg)';
-
+            
+            // Renderiza novamente para limpar as seleções
+            renderInventory();
+            renderTargets();
         }, 5500);
 
     } catch (e) {
-        console.error(e);
+        alert(e.message);
         btn.disabled = false;
     }
 }
@@ -428,15 +532,72 @@ function renderAvailableCasesForBattle() {
     `).join('');
 }
 function openBattleModal() {
-    document.getElementById('battle-modal').style.display = 'flex';
+    const modal = document.getElementById('battle-modal');
+    modal.style.display = 'flex'; // Isso vai disparar as animações do CSS
     selectedCasesForBattle = [];
     updateModalSelected();
     renderAvailableCasesForBattle(); // Chama a função de renderização
 }
+// Função genérica para fechar qualquer modal com animação
+function closeModalWithAnim(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
 
+    // Adiciona a classe de animação de saída
+    modal.classList.add('closing');
+
+    // Espera 300ms (o tempo definido no CSS) para remover o elemento
+    setTimeout(() => {
+        modal.style.display = 'none';
+        modal.classList.remove('closing');
+    }, 300);
+}
+
+// Atualize suas funções específicas para usar a nova lógica:
+function closeBattleModal() {
+    closeModalWithAnim('battle-modal');
+}
+
+function closeSellAllModal() {
+    closeModalWithAnim('sell-all-modal');
+}
+
+function closeUpgradeModal() {
+    closeModalWithAnim('upgrade-modal');
+}
+
+// Função de troca de abas (SwitchTab)
+// Já deve funcionar com o CSS novo, mas vamos garantir que ela limpe animações anteriores
+function switchTab(id, el) {
+    const tabs = document.querySelectorAll('.tab-view');
+    tabs.forEach(t => {
+        t.style.display = 'none';
+    });
+
+    const targetTab = document.getElementById(id);
+    if (targetTab) {
+        targetTab.style.display = 'block';
+        // O CSS cuidará do "fade in" automaticamente ao mudar para display: block
+    }
+
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+
+// Atualize também a função showHome para manter a consistência
+function showHome() {
+    document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    
+    const homeTab = document.getElementById('home-tab');
+    homeTab.style.display = 'block';
+    
+    const btnHome = document.querySelector('button[onclick="showHome()"]');
+    if (btnHome) btnHome.classList.add('active');
+}
 
 function closeBattleModal() {
-    document.getElementById('battle-modal').style.display = 'none';
+    closeModalWithAnim('battle-modal');
 }
 
 function addCaseToBattle(id) {
@@ -454,7 +615,7 @@ function sellAllItems() {
 }
 
 function closeSellAllModal() {
-    document.getElementById('sell-all-modal').style.display = 'none';
+    closeModalWithAnim('sell-all-modal');
 }
 
 async function confirmSellAll() {
@@ -612,8 +773,6 @@ function showBattleGain(playerNum, amount) {
     el.style.left = `${rect.right + 10}px`;
     el.style.top = `${rect.top - 5}px`;
 
-    landSound.currentTime = 0;
-    landSound.play();
 
     setTimeout(() => el.remove(), 1500);
 }
@@ -723,8 +882,24 @@ function renderTrack(trackId, trackData) {
     if(!track) return;
 
     track.innerHTML = trackData.map((item, index) => {
-        const val = item.value || item.maxVal || item.minVal || 0;
+        const val = item.value || 0;
         
+        if (item.isSuperSpin) {
+            // Adicionamos preload e removemos o 'autoplay' para ele ficar parado
+            return `
+                <div class="item-node super-spin-node" data-index="${index}">
+                    <video muted playsinline class="super-spin-video" preload="auto">
+                        <source src="./assets/super_spin.webm" type="video/webm">
+                    </video>
+                    <div class="winner-info-box">
+                        <span class="win-condition">${item.conditionShort || ''}</span>
+                        <b class="win-name">${item.name}</b>
+                        <span class="win-price">$${formatCurrency(val)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         let rarityClass = '';
         const color = item.color ? item.color.toLowerCase() : '';
         if (color === '#ffb703') rarityClass = 'rarity-gold';
@@ -745,6 +920,102 @@ function renderTrack(trackId, trackData) {
         `;
     }).join('');
 }
+async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false) {
+    const spinner = document.getElementById(spinnerId);
+    if (!spinner) return;
+
+    const containerWidth = spinner.parentElement.offsetWidth;
+    const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+    const targetX = centerPrecisionX + (Math.random() * 60 - 30);
+
+    const isSuperWin = winnerData.value >= (casePrice * 2.5);
+
+    // 1. Reset e Início
+    spinner.style.transition = 'none';
+    spinner.style.transform = 'translateX(0)';
+    renderTrack(spinnerId, winnerData.track); 
+    await new Promise(r => setTimeout(r, 50));
+
+    // Giro 1
+    spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
+    spinner.style.transform = `translateX(-${targetX}px)`;
+    trackCenterItem(spinnerId);
+    spinSound.currentTime = 0;
+    spinSound.play().catch(e => {});
+    await new Promise(r => setTimeout(r, 5000));
+
+    // Snap
+    spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+    spinner.style.transform = `translateX(-${centerPrecisionX}px)`;
+    const node = spinner.querySelector('.item-node[data-index="50"]');
+    if(node) node.classList.add('is-winner');
+
+    // Som e Interface Inicial
+    if (isSuperWin) {
+        superLandSound.currentTime = 0;
+        superLandSound.play().catch(e => {});
+    } else {
+        landSound.currentTime = 0;
+        landSound.play().catch(e => {});
+        // Revela info se for comum
+        if(node) node.classList.add('reveal-final');
+        if(isBattle) {
+            addWonItemToArena(playerNum, winnerData);
+            showBattleGain(playerNum, winnerData.value);
+        }
+    }
+
+    await new Promise(r => setTimeout(r, 600));
+
+    // 2. Lógica do Super Spin
+    if (isSuperWin) {
+        const video = node ? node.querySelector('video') : null;
+        if(video) { video.currentTime = 0; video.play(); }
+
+        // ESPERA 3 SEGUNDOS DE VÍDEO
+        await new Promise(r => setTimeout(r, 3000));
+        spinSound.currentTime = 0;
+    spinSound.play().catch(e => {}); 
+        // Monta track do segundo giro (skins caras)
+        const topItems = itemsPool.filter(i => (i.maxVal || i.minVal) >= (casePrice * 2.5));
+        const superTrack = [];
+        for(let i=0; i<60; i++) {
+            const pick = topItems[Math.floor(Math.random() * topItems.length)];
+            superTrack.push(i === 50 ? { ...winnerData, isSuperSpin: false } : { ...pick, value: pick.maxVal, conditionShort: 'FN', isSuperSpin: false });
+        }
+
+        spinner.style.transition = 'none';
+        spinner.style.transform = 'translateX(0)';
+        renderTrack(spinnerId, superTrack); 
+        await new Promise(r => setTimeout(r, 50));
+
+        const superTargetX = centerPrecisionX + (Math.random() * 60 - 30);
+
+        // Segundo Giro (Rápido)
+        spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
+        spinner.style.transform = `translateX(-${superTargetX}px)`;
+
+        trackCenterItem(spinnerId); // Religa o highlight
+        await new Promise(r => setTimeout(r, 5000));
+
+        spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+        spinner.style.transform = `translateX(-${centerPrecisionX}px)`;
+
+        const finalNode = spinner.querySelector('.item-node[data-index="50"]');
+        if(finalNode) {
+            finalNode.classList.add('is-winner', 'reveal-final'); 
+        }
+
+        if(isBattle) {
+            addWonItemToArena(playerNum, winnerData);
+            showBattleGain(playerNum, winnerData.value);
+        }
+
+        landSound.currentTime = 0;
+        landSound.play();
+        await new Promise(r => setTimeout(r, 800));
+    }
+}
 async function openCase() {
     const btn = document.getElementById('open-btn');
     const caseInfo = itemsData[activeCaseId];
@@ -762,62 +1033,69 @@ async function openCase() {
         });
         const data = await res.json();
 
+        // 1. Deduz o saldo da interface antes de girar
         updateBalanceUI(data.balanceAfterDeduction);
-        renderTrack('spinner', data.track);
-        
-        const spinner = document.getElementById('spinner');
-        const containerWidth = document.getElementById('main-view').offsetWidth;
 
-        // CÁLCULO DO CENTRO EXATO
-        const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
+        // 2. Chama a função que faz o giro (e o Super Spin se necessário)
+        // Passamos 'spinner' porque é o ID do nó no modo individual
+        await executeArenaSpin(1, 'spinner', {
+            ...data.winner,
+            track: data.track
+        }, caseInfo.price, caseInfo.items);
 
-        // CÁLCULO DO OFFSET ALEATÓRIO (para cair fora do centro inicialmente)
-        const randomLandingOffset = (Math.random() * (NODE_WIDTH * 0.7)) - (NODE_WIDTH * 0.35);
-        const targetX = centerPrecisionX + randomLandingOffset;
-        spinSound.currentTime = 0;
-        spinSound.play();
-
-        spinner.style.transition = 'none'; 
-        spinner.style.transform = 'translateX(0)';
-        
-        setTimeout(() => {
-            // Giro principal (9 segundos)
-            spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
-            spinner.style.transform = `translateX(-${targetX}px)`;
-            trackCenterItem('spinner'); 
-        }, 50);
-
-        // --- MOMENTO DO SNAP E REVELAÇÃO SIMULTÂNEA ---
-        setTimeout(() => {
-            // 1. Iniciamos o ajuste para o centro exato (Snap)
-            spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-            spinner.style.transform = `translateX(-${centerPrecisionX}px)`;
-
-            // 2. No MESMO instante, adicionamos a classe de vencedor
-            // Isso vai fazer o nome, preço e a imagem de raridade (pequena) aparecerem via CSS
-            const winnerNode = spinner.querySelector('.item-node[data-index="50"]');
-            if(winnerNode) {
-                winnerNode.classList.add('is-winner');
-            }
-
-            landSound.currentTime = 0;
-            landSound.play();
-
-            // 3. Finaliza os dados após a animação de 0.6s
-            setTimeout(() => {
-                updateBalanceUI(data.finalBalance);
-                loadInventory();
-                btn.disabled = false;
-                btn.classList.remove('btn-loading');
-            }, 600);
-
-        }, 5000); 
+        // 3. Finaliza
+        updateBalanceUI(data.finalBalance);
+        loadInventory();
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
 
     } catch (e) {
+        console.error(e);
         btn.classList.remove('btn-loading');
         btn.disabled = false;
-        alert(e.message);
     }
+}
+
+function openEquipMenu(event, itemId, weaponId) {
+    // Remove menu anterior se existir
+    const oldMenu = document.querySelector('.mini-equip-menu');
+    if (oldMenu) oldMenu.remove();
+
+    const teamType = getWeaponTeamType(weaponId);
+    const menu = document.createElement('div');
+    menu.className = 'mini-equip-menu';
+    
+    let buttons = '';
+    if (teamType === 'tr' || teamType === 'both') 
+        buttons += `<button onclick="handleEquip('${itemId}', 2)">EQUIP T</button>`;
+    if (teamType === 'ct' || teamType === 'both') 
+        buttons += `<button onclick="handleEquip('${itemId}', 3)">EQUIP CT</button>`;
+    if (teamType === 'both') 
+        buttons += `<button onclick="handleEquip('${itemId}', 4)">EQUIP BOTH</button>`;
+    
+    buttons += `<button class="btn-unequip" onclick="handleEquip('${itemId}', 0, 'unequip')">UNEQUIP</button>`;
+
+    menu.innerHTML = buttons;
+    document.body.appendChild(menu);
+
+    // Posicionar o menu onde clicou
+    menu.style.left = `${event.pageX}px`;
+    menu.style.top = `${event.pageY}px`;
+
+    // Fechar menu ao clicar fora
+    setTimeout(() => {
+        window.onclick = () => { menu.remove(); window.onclick = null; };
+    }, 100);
+}
+
+async function handleEquip(itemId, team, action = 'equip') {
+    const res = await fetch('/api/equip-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, team, action })
+    });
+    const data = await res.json();
+    if (data.success) loadInventory();
 }
 socket.on('balanceUpdate', (newBalance) => {
    updateBalanceUI(newBalance); 
@@ -898,44 +1176,46 @@ async function loadInventory() {
     const res = await fetch('/api/me');
     const data = await res.json();
     if (!data.loggedIn) return;
-    currentUser = data.user; 
-    let items = data.user.inventory;
+    
+    currentUser = data.user;
     const grid = document.getElementById('inventory-grid');
+    
+    grid.innerHTML = data.user.inventory.map(item => {
+        const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
+        
+        let badgesHtml = '<div class="loadout-badges">';
+        if (item.equippedTeam === 2 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge t">T</span>';
+        if (item.equippedTeam === 3 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge ct">CT</span>';
+        badgesHtml += '</div>';
 
-    // 1. FILTRAR POR RARIDADE
-    const rarityFilter = document.getElementById('filter-rarity').value;
-    if (rarityFilter !== 'all') {
-        items = items.filter(item => item.color === rarityFilter);
-    }
-
-    // 2. ORDENAR (PREÇO OU DATA)
-    const sortType = document.getElementById('sort-price').value;
-    if (sortType === 'high') {
-        items.sort((a, b) => b.value - a.value);
-    } else if (sortType === 'low') {
-        items.sort((a, b) => a.value - b.value);
-    } else if (sortType === 'newest') {
-        // Como o Mongoose guarda por ordem de inserção, o loadInventory antigo já fazia reverse()
-        items = items.reverse(); 
-    }
-
-    // 3. RENDERIZAR
-    if (items.length === 0) {
-        grid.innerHTML = '<p style="color:#555; grid-column: 1/-1; text-align:center; padding: 50px;">No items found with these filters.</p>';
-        return;
-    }
-
-    grid.innerHTML = items.map(item => `
-        <div class="inventory-card" style="border-bottom: 3px solid ${item.color}">
-            <img src="${item.img}">
-            <div class="inv-info">
-                <b>${item.name}</b>
-                <small style="color: ${item.color}">${item.conditionShort}</small>
-                <span>$${formatCurrency(item.value)}</span>
+        return `
+            <div class="inventory-card" 
+                 style="--rarity-color: ${item.color};" 
+                 onclick='openSkinModal(${itemJson})'>
+                ${badgesHtml}
+                <img src="${item.img}">
+                <div class="inv-info">
+                    <b>${item.name}</b>
+                    <small style="color: ${item.color}">${item.conditionShort}</small>
+                    <span>$${formatCurrency(item.value)}</span>
+                </div>
             </div>
-            <button class="btn-sell" onclick="sellItem(event, '${item.id}')">SELL</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+}
+
+
+// Nova função para chamar a API de equipar
+async function equipItem(id) {
+    const res = await fetch('/api/equip-item', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ itemId: id })
+    });
+    const data = await res.json();
+    if(data.success) {
+        loadInventory(); // Recarrega para mostrar o status novo
+    }
 }
 
 async function sellItem(event, id) {
@@ -979,13 +1259,17 @@ async function sellItem(event, id) {
 socket.on('startBattleSpin', async (data) => {
     switchTab('arena-tab');
     
-    // Reset de UI
+    // 1. Reset de UI e Cálculo do Valor Total
     document.getElementById('battle-msg').innerText = "FIGHT!"; 
-    document.getElementById('p1-total-val').innerText = "0,00"; 
-    document.getElementById('p2-total-val').innerText = "0,00"; 
+    document.getElementById('p1-total-val').innerText = "0.00"; 
+    document.getElementById('p2-total-val').innerText = "0.00"; 
     document.getElementById('p1-inventory').innerHTML = '';
     document.getElementById('p2-inventory').innerHTML = '';
     document.getElementById('total-rounds').innerText = data.p1Rolls.length;
+
+    // Calcula e exibe o preço total da batalha
+    let totalBattlePrice = data.battle.caseIds.reduce((sum, cid) => sum + (itemsData[cid]?.price || 0), 0);
+    document.getElementById('arena-total-battle-price').innerText = formatCurrency(totalBattlePrice);
     
     // Timeline das caixas
     const timeline = document.getElementById('battle-case-timeline');
@@ -1004,75 +1288,36 @@ socket.on('startBattleSpin', async (data) => {
 
     // LOOP DAS RONDAS
     for (let i = 0; i < data.p1Rolls.length; i++) {
+        const currentCaseId = data.battle.caseIds[i];
+        const currentCase = itemsData[currentCaseId]; // Pega os dados da caixa atual
+        const casePrice = currentCase.price;
+        const itemsPool = currentCase.items;
+
+        // --- ATUALIZA NOME E PREÇO DA CAIXA ATUAL ---
+        document.getElementById('cur-case-name').innerText = currentCase.name.toUpperCase();
+        document.getElementById('cur-case-price').innerText = formatCurrency(casePrice);
+
         document.querySelectorAll('.timeline-case').forEach(el => el.classList.remove('active'));
         const currentStep = document.getElementById(`step-${i}`);
-        if(currentStep) currentStep.classList.add('active', 'passed');
+        if(currentStep) 
+            currentStep.classList.add('active', 'passed');
+        currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         document.getElementById('current-round').innerText = i + 1;
 
         spinSound.currentTime = 0; 
         spinSound.play().catch(e => {});
 
-        // 1. Renderizar trilhas
-        renderTrack('p1-spinner', data.p1Rolls[i].track);
-        renderTrack('p2-spinner', data.p2Rolls[i].track);
-
-        const t1 = document.getElementById('p1-spinner');
-        const t2 = document.getElementById('p2-spinner');
-
-        // --- CORREÇÃO DO ERRO 't is not defined' ---
-        // Pegamos o container de um dos spinners (ambos têm o mesmo tamanho)
-        const containerWidth = document.querySelector('.spinner-container.sm').offsetWidth;
-
-        // Lógica de Cálculo exata do Case Opening
-        const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
-        const randomLandingOffset = (Math.random() * (NODE_WIDTH * 0.7)) - (NODE_WIDTH * 0.35);
-        const targetX = centerPrecisionX + randomLandingOffset;
-
-        // Reset de posição
-        [t1, t2].forEach(t => { 
-            t.style.transition = 'none'; 
-            t.style.transform = 'translateX(0)'; 
-        });
-
-        await new Promise(r => setTimeout(r, 50));
-
-        // Ativa highlight em tempo real (zoom ao passar no meio)
-        trackCenterItem('p1-spinner');
-        trackCenterItem('p2-spinner');
-
-        // 2. Giro Principal (4 segundos)
-        [t1, t2].forEach(t => {
-            t.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
-            t.style.transform = `translateX(-${targetX}px)`;
-        });
-
-        await new Promise(r => setTimeout(r, 5000));
-
-        // 3. O SNAP (Ajuste Final) + REVELAÇÃO PREMIUM
-        [t1, t2].forEach(t => {
-            t.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-            t.style.transform = `translateX(-${centerPrecisionX}px)`;
-            
-            const winnerNode = t.querySelector('.item-node[data-index="50"]');
-            if(winnerNode) winnerNode.classList.add('is-winner'); // Ativa zoom e subida da raridade
-        });
-
-        landSound.currentTime = 0;
-        landSound.play().catch(e => {});
-
-        // Atualizar valores acumulados e itens ganhos
-        showBattleGain(1, data.p1Rolls[i].value);
-        showBattleGain(2, data.p2Rolls[i].value);
-        addWonItemToArena(1, data.p1Rolls[i]);
-        addWonItemToArena(2, data.p2Rolls[i]);
+        await Promise.all([
+            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true),
+            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true)
+        ]);
 
         p1Acc += data.p1Rolls[i].value;
         p2Acc += data.p2Rolls[i].value;
-
         document.getElementById('p1-total-val').innerText = formatCurrency(p1Acc);
         document.getElementById('p2-total-val').innerText = formatCurrency(p2Acc);
         
-        await new Promise(r => setTimeout(r, 1500)); 
+        await new Promise(r => setTimeout(r, 1000)); 
     }
 
     // Resultado Final

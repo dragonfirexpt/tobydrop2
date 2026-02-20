@@ -193,8 +193,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 
 /* Modal de Batalhas */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 700px; max-width: 100%; }
 .modal-config { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
 
 .modal-grid { 
@@ -262,10 +260,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 /* Indicadores de Ganho (Animação) */
 .indicator-container { position: absolute; top: -20px; right: 20px; }
-
-/* Custom Scrollbar para o inventário */
-.arena-inventory::-webkit-scrollbar { width: 4px; }
-.arena-inventory::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
 .case-timeline {
     display: flex;
@@ -374,10 +368,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
-}
-
-.case-timeline::-webkit-scrollbar {
-    height: 3px;
 }
 
 .case-card-img {
@@ -493,10 +483,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     overflow-y: auto;
     padding-right: 10px;
 }
-
-/* Scrollbar fina para o inventário */
-.inventory-grid::-webkit-scrollbar { width: 4px; }
-.inventory-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
 /* Garante que o spinner de loading fique branco por cima do botão de sell */
 .btn-sell.btn-loading::after {
@@ -624,19 +610,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 #battle-case-search:focus { border-color: var(--accent); }
 
 /* Ajuste do Modal Width */
-.modal-box {
-    width: 850px; /* Um pouco mais largo para acomodar a lista e a seleção */
-}
 
-.modal-box h3 {
-    letter-spacing: 2px;
-    margin-bottom: 10px;
-}
-
-.modal-box p {
-    font-size: 14px;
-    line-height: 1.5;
-}
 
 .selected-list {
     background: #000;
@@ -1784,4 +1758,1228 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .spinner-container.sm .item-node {
     height: 180px !important;
 }
+
+/* Super Spin Node */
+.super-spin-node {
+    background-image: none !important; /* Remove imagem de raridade */
+    overflow: hidden;
+}
+
+.super-spin-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65%; /* Reduzido de 100% para 65% */
+    height: auto;
+    z-index: 1;
+}
+/* Garante que os textos fiquem acima do vídeo */
+.super-spin-node .winner-info-box {
+    z-index: 10 !important;
+}
+
+/* Quando o item está no centro e é super spin, aumenta o brilho */
+.super-spin-node.active-center {
+    filter: brightness(1.5);
+}
+
+/* Estilo para esconder a imagem padrão quando o vídeo está rolando */
+.super-spin-node img {
+    display: none !important;
+}
+
+/* Esconde as informações do item (nome/preço) se for um bloco de Super Spin */
+.super-spin-node .winner-info-box {
+    display: none !important;
+}
+
+/* Nova classe para mostrar a info APENAS quando o Super Spin terminar */
+.super-spin-node.reveal-final .winner-info-box {
+    display: flex !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Ajuste do brilho para o vídeo menor */
+.super-spin-node.active-center {
+    background: radial-gradient(circle, rgba(0, 242, 255, 0.2) 0%, transparent 70%);
+}
+
+/* ============================================================
+   ESTILO DE SCROLLBAR GLOBAL (PREMIUM)
+   ============================================================ */
+
+/* 1. Largura da barra de scroll */
+::-webkit-scrollbar {
+    width: 4px;  /* Vertical */
+    height: 4px; /* Horizontal */
+}
+
+/* 2. O fundo da barra (o trilho) */
+::-webkit-scrollbar-track {
+    background: transparent; /* Fica invisível para um look mais clean */
+}
+
+/* 3. O "polegar" (a parte que arrasta) */
+::-webkit-scrollbar-thumb {
+    background: var(--border); /* Usa a cor de borda definida no seu :root */
+    border-radius: 10px;
+}
+
+/* 4. Efeito de brilho quando passar o mouse (opcional, fica bem bonito) */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent); 
+    box-shadow: 0 0 10px var(--accent);
+}
+
+/* Para Firefox (suporte básico) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+/* --- CABEÇALHO DE ABERTURA (Centralização Perfeita) --- */
+.opening-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* Cria 3 colunas: a do meio fica sempre no centro */
+    align-items: center;
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+/* Garante que o título e a imagem fiquem centralizados */
+#case-title {
+    grid-column: 2; /* Força o título para a coluna central */
+}
+
+#case-title div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+#case-title img {
+    width: 60px !important; /* Tamanho da imagem no título reduzido */
+    filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.2));
+}
+
+/* --- BOTÃO VOLTAR (Coluna 1) --- */
+.btn-back {
+    grid-column: 1; /* Fica na primeira coluna (esquerda) */
+    justify-self: start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: #fff;
+    color: #000;
+}
+
+/* --- BOTÃO ABRIR (ESTILO PREMIUM) --- */
+.btn-open {
+    background: linear-gradient(135deg, #00f2ff 0%, #0066ff 100%);
+    color: #000;
+    border: none;
+    padding: 15px 45px;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(0, 242, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-top: 20px;
+}
+
+.btn-open:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 15px 35px rgba(0, 242, 255, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-open:active {
+    transform: scale(0.97);
+}
+
+/* Ajuste do Spinner de Loading */
+.btn-open.btn-loading::after {
+    border-top-color: #000 !important;
+}
+
+/* --- BOTÃO PRIMÁRIO (Cyan Gradient) --- */
+.btn-primary {
+    background: linear-gradient(135deg, #00f2ff 0%, #0066ff 100%);
+    color: #000 !important;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 242, 255, 0.2);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 242, 255, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* --- BOTÃO SECUNDÁRIO / CANCELAR --- */
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+/* --- ANIMAÇÕES --- */
+
+/* Animação para o fundo escuro (Overlay) */
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Animação para a caixa (Modal Box) */
+@keyframes modalPopUp {
+    from { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* --- ESTILOS DO MODAL ATUALIZADOS --- */
+
+/* --- ANIMAÇÕES DE SAÍDA (MODAL) --- */
+@keyframes modalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes modalPopDown {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95) translateY(10px); }
+}
+
+
+/* --- TRANSIÇÃO DAS PÁGINAS (TABS) --- */
+@keyframes tabEnter {
+    from { 
+        opacity: 0; 
+        transform: translateY(15px); 
+        filter: blur(10px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+        filter: blur(0);
+    }
+}
+
+/* Aplica a animação sempre que uma tab-view for exibida */
+.tab-view {
+    animation: tabEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    will-change: transform, opacity;
+}
+
+
+
+/* Ajuste interno para as grades de casos não esticarem o modal infinitamente */
+.modal-grid-compact, .selected-list {
+    max-height: 300px; /* Limita a altura interna */
+    overflow-y: auto;
+}
+
+/* Scrollbar fina dentro do modal */
+.modal-grid-compact::-webkit-scrollbar, 
+.selected-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+/* --- AJUSTE NAS SEÇÕES INTERNAS (Para não bugar o scroll) --- */
+.modal-config {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* ============================================================
+   SISTEMA DE MODAL DEFINITIVO (CORREÇÃO DE DESLOCAMENTO)
+   ============================================================ */
+
+.modal-overlay {
+    /* O SEGREDO: inset 0 força o elemento nos 4 cantos da janela */
+    position: fixed !important;
+    inset: 0 !important; 
+    width: 100vw !important;
+    height: 100vh !important;
+    
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px) brightness(0.6);
+    -webkit-backdrop-filter: blur(15px) brightness(0.6);
+    
+    /* Z-Index extremo para ignorar sidebar e navbar */
+    z-index: 9999999 !important;
+    
+    /* Centralização usando Flexbox interno */
+    display: none; /* JS muda para 'flex' */
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Garante que não herde nada do body flex */
+    margin: 0 !important;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-box {
+    background: #0e1015;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 35px;
+    width: 100%;
+    max-width: 850px; 
+    
+    /* Previne que suma no topo em telas de portáteis/laptops */
+    max-height: 90vh;
+    overflow-y: auto;
+    
+    position: relative;
+    /* Reset de margens para não deslocar para os lados */
+    margin: 0 !important; 
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 1);
+    
+    animation: modalPopUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modais de confirmação menores (Sell All, etc) */
+#sell-all-modal .modal-box,
+#upgrade-modal .modal-box {
+    max-width: 450px;
+    text-align: center;
+}
+
+/* Fechamento suave */
+.modal-overlay.closing {
+    animation: modalFadeOut 0.3s ease-in forwards;
+}
+
+@keyframes modalPopUp {
+    from { opacity: 0; transform: scale(0.9) translateY(40px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modalFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* --- ESTILOS DA INFO DE BATALHA --- */
+
+.battle-total-badge {
+    margin-left: 15px;
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    font-size: 12px;
+}
+
+.current-case-banner {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+#cur-case-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.cur-case-price-tag {
+    font-size: 14px;
+    color: var(--accent);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* Ajuste no FIGHT! para não ficar muito grande */
+#battle-msg {
+    margin-top: 5px;
+    font-size: 28px;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+
+/* Container que segura as Rondas, Timeline e Valor */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 150px 1fr 150px; /* Colunas fixas nas pontas e timeline no meio */
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 25px;
+    border-radius: 100px; /* Estilo pílula */
+    border: 1px solid var(--border);
+}
+
+/* Estilo das caixas de estatísticas (Ronda e Valor) */
+.stats-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-box small {
+    font-size: 10px;
+    font-weight: 800;
+    color: #555;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.stats-box span {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+}
+
+.stats-box b {
+    color: var(--accent); /* Destaca os números */
+}
+
+.round-side { text-align: left; }
+.value-side { text-align: right; }
+
+/* Ajuste na Timeline para ocupar o centro e não quebrar */
+.case-timeline {
+    margin-bottom: 0 !important; /* Remove margem antiga */
+    border: none !important;     /* Remove borda antiga se houver */
+    background: transparent !important;
+    max-width: 100%;
+}
+
+/* Banner da Caixa Atual */
+.current-case-banner {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#cur-case-name {
+    font-size: 16px;
+    color: #888;
+    font-weight: 600;
+}
+
+.cur-case-price-tag {
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 800;
+}
+
+/* --- AJUSTE DA TIMELINE SUTIL --- */
+
+.timeline-case {
+    width: 45px; /* Ligeiramente menor */
+    height: 35px;
+    opacity: 0.15; /* Mais apagada quando inativa */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: grayscale(1); /* Deixa as inativas em cinza para focar na ativa */
+}
+
+.timeline-case.passed {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+}
+
+/* ESTILO DA CAIXA ATIVA - Brilho Reduzido */
+.timeline-case.active {
+    opacity: 1;
+    transform: scale(1.2);
+    filter: grayscale(0); /* Cor total na ativa */
+}
+
+.timeline-case img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Brilho removido da imagem base para evitar sobreposição */
+    filter: none; 
+    transition: transform 0.3s ease;
+}
+
+/* Sombra muito mais suave apenas na ativa */
+.timeline-case.active img {
+    /* Um brilho muito mais leve e difuso */
+    filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.3)); 
+}
+
+/* Opcional: Adicionar um pequeno indicador embaixo da caixa ativa */
+.timeline-case.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+}
+
+/* Container principal ajustado para dar altura aos efeitos */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 20px 25px; /* Aumentei o padding vertical para o brilho não cortar */
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    position: relative;
+}
+
+/* Timeline com overflow visível para as sombras e escala */
+.case-timeline {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    background: transparent !important;
+    padding: 10px 0; /* Espaço interno para a escala */
+    overflow-x: auto;
+    overflow-y: visible; /* CRUCIAL: permite que o brilho suba sem cortar */
+    scrollbar-width: none; /* Esconde scrollbar no Firefox */
+    -ms-overflow-style: none; /* Esconde scrollbar no IE/Edge */
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+/* Esconde a barra de rolagem no Chrome/Safari */
+.case-timeline::-webkit-scrollbar {
+    display: none;
+}
+
+.timeline-case {
+    position: relative; /* Garante que elementos internos sigam o fluxo */
+    width: 45px;
+    height: 35px;
+    flex-shrink: 0; /* Impede que as caixas esmaguem */
+    opacity: 0.2;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: grayscale(1);
+}
+
+.timeline-case.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.25); /* Um pouco maior para destaque */
+    z-index: 10; /* Fica por cima das outras */
+}
+
+/* O brilho sutil na imagem */
+.timeline-case.active img {
+    filter: drop-shadow(0 0 12px rgba(0, 242, 255, 0.4));
+}
+
+/* Indicador sutil de posição embaixo */
+.timeline-case.active::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulseActive 2s infinite;
+}
+
+@keyframes pulseActive {
+    0% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.5); }
+    100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+}
+
+/* 1. O container em formato de pílula */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0 25px; /* Padding vertical removido aqui para ser controlado pela timeline */
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    height: 100px; /* Altura fixa para garantir alinhamento */
+}
+
+/* 2. A trilha das caixas (O segredo está no Height + Padding) */
+.case-timeline {
+    display: flex;
+    align-items: center; /* Centraliza as caixas verticalmente */
+    justify-content: center;
+    gap: 15px;
+    
+    /* Altura total maior que as caixas para o brilho não bater no teto */
+    height: 100%; 
+    padding: 20px 0; /* Cria o espaço para o brilho em cima e embaixo */
+    
+    overflow-x: auto;
+    overflow-y: visible !important;
+    
+    /* Esconde a scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.case-timeline::-webkit-scrollbar {
+    display: none;
+}
+
+/* 3. A caixa individual */
+.timeline-case {
+    position: relative;
+    width: 45px;
+    height: 35px;
+    flex-shrink: 0;
+    opacity: 0.15;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: grayscale(1);
+    /* Garante que o brilho não seja cortado pela própria div da caixa */
+    overflow: visible !important; 
+}
+
+.timeline-case.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.3); /* Aumenta o tamanho */
+    z-index: 100; /* Joga para a frente de tudo */
+}
+
+/* 4. A imagem da caixa com brilho suavizado */
+.timeline-case img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.timeline-case.active img {
+    /* Brilho suave que agora tem espaço para aparecer */
+    filter: drop-shadow(0 0 12px rgba(0, 242, 255, 0.5));
+}
+
+/* 5. Indicador embaixo */
+.timeline-case.active::after {
+    content: '';
+    position: absolute;
+    bottom: -15px; /* Ajustado para a nova altura */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 10px var(--accent);
+}
+
+/* 1. O container principal (Pílula) */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 0; /* Gap zero para controlarmos o espaço via padding */
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    height: 100px;
+    position: relative;
+    overflow: visible; /* Permite que o conteúdo interno respire */
+}
+
+/* 2. A trilha das caixas (Onde o scroll acontece) */
+.case-timeline {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+    
+    /* O SEGREDO: Padding horizontal alto (40px) garante que a primeira 
+       e a última caixa tenham espaço para o brilho lateral */
+    padding: 0 40px; 
+    
+    overflow-x: auto;
+    overflow-y: visible !important;
+    
+    /* Centraliza se houver poucas caixas, alinha à esquerda se houver muitas */
+    justify-content: center; 
+    
+    /* Esconde a scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    /* EFEITO PREMIUM: Suaviza as bordas laterais para o brilho não "bater no muro" */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+.case-timeline::-webkit-scrollbar {
+    display: none;
+}
+
+/* 3. A caixa individual */
+.timeline-case {
+    position: relative;
+    width: 45px;
+    height: 35px;
+    flex-shrink: 0;
+    opacity: 0.15;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: grayscale(1);
+    /* Garante que a div da caixa não corte seu próprio brilho */
+    overflow: visible !important; 
+}
+
+.timeline-case.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.35); /* Leve aumento no tamanho */
+    z-index: 100;
+}
+
+/* 4. A imagem da caixa e o brilho */
+.timeline-case img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    /* Hardware acceleration para animação suave */
+    backface-visibility: hidden;
+}
+
+.timeline-case.active img {
+    /* Brilho expandido mas suave */
+    filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.45));
+}
+
+/* 5. Estilo das caixas laterais para não encostarem na timeline */
+.stats-box.round-side { padding-left: 25px; }
+.stats-box.value-side { padding-right: 25px; }
+
+/* 1. Container Principal */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    height: 100px;
+    position: relative;
+    overflow: visible;
+}
+
+/* 2. A trilha das caixas (Corrigida para muitas caixas) */
+.case-timeline {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%;
+    
+    /* MUDANÇA CRUCIAL: justify-content deve ser flex-start para não bugar o scroll */
+    justify-content: flex-start; 
+    
+    overflow-x: auto;
+    overflow-y: visible !important;
+    padding: 0; /* Padding será feito pelos espaçadores abaixo */
+    
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    /* Máscara de gradiente mais suave nas pontas */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+
+.case-timeline::-webkit-scrollbar {
+    display: none;
+}
+
+/* 3. Espaçadores Dinâmicos (O segredo para centralizar sem quebrar) */
+.case-timeline::before,
+.case-timeline::after {
+    content: '';
+    flex: 1 0 auto; /* Eles tentam ocupar todo o espaço vazio, centralizando as caixas */
+    min-width: 40px; /* Garante que o brilho da primeira/última caixa nunca encoste na borda */
+}
+
+/* 4. A caixa individual */
+.timeline-case {
+    position: relative;
+    width: 45px;
+    height: 35px;
+    flex: 0 0 auto; /* Impede que as caixas estiquem ou encolham */
+    opacity: 0.15;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: grayscale(1);
+    overflow: visible !important;
+}
+
+.timeline-case.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.35);
+    z-index: 100;
+}
+
+.timeline-case.active img {
+    filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.45));
+}
+
+/* 5. HUD das Laterais (Round e Value) */
+.stats-box {
+    background: var(--card); /* Fundo sólido para as infos não misturarem com o scroll */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 101; /* Fica acima da máscara da timeline */
+    padding: 0 25px;
+}
+
+.round-side { 
+    border-radius: 20px 0 0 20px; 
+    text-align: left;
+    border-right: 1px solid rgba(255,255,255,0.03);
+}
+
+.value-side { 
+    border-radius: 0 20px 20px 0; 
+    text-align: right;
+    border-left: 1px solid rgba(255,255,255,0.03);
+}
+/* Container da barra superior */
+.battle-stats-bar {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02); /* Fundo sutil */
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    height: 100px;
+    position: relative;
+    overflow: hidden; /* Garante que o scroll não vaze para fora da pílula */
+}
+
+/* A trilha das caixas com efeito de FADE */
+.case-timeline {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: visible !important;
+    scroll-behavior: smooth; /* Garante que o scroll via JS seja suave */
+    
+    /* Remove scrollbars */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    /* EFEITO DE FADE: Transparente nas pontas, preto (visível) no meio */
+    -webkit-mask-image: linear-gradient(to right, 
+        transparent 0%, 
+        black 15%, 
+        black 85%, 
+        transparent 100%
+    );
+    mask-image: linear-gradient(to right, 
+        transparent 0%, 
+        black 15%, 
+        black 85%, 
+        transparent 100%
+    );
+}
+
+.case-timeline::-webkit-scrollbar { display: none; }
+
+/* Espaçadores para centralizar quando houver poucas caixas */
+.case-timeline::before,
+.case-timeline::after {
+    content: '';
+    flex: 1 0 auto;
+    min-width: 60px; /* Espaço para o brilho da primeira/última caixa respirar */
+}
+
+/* HUDs Laterais (Round e Value) - Sem Linhas */
+.stats-box {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 25px;
+    background: transparent; /* Removido fundo sólido para integrar com o fade */
+    z-index: 10;
+}
+
+/* Removendo bordas laterais que você pediu para tirar */
+.round-side { text-align: left; border: none !important; }
+.value-side { text-align: right; border: none !important; }
+
+/* Caixa individual na timeline */
+.timeline-case {
+    position: relative;
+    width: 45px;
+    height: 35px;
+    flex: 0 0 auto;
+    opacity: 0.1; /* Bem apagado para focar no centro */
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: grayscale(1);
+    overflow: visible !important;
+}
+
+.timeline-case.active {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.4); /* Maior destaque */
+    z-index: 100;
+}
+
+.timeline-case.active img {
+    filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.5));
+}
+
+/* Card quando equipado */
+.inventory-card.equipped-item {
+    border: 2px solid var(--accent) !important;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+    transform: translateY(-5px);
+}
+
+/* Botão de Equipar */
+.btn-equip {
+    flex: 1;
+    background: #1a1d26;
+    color: #fff;
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-equip:hover { border-color: var(--accent); }
+
+.btn-equip.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
+/* Ajuste no botão sell para caber ao lado */
+.btn-sell-small {
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Modal de Skin Premium */
+.skin-modal-card {
+    background: #0e1015;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    padding: 40px;
+    width: 450px;
+    position: relative;
+    overflow: hidden;
+    animation: modalPopUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    text-align: center;
+}
+
+.skin-modal-glow {
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(0, 242, 255, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.skin-preview-large img {
+    width: 280px;
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8));
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+.skin-preview-large:hover img {
+    transform: scale(1.05) rotate(2deg);
+}
+
+.skin-details h2 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
+.skin-meta { margin: 10px 0 30px; display: flex; justify-content: center; gap: 15px; align-items: center; }
+#modal-skin-price { color: var(--accent); font-weight: 800; font-size: 18px; }
+
+/* Grid de Botões */
+.skin-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-action {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.btn-action:hover {
+    background: var(--accent);
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 242, 255, 0.3);
+}
+
+.btn-action.btn-full { grid-column: span 2; }
+
+.btn-sell-action {
+    border-color: #ff444455;
+    color: #ff4444;
+}
+
+.btn-sell-action:hover {
+    background: #ff4444;
+    color: #fff;
+    box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px; right: 25px;
+    font-size: 24px; color: #555;
+    cursor: pointer; z-index: 10;
+}
+
+/* Animação nos cards do inventário */
+.inventory-card {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+
+/* Brilho suave baseado na raridade ao dar hover */
+.inventory-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 30%, rgba(255,255,255,0.03) 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+
+
+/* Animação da imagem da skin no hover */
+.inventory-card img {
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+
+
+/* Estilo para o botão Unequip dentro do Modal (Vermelho suave) */
+.btn-unequip-action {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #888 !important;
+}
+
+.btn-unequip-action:hover {
+    background: #444 !important;
+    color: #fff !important;
+}
+
+/* Container do Grid - Adicionamos um padding no topo para o hover ter espaço */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 25px;
+    padding-top: 20px; /* Espaço para a animação de subir */
+    overflow-y: auto;
+    overflow-x: visible; /* IMPORTANTE: permitir que o conteúdo saia para os lados */
+}
+
+.inventory-card {
+    position: relative;
+    background: #11141b;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    
+    /* REMOVEMOS o overflow: hidden para não cortar a skin ao subir */
+    overflow: visible !important; 
+    
+    /* Usamos box-shadow em vez de border-bottom para a raridade, 
+       assim o card não "salta" ao mudar a espessura */
+    box-shadow: inset 0 -3px 0 0 var(--rarity-color, #333);
+}
+
+.inventory-card img {
+    width: 100%;
+    height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.4));
+    transition: transform 0.4s ease;
+    pointer-events: none;
+}
+
+/* Inventário Sólido - Sem subir nem cortar */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.inventory-card {
+    position: relative;
+    background: #0f1118;
+    border: 1px solid #1e222d;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    transition: background 0.2s, border-color 0.2s; /* Apenas cores */
+    cursor: pointer;
+    overflow: hidden; 
+    box-shadow: inset 0 -3px 0 0 var(--rarity-color);
+}
+
+/* Hover apenas muda brilho e cor, sem mexer a posição */
+.inventory-card:hover {
+    background: #161923;
+    border-color: #323846;
+}
+
+.inventory-card img {
+    width: 100%;
+    height: 90px;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+    transition: filter 0.2s;
+    pointer-events: none;
+}
+
+.inventory-card:hover img {
+    filter: drop-shadow(0 5px 15px var(--rarity-color)); /* Brilho da cor da skin */
+}
+
+/* Badges de Loadout */
+.loadout-badges {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.l-badge {
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #000;
+}
+.l-badge.ct { background: #5d79ae; } /* Azul CT */
+.l-badge.t { background: #de9b35; }  /* Laranja T */
 
