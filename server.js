@@ -26,10 +26,16 @@ const SteamStrategy = require('passport-steam').Strategy;
 const mysql = require('mysql2');
 
 const sqlConnection = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'cs2_server'
+    host: 'mysql-2e9dbd1e-nottyastobusiness-6048.k.aivencloud.com',
+    user: 'avnadmin',
+    password: 'AVNS_kPJXVEI34RWcxvS3bnl',
+    database: 'defaultdb',
+    port: 23869,
+    ssl: {
+        rejectUnauthorized: false // NECESSÁRIO para o Aiven
+    },
+    waitForConnections: true,
+    connectionLimit: 10
 }).promise();
 
 // Teste de conexão para não derrubar o site
@@ -47,9 +53,9 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'http://https://tobydrop2.onrender.com/',
-    apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
+    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', 
+    realm: 'https://tobydrop2.onrender.com/',
+    apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
     // Aqui procuramos ou criamos o usuário no MongoDB pelo SteamID
