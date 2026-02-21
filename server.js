@@ -60,7 +60,7 @@ passport.use(new SteamStrategy({
             steamId: profile.id,
             username: profile.displayName,
             avatar: profile.photos[2].value, // Foto maior da Steam
-            balance: 5000 // Saldo inicial para novos usuários
+            balance: 100 // Saldo inicial para novos usuários
         });
     }
     return done(null, user);
