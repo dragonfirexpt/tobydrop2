@@ -169,6 +169,7 @@ function openSkinModal(item) {
     // Float (Wear) - Formata para 6 casas decimais como no CS2
     const floatVal = item.wear ? item.wear.toFixed(8) : "0.00000000";
     document.getElementById('modal-float-val').innerText = floatVal;
+    document.getElementById('modal-seed-val').innerText = item.seed !== undefined ? item.seed : "0";
 
     document.getElementById('modal-skin-price').innerText = `$${formatCurrency(item.value)}`;
     

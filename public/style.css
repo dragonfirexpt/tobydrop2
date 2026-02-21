@@ -3888,3 +3888,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .profile-panel-overlay.closing .panel-backdrop {
     animation: fadeOut 0.4s ease forwards;
 }
+
+.cond-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Espaço entre Float e Pattern */
+    padding: 12px;
+    min-width: 140px;
+}
+
+.float-value {
+    font-size: 10px;
+    font-family: 'Outfit', sans-serif;
+    color: #888;
+}
+
+#modal-float-val, #modal-seed-val {
+    color: var(--accent); /* O valor em si fica branco para destacar */
+}
