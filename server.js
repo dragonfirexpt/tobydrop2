@@ -144,7 +144,8 @@ const generateRandomWear = (conditionShort) => {
         "BS": { min: 0.45, max: 1.00 }
     };
     const range = ranges[conditionShort] || ranges["FT"];
-    return parseFloat((Math.random() * (range.max - range.min) + range.min).toFixed(6));
+    // Alterado de 6 para 8
+    return parseFloat((Math.random() * (range.max - range.min) + range.min).toFixed(8));
 };
 const rollCondition = () => {
     let rand = Math.random() * 100;
@@ -696,6 +697,19 @@ app.post('/api/sell-item', async (req, res) => {
         res.status(500).json({ error: "Erro ao vender item" });
     }
 });
+// Rota para ver o perfil de outro utilizador
+app.get('/api/profile/:steamId', async (req, res) => {
+    try {
+        // Procuramos o utilizador, mas enviamos apenas o necessário (nome, avatar, inventário e saldo)
+        const user = await User.findOne({ steamId: req.params.steamId }, 'username avatar inventory balance');
+        
+        if (!user) return res.status(404).json({ error: "Utilizador não encontrado" });
+        
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ error: "Erro ao carregar perfil" });
+    }
+});
 app.post('/api/open-case', async (req, res) => {
     try {
         const { caseId } = req.body;
@@ -772,7 +786,18 @@ async function resolveBattleRolls(caseIds) {
 io.on('connection', (socket) => {
     socket.emit('updateBattles', activeBattles);
     
-    socket.on('chatMessage', (data) => io.emit('chatMessage', data));
+    socket.on('chatMessage', (data) => {
+    if (!data.msg || data.msg.length > 200) return;
+    
+    const payload = {
+        user: data.user || "Anônimo",
+        msg: data.msg,
+        avatar: data.avatar || "https://api.dicebear.com/9.x/bottts/svg?seed=Guest",
+        steamId: data.steamId // <--- Adicionamos isto
+    };
+
+    io.emit('chatMessage', payload);
+});
 
     socket.on('createBattle', async (data) => {
     const user = await User.findById(data.userId);

@@ -105,34 +105,94 @@ function renderTargets() {
         renderTargets();
     });
 }
+function getWeaponCategory(weaponId) {
+    const id = parseInt(weaponId);
+
+    // MELEE • KNIFES (IDs de facas costumam ser 500-526)
+    if (id >= 500 && id <= 999) return "MELEE • KNIFE";
+
+    // GLOVES
+    if ((id >= 5027 && id <= 5035) || id === 4725) return "EQUIPMENT • GLOVES";
+
+    // PISTOLS
+    // 1: Deagle, 2: Berettas, 3: Five-SeveN, 4: Glock, 30: Tec-9, 32: P2000, 36: P250, 61: USP-S, 63: CZ75, 64: R8
+    if ([1, 2, 3, 4, 30, 32, 36, 61, 63, 64].includes(id)) return "PISTOLS";
+
+    // HEAVY • SHOTGUNS
+    // 25: XM1014, 27: MAG-7, 29: Sawed-Off, 35: Nova
+    if ([25, 27, 29, 35].includes(id)) return "HEAVY • SHOTGUN";
+
+    // HEAVY • MACHINE GUNS
+    // 14: M249, 28: Negev
+    if ([14, 28].includes(id)) return "HEAVY • MACHINE GUN";
+
+    // SMGs
+    // 17: MAC-10, 19: P90, 23: MP5-SD, 24: UMP-45, 26: Bizon, 33: MP7, 34: MP9
+    if ([17, 19, 23, 24, 26, 33, 34].includes(id)) return "SMGs";
+
+    // RIFLES • ASSAULT RIFLES
+    // 7: AK-47, 8: AUG, 10: FAMAS, 13: Galil, 16: M4A4, 39: SG 553, 60: M4A1-S
+    if ([7, 8, 10, 13, 16, 39, 60].includes(id)) return "RIFLES • ASSAULT RIFLE";
+
+    // RIFLES • SNIPER RIFLES
+    // 9: AWP, 11: G3SG1, 38: SCAR-20, 40: SSG 08
+    if ([9, 11, 38, 40].includes(id)) return "RIFLES • SNIPER RIFLE";
+
+    return "OTHER";
+}
 function openSkinModal(item) {
     const modal = document.getElementById('skin-action-modal');
     const container = document.getElementById('modal-actions-container');
     
+    // Mapeamento de nomes completos
+    const conditionNames = {
+        "FN": "Factory New",
+        "MW": "Minimal Wear",
+        "FT": "Field-Tested",
+        "WW": "Well-Worn",
+        "BS": "Battle-Scarred"
+    };
+
+    document.documentElement.style.setProperty('--rarity-color', item.color);
+
+    // Atualiza Imagem e Nomes
     document.getElementById('modal-skin-img').src = item.img;
     document.getElementById('modal-skin-name').innerText = item.name;
-    document.getElementById('modal-skin-cond').innerText = item.conditionShort;
+    
+    // Condição Curta (Badge)
+    const shortCond = item.conditionShort.toUpperCase();
+    document.getElementById('modal-skin-cond').innerText = shortCond;
+    
+    // Condição Longa (Tooltip)
+    document.getElementById('modal-full-cond').innerText = conditionNames[shortCond] || "Unknown";
+    
+    // Float (Wear) - Formata para 6 casas decimais como no CS2
+    const floatVal = item.wear ? item.wear.toFixed(8) : "0.00000000";
+    document.getElementById('modal-float-val').innerText = floatVal;
+
     document.getElementById('modal-skin-price').innerText = `$${formatCurrency(item.value)}`;
     
-    const teamType = getWeaponTeamType(item.weaponId);
-    let html = '';
+    const category = getWeaponCategory(item.weaponId);
+    document.getElementById('modal-skin-type').innerText = category;
 
-    // Botões inteligentes baseados no lado
+    // Gerar Botões (O resto do teu código de botões aqui...)
+    let html = '';
+    const teamType = getWeaponTeamType(item.weaponId);
+
     if (teamType === 'tr' || teamType === 'both') 
-        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 2)">Equip Terrorist</button>`;
+        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 2)">EQUIP TERRORIST</button>`;
     
     if (teamType === 'ct' || teamType === 'both') 
-        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 3)">Equip Counter-Terrorist</button>`;
+        html += `<button class="btn-action" onclick="executeSkinAction('${item.id}', 3)">EQUIP COUNTER-TERRORIST</button>`;
     
     if (teamType === 'both') 
-        html += `<button class="btn-action btn-full" onclick="executeSkinAction('${item.id}', 4)">Equip Both Sides</button>`;
+        html += `<button class="btn-action btn-full" onclick="executeSkinAction('${item.id}', 4)">EQUIP BOTH SIDES</button>`;
 
-    // Só aparece Unequip se estiver equipado em algum lado
     if (item.equippedTeam > 0) {
-        html += `<button class="btn-action btn-unequip-action btn-full" onclick="executeSkinAction('${item.id}', 0, 'unequip')">Unequip from Loadout</button>`;
+        html += `<button class="btn-action btn-unequip-action btn-full" onclick="executeSkinAction('${item.id}', 0, 'unequip')">UNEQUIP FROM LOADOUT</button>`;
     }
 
-    html += `<button class="btn-action btn-sell-action btn-full" onclick="executeSellFromModal('${item.id}')">Sell Skin</button>`;
+    html += `<button class="btn-action btn-sell-action btn-full" onclick="executeSellFromModal('${item.id}')">SELL SKIN FOR $${formatCurrency(item.value)}</button>`;
 
     container.innerHTML = html;
     modal.style.display = 'flex';
@@ -862,45 +922,73 @@ function showHome() {
 function selectCase(id) {
     activeCaseId = id;
     
-    // 1. Verificar se a caixa existe no que veio do servidor
     if (!itemsData || !itemsData[id]) {
         console.error("Caixa não encontrada no sistema:", id);
-        alert("Erro: Dados da caixa não carregados. Recarregue a página.");
+        alert("Erro: Dados da caixa não carregados.");
         return;
     }
 
+    // 1. Mostrar a aba de abertura
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.getElementById('opening-tab').style.display = 'block';
     
     const caseInfo = itemsData[id]; 
+    
+    // 2. Atualizar Título e Botão
     document.getElementById('case-title').innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
             <img src="${caseInfo.img}" style="width: 80px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5))">
             ${caseInfo.name.toUpperCase()}
         </div>
     `;
-    document.getElementById('open-btn').innerText = `OPEN FOR $${caseInfo.price}`;
-    
-    const preview = document.getElementById('preview-items');
+    document.getElementById('open-btn').innerText = `OPEN FOR $${formatCurrency(caseInfo.price)}`;
+    document.getElementById('open-btn').disabled = false;
+    document.getElementById('open-btn').classList.remove('btn-loading');
 
-    // Ordenar por chance (raros no topo)
+    // --- NOVO: GERAR PREVIEW NO SPINNER ---
+    const spinner = document.getElementById('spinner');
+    
+    // Resetar posição da roleta para o início
+    spinner.style.transition = 'none';
+    spinner.style.transform = 'translateX(0)';
+
+    // Criar uma trilha de "espera" com os itens da caixa
+    let previewTrack = [];
+    const itemsPool = caseInfo.items;
+    
+    // Preenchemos a roleta com 80 itens repetidos para ela parecer cheia
+    for (let i = 0; i < 80; i++) {
+        const item = itemsPool[i % itemsPool.length];
+        previewTrack.push({
+            ...item,
+            value: item.maxVal, // Mostra o valor máximo no preview
+            conditionShort: ""  // Oculta a condição no preview estático
+        });
+    }
+
+    // Renderiza essa trilha no spinner
+    renderTrack('spinner', previewTrack);
+    // --------------------------------------
+
+    // 3. Renderizar a lista de conteúdos abaixo (Preview List)
+    const preview = document.getElementById('preview-items');
     const sortedItems = [...caseInfo.items].sort((a, b) => a.chance - b.chance);
 
     preview.innerHTML = sortedItems.map(item => {
-    let priceDisplay = formatCurrency(item.minVal) + " - " + formatCurrency(item.maxVal);
-    if (item.minVal === item.maxVal) priceDisplay = formatCurrency(item.minVal);
+        let priceDisplay = formatCurrency(item.minVal) + " - " + formatCurrency(item.maxVal);
+        if (item.minVal === item.maxVal) priceDisplay = formatCurrency(item.minVal);
 
-    return `
-        <div class="preview-item" style="border-color: ${item.color}">
-            <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
-            <div class="preview-info">
-                <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
-                <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">$${priceDisplay}</span>
-                <small style="color: #666; display: block; margin-top: 5px;">${item.chance}% Drop</small>
+        return `
+            <div class="preview-item" style="border-color: ${item.color}">
+                <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
+                <div class="preview-info">
+                    <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
+                    <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">$${priceDisplay}</span>
+                    <small style="color: #666; display: block; margin-top: 5px;">${item.chance}% Drop</small>
+                </div>
             </div>
-        </div>
-    `;
-}).join('');
+        `;
+    }).join('');
 }
 
 function switchTab(id, el) {
@@ -1390,24 +1478,188 @@ socket.on('startBattleSpin', async (data) => {
     const myFinalBalance = (currentUser._id === data.battle.player1.id) ? data.p1FinalBalance : data.p2FinalBalance;
     if (myFinalBalance !== undefined) updateBalanceUI(myFinalBalance);
 });
+function escapeHTML(str) {
+    const p = document.createElement('p');
+    p.textContent = str;
+    return p.innerHTML;
+}
 // Chat
 document.getElementById('chat-input').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter' && e.target.value.trim() !== '') {
-        socket.emit('chatMessage', { user: currentUser.username, msg: e.target.value, avatar: currentUser.avatar });
+    if (e.key === 'Enter' && e.target.value.trim() !== '') {
+        // CORREÇÃO 1: Verificar se o usuário está logado antes de enviar
+        if (!currentUser) {
+            alert("Você precisa estar logado para usar o chat!");
+            e.target.value = '';
+            return;
+        }
+
+        const message = e.target.value.trim();
+        
+        socket.emit('chatMessage', { 
+            user: currentUser.username, 
+            msg: message, 
+            avatar: currentUser.avatar || 'https://api.dicebear.com/9.x/bottts/svg?seed=Guest' 
+        });
+        
         e.target.value = '';
     }
 });
 
 socket.on('chatMessage', (data) => {
+    if (!data.user || !data.msg) return;
+
+    const box = document.getElementById('chat-msgs');
+    const isAtBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 50;
+
     const div = document.createElement('div');
     div.className = 'chat-line';
-    div.innerHTML = `<img src="${data.avatar}"><div class="chat-bubble"><b>${data.user}</b>${data.msg}</div>`;
-    const box = document.getElementById('chat-msgs');
-    box.appendChild(div); box.scrollTop = box.scrollHeight;
+
+    const safeUser = escapeHTML(data.user);
+    const safeMsg = escapeHTML(data.msg);
+    
+    // Verificamos se existe steamId para evitar o erro de 'undefined'
+    const steamId = data.steamId;
+    const clickAction = steamId ? `onclick="openProfileModal('${steamId}')"` : "";
+
+    div.innerHTML = `
+        <div class="chat-profile-link" ${clickAction} style="cursor: pointer;">
+            <img src="${data.avatar}" onerror="this.src='https://api.dicebear.com/9.x/bottts/svg?seed=Error'">
+        </div>
+        <div class="chat-bubble">
+            <div class="chat-user-name" ${clickAction} style="cursor: pointer;">
+                <b>${safeUser}</b>
+            </div>
+            <div class="chat-text">${safeMsg}</div>
+        </div>
+    `;
+    
+    box.appendChild(div);
+    if (isAtBottom) box.scrollTop = box.scrollHeight;
+});
+async function showUserProfile(steamId) {
+    if(!steamId) return;
+    
+    // Mostra o separador e limpa o anterior
+    switchTab('profile-tab');
+    document.getElementById('view-profile-name').innerText = "Carregando...";
+    document.getElementById('view-profile-inventory-grid').innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/profile/${steamId}`);
+        const user = await res.json();
+
+        if (user.error) return alert(user.error);
+
+        // Preenche o Cabeçalho
+        document.getElementById('view-profile-avatar').src = user.avatar;
+        document.getElementById('view-profile-name').innerText = user.username.toUpperCase();
+        
+        // Calcula valores
+        const totalValue = user.inventory.reduce((sum, item) => sum + item.value, 0);
+        document.getElementById('view-profile-count').innerText = `${user.inventory.length} ITENS`;
+        document.getElementById('view-profile-value').innerText = `$${formatCurrency(totalValue)}`;
+
+        // Renderiza o Inventário (apenas visualização, sem botões de vender)
+        const grid = document.getElementById('view-profile-inventory-grid');
+        grid.innerHTML = user.inventory.map(item => `
+            <div class="inventory-card" style="--rarity-color: ${item.color};">
+                <img src="${item.img}">
+                <div class="inv-info">
+                    <b>${item.name}</b>
+                    <small style="color: ${item.color}">${item.conditionShort}</small>
+                    <span>$${formatCurrency(item.value)}</span>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error("Erro ao carregar perfil:", e);
+    }
+}
+async function openProfileModal(steamId) {
+    if(!steamId || steamId === 'undefined') return;
+
+    const modal = document.getElementById('profile-modal');
+    modal.classList.remove('closing'); 
+    modal.style.display = 'flex';
+    
+    
+    // Reset
+    document.getElementById('p-name').innerText = "CARREGANDO...";
+    document.getElementById('p-grid').innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/profile/${steamId}`);
+        const user = await res.json();
+
+        document.getElementById('p-ava').src = user.avatar;
+        document.getElementById('p-name').innerText = user.username;
+        
+        const totalValue = user.inventory.reduce((sum, item) => sum + item.value, 0);
+        document.getElementById('p-count').innerText = user.inventory.length;
+        document.getElementById('p-value').innerText = `$${formatCurrency(totalValue)}`;
+
+        const grid = document.getElementById('p-grid');
+        grid.innerHTML = user.inventory.map(item => `
+            <div class="inventory-card" style="--rarity-color: ${item.color};">
+                <img src="${item.img}">
+                <div class="inv-info">
+                    <b>${item.name}</b>
+                    <small style="color: ${item.color}">${item.conditionShort}</small>
+                    <span>$${formatCurrency(item.value)}</span>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function closeProfile() {
+    const modal = document.getElementById('profile-modal');
+    
+    // 1. Adiciona a classe que dispara as animações de saída
+    modal.classList.add('closing');
+
+    // 2. Espera 500ms (o mesmo tempo da animação no CSS) para esconder o modal
+    setTimeout(() => {
+        modal.style.display = 'none';
+        
+        // 3. Remove a classe closing para que ele possa abrir corretamente da próxima vez
+        modal.classList.remove('closing');
+    }, 500); 
+}
+// Settings & Auth
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+
+    if (message !== '') {
+        if (!currentUser || !currentUser.steamId) {
+            alert("Faça login via Steam para usar o chat!");
+            input.value = '';
+            return;
+        }
+
+        socket.emit('chatMessage', { 
+            user: currentUser.username, 
+            msg: message, 
+            avatar: currentUser.avatar,
+            steamId: currentUser.steamId // <--- ENVIA O SEU ID AQUI
+        });
+        
+        input.value = '';
+    }
+}
+
+// Enter para enviar
+document.getElementById('chat-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
 });
 
-// Settings & Auth
-
+// Clique no botão redondo para enviar
+document.getElementById('btn-chat-send').addEventListener('click', sendMessage);
 
 async function auth(type) {
     const btn = event.target; // Get the clicked button
