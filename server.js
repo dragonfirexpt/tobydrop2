@@ -546,21 +546,26 @@ app.post('/api/upgrade', async (req, res) => {
                 const isGlove = (weaponId >= 5027 && weaponId <= 5035) || weaponId === 4725;
 
                 try {
-                    if (isGlove) {
-                        // Remove from gloves table and skins table
-                        await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
-                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
-                    } else if (isKnife) {
-                        // Remove from knife table and the skin record associated with it
-                        await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ?", [user.steamId]);
-                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex BETWEEN 500 AND 999", [user.steamId]);
-                    } else {
-                        // Standard weapon skin
-                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+                    // Preparamos as equipes para remover (vale para todos: armas, facas e luvas)
+                    let teamsToRemove = [];
+                    if (item.equippedTeam === 2) teamsToRemove = [2];
+                    if (item.equippedTeam === 3) teamsToRemove = [3];
+                    if (item.equippedTeam === 4) teamsToRemove = [2, 3];
+
+                    for (let tId of teamsToRemove) {
+                        if (isGlove) {
+                            await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_team = ?", [user.steamId, tId]);
+                            await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ? AND weapon_team = ?", [user.steamId, weaponId, tId]);
+                        } else if (isKnife) {
+                            await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ? AND weapon_team = ?", [user.steamId, tId]);
+                            await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ? AND weapon_team = ?", [user.steamId, weaponId, tId]);
+                        } else {
+                            // Armas normais (AK, M4, etc)
+                            await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ? AND weapon_team = ?", [user.steamId, weaponId, tId]);
+                        }
                     }
                 } catch (sqlErr) {
                     console.error("Erro ao remover item equipado do MySQL durante upgrade:", sqlErr);
-                    // We continue even if MySQL fails to prevent blocking the user's upgrade
                 }
             }
         }
