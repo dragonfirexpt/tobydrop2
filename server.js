@@ -29,7 +29,14 @@ const sqlConnection = mysql.createPool({
     host: 'mysql-2e9dbd1e-nottyastobusiness-6048.k.aivencloud.com',
     user: 'avnadmin',
     password: 'AVNS_kPJXVEI34RWcxvS3bnl',
-    database: 'defaultdb'
+    database: 'defaultdb',
+    port: 23869, // O Aiven geralmente usa a porta 20336, verifique no seu painel!
+    ssl: {
+        rejectUnauthorized: false // Necessário para aceitar o certificado do Aiven
+    },
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 }).promise();
 
 // Teste de conexão para não derrubar o site
