@@ -256,20 +256,20 @@ const caseData = {
         img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/Eclipse.webp",
         items: [
             { name: "AWP | Dragon Lore", maxVal: 10061.34, minVal: 10061.34, color: "#ffb703", chance: 0.010, fixedCondition: "FT", weaponId: 9, paintKit: 344 },
-            { name: "★ Butterfly Knife | Gamma Doppler Phase 3", maxVal: 3401.02, minVal: 3401.02, color: "#ffb703", chance: 0.019, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTNfbGlnaHQuM2RhZjU3N2Q5OWU3N2E4ZjZkNTYzNDEyZWEwNTJiMWM2MmQ1NWMwNC5wbmc-/auto/auto/85/notrim/2c25258be3e263f9f578102515aae500.webp", weaponId: 515, paintKit: 571 },
-            { name: "★ M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.034, fixedCondition: "FN", weaponId: 508, paintKit: 38 },
-            { name: "★ Skeleton Knife | Doppler Phase 4", maxVal: 1130.23, minVal: 1130.23, color: "#ffb703", chance: 0.124, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9za2VsZXRvbl9hbV9kb3BwbGVyX3BoYXNlNF9saWdodC4zMmM1NjY3MjJhNDRlY2VjZDRkZTA2YjVhMjNkMDUyMjE1NTY4ZjA2LnBuZw--/auto/auto/85/notrim/8f45a6034bd22089476ccfde0fb147d9.webp", weaponId: 525, paintKit: 421 },
-            { name: "★ Butterfly Knife | Lore", maxVal: 1070.51, minVal: 1070.51, color: "#ffb703", chance: 0.056, fixedCondition: "FT", weaponId: 515, paintKit: 1105 },
-            { name: "★ Skeleton Knife | Fade", maxVal: 903.96, minVal: 903.96, color: "#ffb703", chance: 0.046, fixedCondition: "FN", weaponId: 525, paintKit: 38 },
-            { name: "★ Skeleton Knife | Marble Fade", maxVal: 683.56, minVal: 683.56, color: "#ffb703", chance: 0.158, fixedCondition: "FN", weaponId: 525, paintKit: 413 },
-            { name: "★ Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.148, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlNF9saWdodC5jNDQ3MThlNzQ1MDNhOGY2NTg0MzM2MzQzNDU1NDI1YjNiYTRkNTI5LnBuZw--/auto/auto/85/notrim/38f33dd23029871b7105d5753682124c.webp", weaponId: 518, paintKit: 421 },
-            { name: "★ Paracord Knife | Fade", maxVal: 258.24, minVal: 258.24, color: "#ffb703", chance: 0.207, fixedCondition: "FN", weaponId: 517, paintKit: 38 },
-            { name: "★ Bayonet | Freehand", maxVal: 251.00, minVal: 251.00, color: "#ffb703", chance: 0.263, fixedCondition: "FT", weaponId: 500, paintKit: 580 },
-            { name: "★ Gut Knife | Tiger Tooth", maxVal: 164.31, minVal: 164.31, color: "#ffb703", chance: 3.813, fixedCondition: "FN", weaponId: 506, paintKit: 409 },
+            { name: "Butterfly Knife | Gamma Doppler Phase 3", maxVal: 3401.02, minVal: 3401.02, color: "#ffb703", chance: 0.019, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTNfbGlnaHQuM2RhZjU3N2Q5OWU3N2E4ZjZkNTYzNDEyZWEwNTJiMWM2MmQ1NWMwNC5wbmc-/auto/auto/85/notrim/2c25258be3e263f9f578102515aae500.webp", weaponId: 515, paintKit: 571 },
+            { name: "M9 Bayonet | Fade", maxVal: 1613.09, minVal: 1613.09, color: "#ffb703", chance: 0.034, fixedCondition: "FN", weaponId: 508, paintKit: 38 },
+            { name: "Skeleton Knife | Doppler Phase 4", maxVal: 1130.23, minVal: 1130.23, color: "#ffb703", chance: 0.124, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9za2VsZXRvbl9hbV9kb3BwbGVyX3BoYXNlNF9saWdodC4zMmM1NjY3MjJhNDRlY2VjZDRkZTA2YjVhMjNkMDUyMjE1NTY4ZjA2LnBuZw--/auto/auto/85/notrim/8f45a6034bd22089476ccfde0fb147d9.webp", weaponId: 525, paintKit: 421 },
+            { name: "Butterfly Knife | Lore", maxVal: 1070.51, minVal: 1070.51, color: "#ffb703", chance: 0.056, fixedCondition: "FT", weaponId: 515, paintKit: 1105 },
+            { name: "Skeleton Knife | Fade", maxVal: 903.96, minVal: 903.96, color: "#ffb703", chance: 0.046, fixedCondition: "FN", weaponId: 525, paintKit: 38 },
+            { name: "Skeleton Knife | Marble Fade", maxVal: 683.56, minVal: 683.56, color: "#ffb703", chance: 0.158, fixedCondition: "FN", weaponId: 525, paintKit: 413 },
+            { name: "Survival Knife | Doppler Phase 4", maxVal: 315.24, minVal: 315.24, color: "#ffb703", chance: 0.148, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlNF9saWdodC5jNDQ3MThlNzQ1MDNhOGY2NTg0MzM2MzQzNDU1NDI1YjNiYTRkNTI5LnBuZw--/auto/auto/85/notrim/38f33dd23029871b7105d5753682124c.webp", weaponId: 518, paintKit: 421 },
+            { name: "Paracord Knife | Fade", maxVal: 258.24, minVal: 258.24, color: "#ffb703", chance: 0.207, fixedCondition: "FN", weaponId: 517, paintKit: 38 },
+            { name: "Bayonet | Freehand", maxVal: 251.00, minVal: 251.00, color: "#ffb703", chance: 0.263, fixedCondition: "FT", weaponId: 500, paintKit: 580 },
+            { name: "Gut Knife | Tiger Tooth", maxVal: 164.31, minVal: 164.31, color: "#ffb703", chance: 3.813, fixedCondition: "FN", weaponId: 506, paintKit: 409 },
             { name: "AWP | Asiimov", maxVal: 137.95, minVal: 118.37, color: "#eb4b4b", chance: 1.963, weaponId: 9, paintKit: 279 },
-            { name: "★ Shadow Daggers | Freehand", maxVal: 96.66, minVal: 89.64, color: "#ffb703", chance: 2.851, weaponId: 516, paintKit: 581 },
-            { name: "★ Shadow Daggers | Lore", maxVal: 94.45, minVal: 94.45, color: "#ffb703", chance: 3.599, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
-            { name: "★ Gut Knife | Freehand", maxVal: 94.41, minVal: 94.41, color: "#ffb703", chance: 2.657, fixedCondition: "FT", weaponId: 506, paintKit: 580 },
+            { name: "Shadow Daggers | Freehand", maxVal: 96.66, minVal: 89.64, color: "#ffb703", chance: 2.851, weaponId: 516, paintKit: 581 },
+            { name: "Shadow Daggers | Lore", maxVal: 94.45, minVal: 94.45, color: "#ffb703", chance: 3.599, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
+            { name: "Gut Knife | Freehand", maxVal: 94.41, minVal: 94.41, color: "#ffb703", chance: 2.657, fixedCondition: "FT", weaponId: 506, paintKit: 580 },
             { name: "AWP | Wildfire", maxVal: 74.74, minVal: 63.72, color: "#eb4b4b", chance: 8.148, weaponId: 9, paintKit: 917 },
             { name: "Desert Eagle | Printstream", maxVal: 54.56, minVal: 49.09, color: "#eb4b4b", chance: 8.988, weaponId: 1, paintKit: 962 },
             { name: "AK-47 | Legion of Anubis", maxVal: 34.65, minVal: 12.36, color: "#d32ce6", chance: 8.914, weaponId: 7, paintKit: 959 },
@@ -286,34 +286,34 @@ const caseData = {
     price: 2.50,
     img: "https://img.clash.gg/cases?q=https%3A%2F%2Fmedia.discordapp.net%2Fattachments%2F449030703426961418%2F1230909108526383204%2FSurvival_Guide.png%3Fex%3D66350870%26is%3D66229370%26hm%3Dce48650d53dbcc8f318b65e8f5c13dffdc971d5842d2052368d79fc54adca2e9%26%3D%26format%3Dwebp%26quality%3Dlossless%26width%3D924%26height%3D978",
     items: [
-        { name: "★ Survival Knife | Doppler Phase 3", maxVal: 309.73, minVal: 309.73, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlM19saWdodC5kOGFkZTQ2ZWQ0ZmY3MGY4YjcxMzI3MDMyZTM1NDE5MjhhYWIxYTA5LnBuZw--/auto/auto/85/notrim/d62bb8ac23e9ff4da34f8e74ddb2fbc9.webp", weaponId: 518, paintKit: 420 },
-        { name: "★ Flip Knife | Autotronic", maxVal: 252.51, minVal: 252.51, color: "#ffb703", chance: 0.010, fixedCondition: "FT", weaponId: 505, paintKit: 1116 },
-        { name: "★ Ursus Knife | Tiger Tooth", maxVal: 227.18, minVal: 227.18, color: "#ffb703", chance: 0.010, fixedCondition: "FN", weaponId: 519, paintKit: 409 },
+        { name: "Survival Knife | Doppler Phase 3", maxVal: 309.73, minVal: 309.73, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlM19saWdodC5kOGFkZTQ2ZWQ0ZmY3MGY4YjcxMzI3MDMyZTM1NDE5MjhhYWIxYTA5LnBuZw--/auto/auto/85/notrim/d62bb8ac23e9ff4da34f8e74ddb2fbc9.webp", weaponId: 518, paintKit: 420 },
+        { name: "Flip Knife | Autotronic", maxVal: 252.51, minVal: 252.51, color: "#ffb703", chance: 0.010, fixedCondition: "FT", weaponId: 505, paintKit: 574 },
+        { name: "Ursus Knife | Tiger Tooth", maxVal: 227.18, minVal: 227.18, color: "#ffb703", chance: 0.010, fixedCondition: "FN", weaponId: 519, paintKit: 409 },
 
         { name: "AK-47 | Neon Rider", maxVal: 127.36, minVal: 127.36, color: "#eb4b4b", chance: 0.011, fixedCondition: "MW", weaponId: 7, paintKit: 707 },
-        { name: "M4A4 | Full Throttle", maxVal: 83.20, minVal: 83.20, color: "#eb4b4b", chance: 0.029, fixedCondition: "FT", weaponId: 16, paintKit: 631 },
+        { name: "M4A4 | Full Throttle", maxVal: 83.20, minVal: 83.20, color: "#eb4b4b", chance: 0.029, fixedCondition: "FT", weaponId: 16, paintKit: 1353 },
         { name: "AWP | Wildfire", maxVal: 74.74, minVal: 74.74, color: "#eb4b4b", chance: 0.047, fixedCondition: "FT", weaponId: 9, paintKit: 917 },
         { name: "AK-47 | Asiimov", maxVal: 65.90, minVal: 61.01, color: "#eb4b4b", chance: 0.061, weaponId: 7, paintKit: 801 },
 
         { name: "AK-47 | Point Disarray", maxVal: 37.66, minVal: 37.66, color: "#d32ce6", chance: 0.099, fixedCondition: "MW", weaponId: 7, paintKit: 506 },
-        { name: "M4A1-S | Party Animal", maxVal: 34.97, minVal: 34.97, color: "#d32ce6", chance: 0.124, fixedCondition: "FT", weaponId: 60, paintKit: 680 },
-        { name: "AK-47 | Searing Rage", maxVal: 14.40, minVal: 14.40, color: "#d32ce6", chance: 0.108, fixedCondition: "MW", weaponId: 7, paintKit: 1024 },
+        { name: "M4A1-S | Party Animal", maxVal: 34.97, minVal: 34.97, color: "#d32ce6", chance: 0.124, fixedCondition: "FT", weaponId: 60, paintKit: 1376 },
+        { name: "AK-47 | Searing Rage", maxVal: 14.40, minVal: 14.40, color: "#d32ce6", chance: 0.108, fixedCondition: "MW", weaponId: 7, paintKit: 1207 },
 
         { name: "AK-47 | Ice Coaled", maxVal: 11.33, minVal: 6.43, color: "#d32ce6", chance: 3.032, weaponId: 7, paintKit: 1143 },
-        { name: "MAG-7 | Monster Call", maxVal: 8.81, minVal: 0.66, color: "#8847ff", chance: 10.958, weaponId: 27, paintKit: 577 },
-        { name: "R8 Revolver | Banana Cannon", maxVal: 8.66, minVal: 0.63, color: "#8847ff", chance: 10.197, weaponId: 64, paintKit: 1230 },
-        { name: "P250 | Inferno", maxVal: 8.36, minVal: 0.98, color: "#8847ff", chance: 9.583, weaponId: 36, paintKit: 516 },
+        { name: "MAG-7 | Monster Call", maxVal: 8.81, minVal: 0.66, color: "#8847ff", chance: 10.958, weaponId: 27, paintKit: 961 },
+        { name: "R8 Revolver | Banana Cannon", maxVal: 8.66, minVal: 0.63, color: "#8847ff", chance: 10.197, weaponId: 64, paintKit: 1232 },
+        { name: "P250 | Inferno", maxVal: 8.36, minVal: 0.98, color: "#8847ff", chance: 9.583, weaponId: 36, paintKit: 907 },
         { name: "Dual Berettas | Twin Turbo", maxVal: 8.11, minVal: 2.89, color: "#8847ff", chance: 6.817, weaponId: 2, paintKit: 747 },
-        { name: "Glock-18 | Shinobu", maxVal: 7.08, minVal: 6.98, color: "#8847ff", chance: 2.628, weaponId: 4, paintKit: 988 },
-        { name: "Glock-18 | Vogue", maxVal: 5.93, minVal: 5.89, color: "#8847ff", chance: 2.408, weaponId: 4, paintKit: 785 },
-        { name: "AWP | Duality", maxVal: 5.08, minVal: 5.08, color: "#8847ff", chance: 3.394, fixedCondition: "FT", weaponId: 9, paintKit: 1079 },
+        { name: "Glock-18 | Shinobu", maxVal: 7.08, minVal: 6.98, color: "#8847ff", chance: 2.628, weaponId: 4, paintKit: 1208 },
+        { name: "Glock-18 | Vogue", maxVal: 5.93, minVal: 5.89, color: "#8847ff", chance: 2.408, weaponId: 4, paintKit: 963 },
+        { name: "AWP | Duality", maxVal: 5.08, minVal: 5.08, color: "#8847ff", chance: 3.394, fixedCondition: "FT", weaponId: 9, paintKit: 1222 },
 
-        { name: "M4A1-S | Night Terror", maxVal: 4.12, minVal: 1.01, color: "#4b69ff", chance: 9.921, weaponId: 60, paintKit: 1148 },
+        { name: "M4A1-S | Night Terror", maxVal: 4.12, minVal: 1.01, color: "#4b69ff", chance: 9.921, weaponId: 60, paintKit: 1130 },
         { name: "AWP | Phobos", maxVal: 3.45, minVal: 3.45, color: "#4b69ff", chance: 5.614, fixedCondition: "FT", weaponId: 9, paintKit: 584 },
         { name: "P250 | Franklin", maxVal: 3.30, minVal: 3.30, color: "#4b69ff", chance: 6.037, fixedCondition: "MW", weaponId: 36, paintKit: 295 },
-        { name: "M4A1-S | Rose Hex", maxVal: 2.88, minVal: 0.51, color: "#4b69ff", chance: 10.015, weaponId: 60, paintKit: 803 },
-        { name: "G3SG1 | Dream Glade", maxVal: 1.73, minVal: 0.91, color: "#4b69ff", chance: 8.344, weaponId: 11, paintKit: 1477 },
-        { name: "Glock-18 | Ocean Topo", maxVal: 0.91, minVal: 0.08, color: "#4b69ff", chance: 10.543, weaponId: 4, paintKit: 680 }
+        { name: "M4A1-S | Rose Hex", maxVal: 2.88, minVal: 0.51, color: "#4b69ff", chance: 10.015, weaponId: 60, paintKit: 1319 },
+        { name: "G3SG1 | Dream Glade", maxVal: 1.73, minVal: 0.91, color: "#4b69ff", chance: 8.344, weaponId: 11, paintKit: 1129 },
+        { name: "Glock-18 | Ocean Topo", maxVal: 0.91, minVal: 0.08, color: "#4b69ff", chance: 10.543, weaponId: 4, paintKit: 1265 }
     ]
 },
     sapphire_elite: {
@@ -321,32 +321,32 @@ const caseData = {
     price: 45.00,
     img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/Elixir.webp",
     items: [
-        { name: "★ Karambit | Doppler - Sapphire", maxVal: 7437.61, minVal: 7437.61, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9rYXJhbWJpdF9hbV9zYXBwaGlyZV9tYXJibGVpemVkX2xpZ2h0LmE2NjEzZWQxMTRmNTM1NDdjYzE0ZjUyMjU1ZWI0OTkzMzEzNTM4OTcucG5n/auto/auto/85/notrim/ced533af9158e96f3a99b160c4104177.webp", weaponId: 507, paintKit: 416 },
-        { name: "★ Butterfly Knife | Gamma Doppler - Phase 4", maxVal: 3310.91, minVal: 3310.91, color: "#ffb703", chance: 0.031, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTRfbGlnaHQuMDUyMDJlMTQxZmM0MWUyM2VkY2ViYzQ1MmZkODhlMzEzMTIxZDY4NC5wbmc-/auto/auto/85/notrim/d6629ea568700f1e918d73522e5c6abe.webp", weaponId: 515, paintKit: 573 },
-        { name: "★ Bayonet | Doppler - Ruby", maxVal: 3061.20, minVal: 3061.20, color: "#ffb703", chance: 0.046, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5lOWQyNDdlNmY0NTBhMDkyYzkzOTUzYmZmOTNkYjQyNmI4MmYyMDY5LnBuZw--/auto/auto/85/notrim/90c16f77c63d454c11d43a74e1d96906.webp", weaponId: 500, paintKit: 415 },
+        { name: "Karambit | Doppler Sapphire", maxVal: 7437.61, minVal: 7437.61, color: "#ffb703", chance: 0.010, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9rYXJhbWJpdF9hbV9zYXBwaGlyZV9tYXJibGVpemVkX2xpZ2h0LmE2NjEzZWQxMTRmNTM1NDdjYzE0ZjUyMjU1ZWI0OTkzMzEzNTM4OTcucG5n/auto/auto/85/notrim/ced533af9158e96f3a99b160c4104177.webp", weaponId: 507, paintKit: 416 },
+        { name: "Butterfly Knife | Gamma Doppler Phase 4", maxVal: 3310.91, minVal: 3310.91, color: "#ffb703", chance: 0.031, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9idXR0ZXJmbHlfYW1fZ2FtbWFfZG9wcGxlcl9waGFzZTRfbGlnaHQuMDUyMDJlMTQxZmM0MWUyM2VkY2ViYzQ1MmZkODhlMzEzMTIxZDY4NC5wbmc-/auto/auto/85/notrim/d6629ea568700f1e918d73522e5c6abe.webp", weaponId: 515, paintKit: 572 },
+        { name: "Bayonet | Doppler Ruby", maxVal: 3061.20, minVal: 3061.20, color: "#ffb703", chance: 0.046, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX3J1YnlfbWFyYmxlaXplZF9saWdodC5lOWQyNDdlNmY0NTBhMDkyYzkzOTUzYmZmOTNkYjQyNmI4MmYyMDY5LnBuZw--/auto/auto/85/notrim/90c16f77c63d454c11d43a74e1d96906.webp", weaponId: 500, paintKit: 415 },
 
-        { name: "★ Butterfly Knife | Lore", maxVal: 1690.34, minVal: 1690.34, color: "#ffb703", chance: 0.107, fixedCondition: "MW", weaponId: 515, paintKit: 1104 },
-        { name: "★ M9 Bayonet | Doppler - Phase 3", maxVal: 1539.84, minVal: 1539.84, color: "#ffb703", chance: 0.099, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9tOV9iYXlvbmV0X2FtX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LjQzZTQ1MDdhMmZlOWI2MDg4OWYzZTUwM2M2NDVlZDkzNjE1N2EwMTcucG5n/auto/auto/85/notrim/0b9af664b7a9d66df0840a13cc36b439.webp", weaponId: 508, paintKit: 420 },
-        { name: "★ M9 Bayonet | Tiger Tooth", maxVal: 1105.55, minVal: 1105.55, color: "#ffb703", chance: 0.149, fixedCondition: "FN", weaponId: 508, paintKit: 409 },
-        { name: "★ Bayonet | Marble Fade", maxVal: 556.44, minVal: 556.44, color: "#ffb703", chance: 0.386, fixedCondition: "FN", weaponId: 500, paintKit: 413 },
-        { name: "★ Bayonet | Crimson Web", maxVal: 289.78, minVal: 289.78, color: "#ffb703", chance: 0.389, fixedCondition: "FT", weaponId: 500, paintKit: 12 },
-        { name: "★ Nomad Knife | Case Hardened", maxVal: 234.98, minVal: 234.98, color: "#ffb703", chance: 0.532, fixedCondition: "FT", weaponId: 521, paintKit: 44 },
-        { name: "★ Falchion Knife | Tiger Tooth", maxVal: 233.53, minVal: 233.53, color: "#ffb703", chance: 0.619, fixedCondition: "FN", weaponId: 512, paintKit: 409 },
-        { name: "★ Gut Knife | Doppler - Phase 3", maxVal: 200.58, minVal: 200.58, color: "#ffb703", chance: 0.479, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9ndXRfYW1fZG9wcGxlcl9waGFzZTNfbGlnaHQuNWJkODU2ODBiYmJjZGI1MmNmNmJiNGIyZTVjZmQwODNhZDMxMGE0OC5wbmc-/auto/auto/85/notrim/818534d69159488590295645514388b3.webp", weaponId: 506, paintKit: 420 },
-        { name: "★ Flip Knife | Bright Water", maxVal: 183.92, minVal: 183.92, color: "#ffb703", chance: 0.913, fixedCondition: "FT", weaponId: 505, paintKit: 578 },
-        { name: "★ Survival Knife | Urban Masked", maxVal: 96.28, minVal: 96.28, color: "#ffb703", chance: 3.482, fixedCondition: "MW", weaponId: 518, paintKit: 143 },
-        { name: "★ Shadow Daggers | Lore", maxVal: 95.52, minVal: 95.52, color: "#ffb703", chance: 3.356, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
-        { name: "★ Gut Knife | Bright Water", maxVal: 91.44, minVal: 91.44, color: "#ffb703", chance: 3.684, fixedCondition: "FT", weaponId: 506, paintKit: 578 },
-        { name: "★ Shadow Daggers | Autotronic", maxVal: 85.46, minVal: 85.46, color: "#ffb703", chance: 3.702, fixedCondition: "FT", weaponId: 516, paintKit: 1116 },
+        { name: "Butterfly Knife | Lore", maxVal: 1690.34, minVal: 1690.34, color: "#ffb703", chance: 0.107, fixedCondition: "MW", weaponId: 515, paintKit: 1105 },
+        { name: "M9 Bayonet | Doppler Phase 3", maxVal: 1539.84, minVal: 1539.84, color: "#ffb703", chance: 0.099, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9tOV9iYXlvbmV0X2FtX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LjQzZTQ1MDdhMmZlOWI2MDg4OWYzZTUwM2M2NDVlZDkzNjE1N2EwMTcucG5n/auto/auto/85/notrim/0b9af664b7a9d66df0840a13cc36b439.webp", weaponId: 508, paintKit: 420 },
+        { name: "M9 Bayonet | Tiger Tooth", maxVal: 1105.55, minVal: 1105.55, color: "#ffb703", chance: 0.149, fixedCondition: "FN", weaponId: 508, paintKit: 409 },
+        { name: "Bayonet | Marble Fade", maxVal: 556.44, minVal: 556.44, color: "#ffb703", chance: 0.386, fixedCondition: "FN", weaponId: 500, paintKit: 413 },
+        { name: "Bayonet | Crimson Web", maxVal: 289.78, minVal: 289.78, color: "#ffb703", chance: 0.389, fixedCondition: "FT", weaponId: 500, paintKit: 12 },
+        { name: "Nomad Knife | Case Hardened", maxVal: 234.98, minVal: 234.98, color: "#ffb703", chance: 0.532, fixedCondition: "FT", weaponId: 521, paintKit: 44 },
+        { name: "Falchion Knife | Tiger Tooth", maxVal: 233.53, minVal: 233.53, color: "#ffb703", chance: 0.619, fixedCondition: "FN", weaponId: 512, paintKit: 409 },
+        { name: "Gut Knife | Doppler Phase 3", maxVal: 200.58, minVal: 200.58, color: "#ffb703", chance: 0.479, fixedCondition: "FN", img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9ndXRfYW1fZG9wcGxlcl9waGFzZTNfbGlnaHQuNWJkODU2ODBiYmJjZGI1MmNmNmJiNGIyZTVjZmQwODNhZDMxMGE0OC5wbmc-/auto/auto/85/notrim/818534d69159488590295645514388b3.webp", weaponId: 506, paintKit: 420 },
+        { name: "Flip Knife | Bright Water", maxVal: 183.92, minVal: 183.92, color: "#ffb703", chance: 0.913, fixedCondition: "FT", weaponId: 505, paintKit: 578 },
+        { name: "Survival Knife | Urban Masked", maxVal: 96.28, minVal: 96.28, color: "#ffb703", chance: 3.482, fixedCondition: "MW", weaponId: 518, paintKit: 143 },
+        { name: "Shadow Daggers | Lore", maxVal: 95.52, minVal: 95.52, color: "#ffb703", chance: 3.356, fixedCondition: "FT", weaponId: 516, paintKit: 1108 },
+        { name: "Gut Knife | Bright Water", maxVal: 91.44, minVal: 91.44, color: "#ffb703", chance: 3.684, fixedCondition: "FT", weaponId: 506, paintKit: 578 },
+        { name: "Shadow Daggers | Autotronic", maxVal: 85.46, minVal: 85.46, color: "#ffb703", chance: 3.702, fixedCondition: "FT", weaponId: 516, paintKit: 1118 },
 
         { name: "AK-47 | Frontside Misty", maxVal: 29.29, minVal: 29.29, color: "#eb4b4b", chance: 9.415, fixedCondition: "FT", weaponId: 7, paintKit: 490 },
         { name: "AWP | Elite Build", maxVal: 27.52, minVal: 27.52, color: "#eb4b4b", chance: 10.002, fixedCondition: "FT", weaponId: 9, paintKit: 525 },
-        { name: "Glock-18 | Ramese's Reach", maxVal: 25.46, minVal: 25.46, color: "#d32ce6", chance: 9.618, fixedCondition: "FT", weaponId: 4, paintKit: 1185 },
+        { name: "Glock-18 | Ramese's Reach", maxVal: 25.46, minVal: 25.46, color: "#d32ce6", chance: 9.618, fixedCondition: "FT", weaponId: 4, paintKit: 1240 },
         { name: "Galil AR | Chromatic Aberration", maxVal: 6.28, minVal: 6.28, color: "#d32ce6", chance: 8.966, fixedCondition: "FT", weaponId: 13, paintKit: 1038 },
         { name: "M4A4 | Tooth Fairy", maxVal: 5.92, minVal: 5.92, color: "#d32ce6", chance: 7.912, fixedCondition: "FT", weaponId: 16, paintKit: 971 },
         { name: "AWP | PAW", maxVal: 5.14, minVal: 5.14, color: "#8847ff", chance: 10.647, fixedCondition: "MW", weaponId: 9, paintKit: 718 },
         { name: "M4A4 | Evil Daimyo", maxVal: 4.74, minVal: 4.74, color: "#8847ff", chance: 10.072, fixedCondition: "FT", weaponId: 16, paintKit: 480 },
-        { name: "AK-47 | Safety Net", maxVal: 4.32, minVal: 4.32, color: "#8847ff", chance: 15.384, fixedCondition: "FT", weaponId: 7, paintKit: 608 }
+        { name: "AK-47 | Safety Net", maxVal: 4.32, minVal: 4.32, color: "#8847ff", chance: 15.384, fixedCondition: "FT", weaponId: 7, paintKit: 795 }
     ]
 },
 };
@@ -355,60 +355,6 @@ const axios = require('axios'); // Você pode precisar instalar: npm install axi
 
 let skinDatabase = []; // Agora é um Array
 
-function autoLinkImages() {
-    console.log("🎨 Vinculando imagens às skins (Correção Doppler Ruby/Sapphire)...");
-    
-    // Função para limpar strings (remove estrelas, acentos e carateres especiais)
-    const simplify = (str) => {
-        if (!str) return "";
-        return str.normalize("NFD")
-                  .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-                  .replace(/★/g, "")              // Remove a estrela
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]/g, "");      // Remove tudo o que não é letra/número
-    };
-
-    for (let caseKey in caseData) {
-        caseData[caseKey].items.forEach(item => {
-            const originalName = item.name.trim().toLowerCase();
-            
-            // 1. Identificar se é uma fase especial
-            const specialPhases = ["ruby", "sapphire", "emerald", "black pearl"];
-            const detectedPhase = specialPhases.find(p => originalName.includes(p));
-
-            let foundItem = skinDatabase.find(dbItem => {
-                if (!dbItem.name) return false;
-                const dbNameLower = dbItem.name.toLowerCase();
-
-                // Se detetamos uma fase (ex: Ruby)
-                if (detectedPhase) {
-                    const weaponName = originalName.split('|')[0].trim(); // ex: "gut knife"
-                    
-                    // O item do banco DEVE ter o nome da arma E a palavra "doppler" E a fase (ruby)
-                    return dbNameLower.includes(weaponName) && 
-                           dbNameLower.includes("doppler") && 
-                           dbNameLower.includes(detectedPhase);
-                }
-
-                // Busca normal para as outras skins
-                return simplify(dbItem.name).includes(simplify(item.name));
-            });
-
-            // 2. Se não achou com a busca acima (fallback)
-            if (!foundItem) {
-                foundItem = skinDatabase.find(dbItem => simplify(dbItem.name).includes(simplify(item.name)));
-            }
-
-            if (foundItem) {
-                item.img = foundItem.image;
-            } else {
-                console.warn(`⚠️ Imagem não encontrada: "${item.name}"`);
-                item.img = "https://via.placeholder.com/512x384?text=Skin+Not+Found";
-            }
-        });
-    }
-    console.log("✅ Imagens sincronizadas com as fases corretas!");
-}
 
 const getConditionForItem = (item) => {
     // 1. Verifica se você definiu uma condição fixa no caseData (ex: "FN")
