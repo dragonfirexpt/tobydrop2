@@ -26,14 +26,14 @@ const SteamStrategy = require('passport-steam').Strategy;
 const mysql = require('mysql2');
 
 const sqlConnection = mysql.createPool({
-    host: 'mysql-2e9dbd1e-nottyastobusiness-6048.k.aivencloud.com',
-    user: 'avnadmin',
-    password: 'AVNS_kPJXVEI34RWcxvS3bnl',
-    database: 'defaultdb',
-    port: 23869, // O Aiven geralmente usa a porta 20336, verifique no seu painel!
-    ssl: {
-        rejectUnauthorized: false // Necessário para aceitar o certificado do Aiven
-    },
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'cs2_server',
+    port: 3306, // O Aiven geralmente usa a porta 20336, verifique no seu painel!
+   // ssl: {
+        // rejectUnauthorized: false // Necessário para aceitar o certificado do Aiven
+   // },
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -54,8 +54,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
@@ -85,6 +85,7 @@ const KNIFE_NAMES = {
     514: "weapon_knife_survival_bowie",
     515: "weapon_knife_butterfly",
     516: "weapon_knife_push", // Shadow Daggers
+    518: "weapon_knife_canis",
     519: "weapon_knife_ursus",
     520: "weapon_knife_gypsy_jackknife", // Navaja
     522: "weapon_knife_stiletto",
