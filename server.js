@@ -529,23 +529,36 @@ app.post('/api/upgrade', async (req, res) => {
         const user = await User.findById(req.session.userId);
         if (!user) return res.status(401).json({ error: "Não autorizado" });
 
+        // Identify which items the user is sacrificing
         const itemsToSacrifice = user.inventory.filter(i => inputItemIds.includes(i.id));
         
-        // --- CORREÇÃO: DELETE ESPECÍFICO PARA CADA ITEM DO SACRIFÍCIO ---
+        if (itemsToSacrifice.length === 0) {
+            return res.status(400).json({ error: "Nenhum item de sacrifício encontrado" });
+        }
+
+        // --- NEW: CLEANUP SACRIFICED ITEMS FROM CS2 LOADOUT (MySQL) ---
         for (let item of itemsToSacrifice) {
             if (item.equippedTeam > 0) {
-                const tableName = item.weaponId >= 500 ? 'wp_player_knife' : 'wp_player_skins';
-                
-                let teamsToRemove = [];
-                if (item.equippedTeam === 2) teamsToRemove = [2];
-                if (item.equippedTeam === 3) teamsToRemove = [3];
-                if (item.equippedTeam === 4) teamsToRemove = [2, 3];
+                const weaponId = parseInt(item.weaponId);
+                const isKnife = weaponId >= 500 && weaponId <= 999;
+                const isGlove = (weaponId >= 5027 && weaponId <= 5035) || weaponId === 4725;
 
-                for (let tId of teamsToRemove) {
-                    await sqlConnection.query(
-                        `DELETE FROM ${tableName} WHERE steamid = ? AND weapon_defindex = ? AND weapon_team = ?`,
-                        [user.steamId, item.weaponId, tId]
-                    );
+                try {
+                    if (isGlove) {
+                        // Remove from gloves table and skins table
+                        await sqlConnection.query("DELETE FROM wp_player_gloves WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+                    } else if (isKnife) {
+                        // Remove from knife table and the skin record associated with it
+                        await sqlConnection.query("DELETE FROM wp_player_knife WHERE steamid = ?", [user.steamId]);
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex BETWEEN 500 AND 999", [user.steamId]);
+                    } else {
+                        // Standard weapon skin
+                        await sqlConnection.query("DELETE FROM wp_player_skins WHERE steamid = ? AND weapon_defindex = ?", [user.steamId, weaponId]);
+                    }
+                } catch (sqlErr) {
+                    console.error("Erro ao remover item equipado do MySQL durante upgrade:", sqlErr);
+                    // We continue even if MySQL fails to prevent blocking the user's upgrade
                 }
             }
         }
@@ -555,35 +568,34 @@ app.post('/api/upgrade', async (req, res) => {
         const roll = Math.random();
         const win = roll < chance;
 
-        // Remove do inventário do MongoDB
+        // Remove the sacrificed items from the MongoDB inventory
         user.inventory = user.inventory.filter(i => !inputItemIds.includes(i.id));
-let wonItem = null;
+
         if (win) {
-            // Lógica de gerar o novo item (mantém o que já tinhas...)
-            // Certifica-te que o newItem tem equippedTeam: 0 por padrão
             let template = null;
             for (let k in caseData) {
                 let found = caseData[k].items.find(i => i.name === targetSkinName);
                 if (found) { template = found; break; }
             }
             
-            wonItem = {
-            name: targetSkinName,
-            value: targetPrice,
-            img: template.img,
-            color: template.color,
-            conditionShort: targetCondition || "FN",
-            // --- CÓPIA DOS IDS TÉCNICOS ---
-            weaponId: Number(template.weaponId) || 0, 
-            paintKit: Number(template.paintKit) || 0,
-            wear: generateRandomWear(targetCondition || "FN"),
-            equippedTeam: 0, 
-            id: Math.random().toString(36).substr(2, 9)
-        };
-        user.inventory.push(wonItem);
+            const wonItem = {
+                name: targetSkinName,
+                value: targetPrice,
+                img: template ? template.img : "",
+                color: template ? template.color : "#fff",
+                conditionShort: targetCondition || "FN",
+                weaponId: template ? Number(template.weaponId) : 0, 
+                paintKit: template ? Number(template.paintKit) : 0,
+                wear: generateRandomWear(targetCondition || "FN"),
+                equippedTeam: 0, // New items are NEVER equipped by default
+                id: Math.random().toString(36).substr(2, 9)
+            };
+            user.inventory.push(wonItem);
         }
 
+        user.markModified('inventory'); // Tell Mongoose the array changed
         await user.save();
+
         res.json({ 
             success: true, 
             win, 
@@ -592,6 +604,7 @@ let wonItem = null;
             balance: user.balance 
         });
     } catch (e) {
+        console.error("Upgrade Error:", e);
         res.status(500).json({ error: "Erro no upgrade" });
     }
 });
