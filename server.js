@@ -54,8 +54,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
@@ -351,6 +351,48 @@ const caseData = {
         { name: "AK-47 | Safety Net", maxVal: 4.32, minVal: 4.32, color: "#8847ff", chance: 15.384, fixedCondition: "FT", weaponId: 7, paintKit: 795 }
     ]
 },
+gamma_shadow: {
+        name: "Gamma Shadow Box",
+        price: 12.00, // Preço sugerido com base no drop rate de facas
+        img: "https://img.clash.gg/cases/?q=https://clash.gg/assets/csgo/cases/Mafia.webp",
+        items: [
+            // --- FACAS (GOLD) ---
+            { name: "Bayonet | Gamma Doppler Phase 2", maxVal: 996.22, minVal: 996.22, color: "#ffb703", chance: 0.022, fixedCondition: "FN", weaponId: 500, paintKit: 570, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9iYXlvbmV0X2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UyX2xpZ2h0LmIzNGRjMjdkMDUzMGRkNDNlZTJmYzFiZjE3Y2MwYzVhOWI0MWI0MjMucG5n/auto/auto/85/notrim/bd638ec178949f856962fb2cc0891044.webp" },
+            { name: "Nomad Knife | Doppler Phase 3", maxVal: 620.13, minVal: 620.13, color: "#ffb703", chance: 0.039, fixedCondition: "FN", weaponId: 521, paintKit: 420, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9vdXRkb29yX2FtX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LmE5NTZkNTlmYzA0MGYzNWM3YzUwZTZhZjhhZjlhNDJiNWJhYzJjNTUucG5n/auto/auto/85/notrim/9eb1a7ef8add83ac52666d0fab4e6d49.webp" },
+            { name: "Skeleton Knife | Slaughter", maxVal: 609.95, minVal: 609.95, color: "#ffb703", chance: 0.039, fixedCondition: "FT", weaponId: 525, paintKit: 59 },
+            { name: "Navaja Knife | Doppler Ruby", maxVal: 419.45, minVal: 419.45, color: "#ffb703", chance: 0.048, fixedCondition: "FN", weaponId: 520, paintKit: 415, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9neXBzeV9qYWNra25pZmVfYW1fcnVieV9tYXJibGVpemVkX2xpZ2h0LjJiNzEyZDBhMDE1MTM4ZWQ4NDFiNWU0ZjVjZjQ1ZDE1YTA0YjJhNWIucG5n/auto/auto/85/notrim/5dd35a477c7d81f9bb69821ac787c325.webp" },
+            { name: "Bowie Knife | Gamma Doppler Phase 2", maxVal: 324.08, minVal: 324.08, color: "#ffb703", chance: 0.050, fixedCondition: "FN", weaponId: 514, paintKit: 570, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9zdXJ2aXZhbF9ib3dpZV9hbV9nYW1tYV9kb3BwbGVyX3BoYXNlMl9saWdodC4zMWFiYmZmZDRiOWJmZTE4NWFiNjkxZGI1Mjg1MDE0ZDg3Y2Q4YjQ0LnBuZw--/auto/auto/85/notrim/d102b94b267ab44fd9f2f60bf5bfb6f1.webp" },
+            { name: "Survival Knife | Marble Fade", maxVal: 225.16, minVal: 225.16, color: "#ffb703", chance: 0.077, fixedCondition: "FN", weaponId: 518, paintKit: 413 },
+
+            // --- COVERT (RED) ---
+            { name: "USP-S | Kill Confirmed", maxVal: 88.02, minVal: 88.02, color: "#eb4b4b", chance: 0.481, weaponId: 61, paintKit: 504, fixedCondition: "WW" },
+            { name: "AK-47 | The Oligarch", maxVal: 67.63, minVal: 67.63, color: "#eb4b4b", chance: 0.488, weaponId: 7, paintKit: 1352, fixedCondition: "BS" },
+            { name: "AK-47 | Aquamarine Revenge", maxVal: 64.89, minVal: 64.89, color: "#eb4b4b", chance: 0.470, weaponId: 7, paintKit: 474, fixedCondition: "FT" },
+            { name: "AWP | Neo-Noir", maxVal: 62.35, minVal: 62.35, color: "#eb4b4b", chance: 0.482, weaponId: 9, paintKit: 803, fixedCondition: "FT" },
+
+            // --- CLASSIFIED (PINK) ---
+            { name: "USP-S | Printstream", maxVal: 59.74, minVal: 59.74, color: "#d32ce6", chance: 0.691, weaponId: 61, paintKit: 1142, fixedCondition: "FT" },
+            { name: "AK-47 | Point Disarray", maxVal: 23.74, minVal: 23.74, color: "#d32ce6", chance: 4.114, weaponId: 7, paintKit: 506, fixedCondition: "FT" },
+            { name: "M4A4 | 龍王 (Dragon King)", maxVal: 21.68, minVal: 21.68, color: "#d32ce6", chance: 4.317, weaponId: 16, paintKit: 400, fixedCondition: "FT" },
+            { name: "M4A1-S | Decimator", maxVal: 20.57, minVal: 20.57, color: "#d32ce6", chance: 4.303, weaponId: 60, paintKit: 644, fixedCondition: "FT" },
+            { name: "AWP | Green Energy", maxVal: 19.27, minVal: 19.27, color: "#d32ce6", chance: 4.890, weaponId: 9, paintKit: 1280, fixedCondition: "BS" },
+
+            // --- RESTRICTED (PURPLE) ---
+            { name: "M4A1-S | Black Lotus", maxVal: 10.36, minVal: 8.53, color: "#8847ff", chance: 5.004, weaponId: 60, paintKit: 1166 },
+            { name: "Charm | Piñatita", maxVal: 10.03, minVal: 10.03, color: "#8847ff", chance: 5.687, weaponId: 0, paintKit: 0, fixedCondition: "FN" }, // Itens de tipo Charm não possuem weaponId
+            { name: "P2000 | Wicked Sick", maxVal: 9.98, minVal: 9.98, color: "#8847ff", chance: 5.125, weaponId: 32, paintKit: 1224, fixedCondition: "MW" },
+            { name: "UMP-45 | Neo-Noir", maxVal: 9.52, minVal: 9.52, color: "#8847ff", chance: 6.662, weaponId: 24, paintKit: 131, fixedCondition: "FT" },
+            { name: "AK-47 | Ice Coaled", maxVal: 9.37, minVal: 9.37, color: "#8847ff", chance: 5.022, weaponId: 7, paintKit: 1143, fixedCondition: "WW" },
+
+            // --- MIL-SPEC (BLUE) ---
+            { name: "Tec-9 | Remote Control", maxVal: 4.58, minVal: 3.23, color: "#4b69ff", chance: 8.261, weaponId: 30, paintKit: 791 },
+            { name: "MP7 | Neon Ply", maxVal: 4.29, minVal: 4.29, color: "#4b69ff", chance: 7.481, weaponId: 33, paintKit: 893, fixedCondition: "BS" },
+            { name: "SG 553 | Pulse", maxVal: 3.82, minVal: 3.82, color: "#4b69ff", chance: 7.913, weaponId: 39, paintKit: 287, fixedCondition: "FT" },
+            { name: "AWP | PAW", maxVal: 3.37, minVal: 3.37, color: "#4b69ff", chance: 8.790, weaponId: 9, paintKit: 718, fixedCondition: "BS" },
+            { name: "P2000 | Acid Etched", maxVal: 0.95, minVal: 0.95, color: "#4b69ff", chance: 9.209, weaponId: 32, paintKit: 951, fixedCondition: "FT" },
+            { name: "M4A4 | Etch Lord", maxVal: 0.89, minVal: 0.89, color: "#4b69ff", chance: 10.335, weaponId: 16, paintKit: 1165, fixedCondition: "FT" }
+        ]
+    }
 };
 
 const axios = require('axios'); // Você pode precisar instalar: npm install axios
