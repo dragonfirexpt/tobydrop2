@@ -235,6 +235,86 @@ gamma_shadow: {
             { name: "P2000 | Acid Etched", maxVal: 0.95, minVal: 0.95, color: "#4b69ff", chance: 9.209, weaponId: 32, paintKit: 951, fixedCondition: "FT" },
             { name: "M4A4 | Etch Lord", maxVal: 0.89, minVal: 0.89, color: "#4b69ff", chance: 10.335, weaponId: 16, paintKit: 1165, fixedCondition: "FT" }
         ]
+    },
+    onyx_reserve: {
+        name: "Onyx Reserve",
+        price: 5.00,
+        img: "https://img.clash.gg/cases?q=https%3A%2F%2Fcdn.discordapp.com%2Fattachments%2F1137000298590765117%2F1362722979619930303%2FFlip_Off.png%3Fex%3D68036e2c%26is%3D68021cac%26hm%3D1a03adf70b3feb273eb5f6696ce1ebefe7e1be45a3ad5800f6bcfb4bf0d81fca%26", // Ícone sugerido
+        items: [
+            // --- GOLD (Fantasmas/Facas) ---
+            { name: "Survival Knife | Doppler Ruby", maxVal: 879.57, minVal: 879.57, color: "#ffb703", chance: 0.007, fixedCondition: "FN", weaponId: 518, paintKit: 415, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9ydWJ5X21hcmJsZWl6ZWRfbGlnaHQuZWI5MmI1YmE5ZTEwYzY2OTk1NzI5MzczMTVlNWYwMWNhODJlMDkxYS5wbmc-/auto/auto/85/notrim/8caa728d96e23013dd7f96cc720da1b3.webp" },
+            { name: "Skeleton Knife | Marble Fade", maxVal: 680.21, minVal: 680.21, color: "#ffb703", chance: 0.005, fixedCondition: "FN", weaponId: 525, paintKit: 413 },
+            { name: "Flip Knife | Gamma Doppler Phase 3", maxVal: 615.08, minVal: 615.08, color: "#ffb703", chance: 0.010, fixedCondition: "FN", weaponId: 505, paintKit: 571, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9mbGlwX2FtX2dhbW1hX2RvcHBsZXJfcGhhc2UzX2xpZ2h0LjczNDY4YTJlMDAzOTRlNjMxZjI5Y2YyZjM0ZGUyMDk4Y2E5ZDk1YjAucG5n/auto/auto/85/notrim/564e4e994881f6c7d306d2414038d237.webp" },
+            { name: "Ursus Knife | Tiger Tooth", maxVal: 231.67, minVal: 231.67, color: "#ffb703", chance: 0.013, fixedCondition: "FN", weaponId: 519, paintKit: 409 },
+            { name: "Survival Knife | Blue Steel", maxVal: 113.48, minVal: 113.48, color: "#ffb703", chance: 0.131, fixedCondition: "FT", weaponId: 518, paintKit: 42 },
+
+            // --- COVERT (Red) ---
+            { name: "M4A1-S | Printstream", maxVal: 338.91, minVal: 338.91, color: "#eb4b4b", chance: 0.010, fixedCondition: "FT", weaponId: 60, paintKit: 984 },
+            { name: "AWP | Containment Breach", maxVal: 202.42, minVal: 202.42, color: "#eb4b4b", chance: 0.026, fixedCondition: "FT", weaponId: 9, paintKit: 887 },
+            { name: "AK-47 | B the Monster", maxVal: 132.31, minVal: 132.31, color: "#eb4b4b", chance: 0.009, fixedCondition: "BS", weaponId: 7, paintKit: 142 },
+
+            // --- CLASSIFIED (Pink) ---
+            { name: "M4A1-S | Vaporwave", maxVal: 98.28, minVal: 74.45, color: "#d32ce6", chance: 0.127, weaponId: 60, paintKit: 106, conditions: ["FT", "WW", "BS"] },
+            { name: "AK-47 | Nouveau Rouge", maxVal: 32.23, minVal: 19.52, color: "#d32ce6", chance: 0.744, weaponId: 7, paintKit: 1309, conditions: ["BS", "FT"] },
+            { name: "AK-47 | Point Disarray", maxVal: 22.06, minVal: 22.06, color: "#d32ce6", chance: 0.812, fixedCondition: "FT", weaponId: 7, paintKit: 506 },
+
+            // --- RESTRICTED (Purple) ---
+            { name: "AK-47 | Searing Rage", maxVal: 14.86, minVal: 14.86, color: "#8847ff", chance: 0.690, fixedCondition: "MW", weaponId: 7, paintKit: 1207 },
+            { name: "UMP-45 | K.O. Factory", maxVal: 12.32, minVal: 6.74, color: "#8847ff", chance: 1.094, weaponId: 24, paintKit: 1194, conditions: ["MW", "BS"] },
+            { name: "M4A4 | Spider Lily", maxVal: 12.19, minVal: 12.19, color: "#8847ff", chance: 0.657, fixedCondition: "FT", weaponId: 16, paintKit: 1097 },
+            { name: "AK-47 | Ice Coaled", maxVal: 11.32, minVal: 6.82, color: "#8847ff", chance: 5.649, weaponId: 7, paintKit: 1143, conditions: ["WW", "MW", "FT"] },
+            { name: "Zeus x27 | Olympus", maxVal: 8.85, minVal: 6.14, color: "#8847ff", chance: 5.492, weaponId: 31, paintKit: 1172, conditions: ["MW", "FT"] },
+            { name: "AWP | Mortis", maxVal: 8.68, minVal: 5.64, color: "#8847ff", chance: 10.076, weaponId: 9, paintKit: 691, conditions: ["BS", "FT", "WW", "MW"] },
+
+            // --- MIL-SPEC (Blue) ---
+            { name: "G3SG1 | High Seas", maxVal: 14.29, minVal: 0.99, color: "#4b69ff", chance: 8.109, weaponId: 11, paintKit: 712 },
+            { name: "Galil AR | Control", maxVal: 8.28, minVal: 0.69, color: "#4b69ff", chance: 7.819, weaponId: 13, paintKit: 1185 },
+            { name: "Glock-18 | Coral Bloom", maxVal: 5.93, minVal: 0.49, color: "#4b69ff", chance: 9.656, weaponId: 4, paintKit: 1312 },
+            { name: "Desert Eagle | Serpent Strike", maxVal: 5.58, minVal: 0.85, color: "#4b69ff", chance: 9.622, weaponId: 1, paintKit: 1189 },
+            { name: "Zeus x27 | Tosai", maxVal: 4.97, minVal: 0.69, color: "#4b69ff", chance: 14.961, weaponId: 31, paintKit: 1183 },
+            { name: "Glock-18 | Block-18", maxVal: 4.07, minVal: 0.79, color: "#4b69ff", chance: 13.586, weaponId: 4, paintKit: 1167 },
+            { name: "M4A1-S | Night Terror", maxVal: 4.00, minVal: 1.01, color: "#4b69ff", chance: 10.695, weaponId: 60, paintKit: 1130 }
+        ]
+    },
+    hyper_dragon: {
+        name: "Hyper Dragon Box",
+        price: 1.00,
+        img: "https://img.clash.gg/cases?q=https%3A%2F%2Fmedia.discordapp.net%2Fattachments%2F449030703426961418%2F1210689228569182338%2FRoll_the_Dice.png%3Fex%3D65eb7935%26is%3D65d90435%26hm%3D4d4682afa59f571e01436a2dbe7c54506667480c006c29bb9ea606ca8ef52334%26%3D%26format%3Dwebp%26quality%3Dlossless", // Ícone sugerido
+        items: [
+            // --- GOLD (Faca) ---
+            { name: "Survival Knife | Doppler Phase 2", maxVal: 351.47, minVal: 351.47, color: "#ffb703", chance: 0.002, fixedCondition: "FN", weaponId: 518, paintKit: 419, img: "https://cdn.csgoskins.gg/public/uih/products/aHR0cHM6Ly9jZG4uY3Nnb3NraW5zLmdnL3B1YmxpYy9pbWFnZXMvYnVja2V0cy9lY29uL2RlZmF1bHRfZ2VuZXJhdGVkL3dlYXBvbl9rbmlmZV9jYW5pc19hbV9kb3BwbGVyX3BoYXNlMl9saWdodC40MTNkNDY0NjcyOGVlNDE4ZDk4ODk3ZDlhNTcxNjUwNmEwOWUyNDU0LnBuZw--/auto/auto/85/notrim/273f87771e9e0ed18c6c5a3443e3c759.webp" },
+
+            // --- COVERT (Red) ---
+            { name: "M4A1-S | Hyper Beast", maxVal: 185.01, minVal: 185.01, color: "#eb4b4b", chance: 0.008, fixedCondition: "MW", weaponId: 60, paintKit: 430 },
+            { name: "Desert Eagle | Kumicho Dragon", maxVal: 183.09, minVal: 30.76, color: "#eb4b4b", chance: 0.022, weaponId: 1, paintKit: 527 },
+            { name: "AK-47 | Asiimov", maxVal: 62.73, minVal: 62.73, color: "#eb4b4b", chance: 0.029, fixedCondition: "FT", weaponId: 7, paintKit: 801 },
+
+            // --- CLASSIFIED (Pink) ---
+            { name: "M4A4 | Full Throttle", maxVal: 84.81, minVal: 84.81, color: "#d32ce6", chance: 0.009, fixedCondition: "FT", weaponId: 16, paintKit: 1353 },
+            { name: "M4A1-S | Nightmare", maxVal: 12.40, minVal: 12.40, color: "#d32ce6", chance: 0.058, fixedCondition: "BS", weaponId: 60, paintKit: 714 },
+
+            // --- RESTRICTED (Purple) ---
+            { name: "AWP | Ice Coaled", maxVal: 11.63, minVal: 9.80, color: "#8847ff", chance: 0.129, weaponId: 9, paintKit: 1346, conditions: ["BS", "WW"] }, // Nota: Nome customizado conforme pedido
+            { name: "AK-47 | Searing Rage", maxVal: 7.62, minVal: 7.37, color: "#8847ff", chance: 1.052, weaponId: 7, paintKit: 1207, conditions: ["BS", "FT", "WW"] },
+            { name: "SG 553 | Cyrex", maxVal: 7.14, minVal: 6.67, color: "#8847ff", chance: 0.369, weaponId: 39, paintKit: 487, conditions: ["BS", "FT"] },
+            { name: "USP-S | Cortex", maxVal: 5.84, minVal: 5.31, color: "#8847ff", chance: 0.456, weaponId: 61, paintKit: 705, conditions: ["BS", "FT", "WW"] },
+            { name: "P250 | Wingshot", maxVal: 2.58, minVal: 2.32, color: "#8847ff", chance: 2.222, weaponId: 36, paintKit: 501, conditions: ["BS", "FT"] },
+
+            // --- MIL-SPEC (Blue) ---
+            { name: "Glock-18 | Off World", maxVal: 6.24, minVal: 0.33, color: "#4b69ff", chance: 1.274, weaponId: 4, paintKit: 680, conditions: ["BS", "FN"] },
+            { name: "M4A4 | Choppa", maxVal: 3.93, minVal: 0.10, color: "#4b69ff", chance: 9.293, weaponId: 16, paintKit: 1210 },
+            { name: "R8 Revolver | Tango", maxVal: 2.64, minVal: 0.16, color: "#4b69ff", chance: 8.417, weaponId: 64, paintKit: 123, conditions: ["BS", "FT", "WW", "FN"] },
+            { name: "P90 | Chopper", maxVal: 2.39, minVal: 1.54, color: "#4b69ff", chance: 1.077, weaponId: 19, paintKit: 593, conditions: ["BS", "MW"] },
+            { name: "AWP | Pit Viper", maxVal: 2.13, minVal: 1.35, color: "#4b69ff", chance: 1.654, weaponId: 9, paintKit: 251, conditions: ["FT", "WW", "MW"] },
+            { name: "UMP-45 | Gunsmoke", maxVal: 2.13, minVal: 0.10, color: "#4b69ff", chance: 6.548, weaponId: 24, paintKit: 15, conditions: ["FT", "MW", "FN"] },
+            { name: "SSG 08 | Memorial", maxVal: 1.84, minVal: 0.09, color: "#4b69ff", chance: 9.967, weaponId: 40, paintKit: 1187 },
+            { name: "M4A4 | Turbine", maxVal: 1.76, minVal: 1.76, color: "#4b69ff", chance: 1.332, fixedCondition: "FT", weaponId: 16, paintKit: 1162 },
+            { name: "M4A1-S | Night Terror", maxVal: 1.64, minVal: 1.01, color: "#4b69ff", chance: 15.956, weaponId: 60, paintKit: 1130, conditions: ["FT", "WW", "MW"] },
+            { name: "M4A1-S | Emphorosaur-S", maxVal: 1.54, minVal: 0.84, color: "#4b69ff", chance: 20.183, weaponId: 60, paintKit: 1223, conditions: ["BS", "FT", "MW"] },
+            { name: "Negev | Loudmouth", maxVal: 1.28, minVal: 1.28, color: "#4b69ff", chance: 0.136, fixedCondition: "FT", weaponId: 28, paintKit: 483 },
+            { name: "USP-S | 27", maxVal: 0.70, minVal: 0.25, color: "#4b69ff", chance: 6.931, weaponId: 61, paintKit: 115, conditions: ["BS", "FT", "WW", "MW"] },
+            { name: "M4A4 | Steel Work", maxVal: 0.66, minVal: 0.03, color: "#4b69ff", chance: 12.876, weaponId: 16, paintKit: 1313 }
+        ]
     }
 };
 
@@ -386,7 +466,7 @@ app.get('/api/all-skins', (req, res) => {
         { name: "Minimal Wear", short: "MW", multiplier: 0.7 },
         { name: "Field-Tested", short: "FT", multiplier: 0.4 },
         { name: "Well-Worn", short: "WW", multiplier: 0.2 },
-        { name: "Battle-Scarred", short: "BS", multiplier: 0.1 }
+        { name: "Battle-Scarred", short: "BS", multiplier: 0.0 }
     ];
 
     for (let key in caseData) {
