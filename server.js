@@ -54,8 +54,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:3000/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'http://localhost:3000/',
+    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'https://tobydrop2.onrender.com/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
