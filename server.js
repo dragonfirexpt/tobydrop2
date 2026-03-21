@@ -54,8 +54,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:3000/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'http://localhost:3000/',
+    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'https://tobydrop2.onrender.com/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
@@ -113,7 +113,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     steamId: { type: String, unique: true }, // Este SIM deve ser único
     password: { type: String }, // Remova o required: true
     avatar: { type: String },
-    balance: { type: Number, default: 5000 },
+    balance: { type: Number, default: 50 },
     // Procure o campo inventory dentro do User model e adicione o wear:
 inventory: [{
     id: String,
