@@ -51,6 +51,11 @@
 </div>
 
     <div id="game-screen" style="display:none">
+        <div class="live-drops-container">
+    <div id="live-drops-track" class="live-drops-track">
+        <!-- Live drops injected here -->
+    </div>
+</div>
         <header class="top-nav">
            <div class="brand" onclick="showHome()" style="cursor: pointer;">TOBY<span>DROP</span></div>
             <nav class="main-nav">
@@ -73,6 +78,10 @@
     </div>
 </nav>
             <div class="nav-user">
+                <div class="online-counter">
+    <div class="dot"></div>
+    <span id="users-online">142</span> ONLINE
+</div>
                 <div class="balance-display">
     <small>BALANCE</small>
     <div style="position: relative;">
@@ -95,7 +104,20 @@
         <div class="upgrade-side">
             <div class="side-header">
     YOUR INVENTORY 
-    <span id="upgrade-count" style="color: var(--accent); font-size: 12px;">0/5</span>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="custom-dropdown" id="up-inv-dropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('up-inv-options')">
+                <span id="selected-up-inv">Newest</span>
+                <svg class="arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+            </div>
+            <div class="dropdown-options" id="up-inv-options">
+                <div onclick="selectOption('up-inv', 'newest', 'Newest')">Newest</div>
+                <div onclick="selectOption('up-inv', 'high', 'Price: High')">Price: High</div>
+                <div onclick="selectOption('up-inv', 'low', 'Price: Low')">Price: Low</div>
+            </div>
+        </div>
+        <span id="upgrade-count" style="color: var(--accent); font-size: 12px;">0/5</span>
+    </div>
 </div>
             <div id="upgrade-inv-grid" class="upgrade-grid"></div>
             <div class="pagination" id="inv-pagination"></div>
@@ -156,22 +178,35 @@
         <div style="display: flex; gap: 10px; align-items: center;">
         <button onclick="sellAllItems()" class="btn-sell-all" id="btn-sell-all">SELL ALL</button>
         <div class="inventory-filters">
-            <select id="sort-price" onchange="loadInventory()">
-                <option value="newest">Newest First</option>
-                <option value="high">Price: High to Low</option>
-                <option value="low">Price: Low to High</option>
-            </select>
-
-            <!-- Filtro por Raridade -->
-            <select id="filter-rarity" onchange="loadInventory()">
-                <option value="all">All Rarities</option>
-                <option value="#ffb703">★ Gold / Knives</option>
-                <option value="#eb4b4b">Covert (Red)</option>
-                <option value="#d32ce6">Classified (Pink)</option>
-                <option value="#8847ff">Restricted (Purple)</option>
-                <option value="#4b69ff">Mil-Spec (Blue)</option>
-            </select>
+    <!-- Dropdown Preço -->
+    <div class="custom-dropdown" id="inv-price-dropdown">
+        <div class="dropdown-selected" onclick="toggleDropdown('inv-price-options')">
+            <span id="selected-inv-price">Newest First</span>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
         </div>
+        <div class="dropdown-options" id="inv-price-options">
+            <div onclick="selectOption('inv-price', 'newest', 'Newest First')">Newest First</div>
+            <div onclick="selectOption('inv-price', 'high', 'Price: High to Low')">Price: High to Low</div>
+            <div onclick="selectOption('inv-price', 'low', 'Price: Low to High')">Price: Low to High</div>
+        </div>
+    </div>
+
+    <!-- Dropdown Raridade -->
+    <div class="custom-dropdown" id="inv-rarity-dropdown">
+        <div class="dropdown-selected" onclick="toggleDropdown('inv-rarity-options')">
+            <span id="selected-inv-rarity">All Rarities</span>
+            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+        </div>
+        <div class="dropdown-options" id="inv-rarity-options">
+            <div onclick="selectOption('inv-rarity', 'all', 'All Rarities')">All Rarities</div>
+            <div onclick="selectOption('inv-rarity', '#ffb703', '★ Gold / Knives')">★ Gold / Knives</div>
+            <div onclick="selectOption('inv-rarity', '#eb4b4b', 'Covert (Red)')">Covert (Red)</div>
+            <div onclick="selectOption('inv-rarity', '#d32ce6', 'Classified (Pink)')">Classified (Pink)</div>
+            <div onclick="selectOption('inv-rarity', '#8847ff', 'Restricted (Purple)')">Restricted (Purple)</div>
+            <div onclick="selectOption('inv-rarity', '#4b69ff', 'Mil-Spec (Blue)')">Mil-Spec (Blue)</div>
+        </div>
+    </div>
+</div>
     </div>
     </div>
     <div id="inventory-grid" class="inventory-grid">
@@ -179,11 +214,24 @@
     </div>
 </section>
                 <section id="home-tab" class="tab-view">
-                    <div class="view-header">SELECT A CASE</div>
-                    <div id="home-case-grid" class="case-grid">
-    <!-- As caixas serão inseridas aqui pelo JavaScript -->
-</div>
-                </section>
+    <!-- Featured Section -->
+    <div class="case-section">
+        <div class="section-title">
+            <span class="glow-text">🔥 HOT SELECTION</span>
+            <div class="line"></div>
+        </div>
+        <div id="grid-hot" class="case-grid"></div>
+    </div>
+
+    <!-- Elite Section -->
+    <div class="case-section">
+        <div class="section-title">
+            <span>💎 ELITE BOXES</span>
+            <div class="line"></div>
+        </div>
+        <div id="grid-elite" class="case-grid"></div>
+    </div>
+</section>
 
 <section id="opening-tab" class="tab-view" style="display:none">
     <div class="opening-header">
@@ -372,11 +420,17 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h4>Available Cases</h4>
         <!-- Novo seletor de ordenação -->
-        <select id="battle-case-sort" onchange="renderAvailableCasesForBattle()" style="background: #000; color: #fff; border: 1px solid var(--border); border-radius: 5px; padding: 5px; font-size: 12px; cursor: pointer;">
-            <option value="default">Newest</option>
-            <option value="high">Price: High to Low</option>
-            <option value="low">Price: Low to High</option>
-        </select>
+        <div class="custom-dropdown" id="battle-sort-dropdown">
+            <div class="dropdown-selected" onclick="toggleDropdown('battle-sort-options')">
+                <span id="selected-battle-sort">Newest</span>
+                <svg class="arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+            </div>
+            <div class="dropdown-options" id="battle-sort-options">
+                <div onclick="selectOption('battle-sort', 'default', 'Newest')">Newest</div>
+                <div onclick="selectOption('battle-sort', 'high', 'Price: High')">Price: High</div>
+                <div onclick="selectOption('battle-sort', 'low', 'Price: Low')">Price: Low</div>
+            </div>
+        </div>
     </div>
     <div id="modal-available-cases" class="modal-grid-compact"></div>
 </div>

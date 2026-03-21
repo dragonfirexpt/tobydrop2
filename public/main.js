@@ -72,19 +72,17 @@ let upgraderPageTargets = 0;
 const UP_PAGE_SIZE = 9; // 3x3 Grid
 function renderTargets() {
     const search = document.getElementById('target-search').value.toLowerCase();
+    // Filtra pela pesquisa
     let filtered = upgraderState.allSkins.filter(s => s.name.toLowerCase().includes(search));
     
     const grid = document.getElementById('upgrade-target-grid');
     const start = upgraderPageTargets * UP_PAGE_SIZE;
     const pageItems = filtered.slice(start, start + UP_PAGE_SIZE);
     
-    // PEGA O VALOR TOTAL SOMADO AQUI
     const totalInputValue = getTotalSelectedValue();
 
     grid.innerHTML = pageItems.map(item => {
-        // COMPARA COM O VALOR TOTAL
         const isTooCheap = totalInputValue > 0 && item.price <= totalInputValue;
-        
         const isSelected = upgraderState.selectedTarget && 
                            upgraderState.selectedTarget.name === item.name && 
                            upgraderState.selectedTarget.displayCond === item.displayCond;
@@ -230,10 +228,21 @@ function closeSkinModal() {
 
 function renderInventory() {
     const grid = document.getElementById('upgrade-inv-grid');
-    const start = upgraderPageInv * UP_PAGE_SIZE;
-    const pageItems = upgraderInv.slice(start, start + UP_PAGE_SIZE);
     
-    // Atualiza o contador visual
+    // --- ATUALIZAÇÃO AQUI ---
+    const sortVal = filters.upInvSort; 
+    
+    let displayInv = [...upgraderInv];
+
+    if (sortVal === 'high') {
+        displayInv.sort((a, b) => b.value - a.value);
+    } else if (sortVal === 'low') {
+        displayInv.sort((a, b) => a.value - b.value);
+    }
+
+    const start = upgraderPageInv * UP_PAGE_SIZE;
+    const pageItems = displayInv.slice(start, start + UP_PAGE_SIZE);
+    
     document.getElementById('upgrade-count').innerText = `${upgraderState.selectedInputs.length}/5`;
 
     grid.innerHTML = pageItems.map(item => {
@@ -248,7 +257,7 @@ function renderInventory() {
         `;
     }).join('');
 
-    renderPagination('inv-pagination', upgraderInv.length, upgraderPageInv, (p) => {
+    renderPagination('inv-pagination', displayInv.length, upgraderPageInv, (p) => {
         upgraderPageInv = p;
         renderInventory();
     });
@@ -296,6 +305,67 @@ function renderPagination(id, totalItems, current, callback) {
         else { upgraderPageTargets = page; renderTargets(); }
     };
 }
+
+let filters = {
+    invPrice: 'newest',
+    invRarity: 'all',
+    battleSort: 'default',
+    upInvSort: 'newest'
+};
+
+
+function toggleDropdown(id) {
+    const options = document.getElementById(id);
+    const isShowing = options.classList.contains('show');
+
+    // Fechar todos antes de abrir um novo
+    document.querySelectorAll('.dropdown-options').forEach(el => el.classList.remove('show'));
+    document.querySelectorAll('.dropdown-selected').forEach(el => el.classList.remove('active'));
+
+    if (!isShowing) {
+        options.classList.add('show');
+        options.previousElementSibling.classList.add('active');
+    }
+}
+
+function selectOption(type, val, text) {
+    // Atualiza o texto visual
+    document.getElementById(`selected-${type}`).innerText = text;
+    
+    // Fecha o menu
+    document.getElementById(`${type}-options`).classList.remove('show');
+    document.getElementById(`${type}-options`).previousElementSibling.classList.remove('active');
+
+    // Lógica específica para cada dropdown
+    if (type === 'inv-price') {
+        filters.invPrice = val;
+        loadInventory();
+    } else if (type === 'inv-rarity') {
+        filters.invRarity = val;
+        loadInventory();
+    } else if (type === 'battle-sort') {
+        filters.battleSort = val;
+        renderAvailableCasesForBattle();
+    } else if (type === 'up-inv') {
+        filters.upInvSort = val;
+        upgraderPageInv = 0;
+        renderInventory();
+    }
+}
+
+// Fechar o dropdown se clicar fora dele
+window.addEventListener('click', function(e) {
+    const sortContainer = document.getElementById('inv-sort-container');
+    
+    // VERIFICAÇÃO DE SEGURANÇA: Só executa se o container existir na página atual
+    if (sortContainer) {
+        const sortOptions = document.getElementById('inv-sort-options');
+        if (!sortContainer.contains(e.target)) {
+            if (sortOptions) sortOptions.classList.add('select-hide');
+            sortContainer.querySelector('.dropdown-selected')?.classList.remove('select-arrow-active');
+        }
+    }
+});
 function jumpToMult(m) {
     const totalVal = getTotalSelectedValue();
     
@@ -576,9 +646,10 @@ function handleCrashAction() {
 }
 function renderAvailableCasesForBattle() {
     const container = document.getElementById('modal-available-cases');
-    const sortType = document.getElementById('battle-case-sort').value;
     
-    // Transformamos o objeto itemsData em um array para poder ordenar
+    // --- ATUALIZAÇÃO AQUI ---
+    const sortType = filters.battleSort; 
+    
     let entries = Object.entries(itemsData);
 
     if (sortType === 'high') {
@@ -696,11 +767,6 @@ async function confirmSellAll() {
         const data = await res.json();
         
         if (data.success) {
-            // Sound effect
-            if(landSound) {
-                landSound.currentTime = 0;
-                landSound.play();
-            }
             
             // Update balance and refresh UI
             updateBalanceUI(data.balance);
@@ -764,14 +830,41 @@ function confirmCreateBattle() {
     closeBattleModal();
 }
 function renderHomeCases() {
-    const grid = document.getElementById('home-case-grid');
-    grid.innerHTML = Object.keys(itemsData).map(id => `
-        <div class="case-card" onclick="selectCase('${id}')">
-            <img src="${itemsData[id].img}" class="case-card-img">
-            <h3>${itemsData[id].name}</h3>
-            <p>$${formatCurrency(itemsData[id].price)}</p>
-        </div>
-    `).join('');
+    const gridHot = document.getElementById('grid-hot');
+    const gridElite = document.getElementById('grid-elite');
+
+    if (!gridHot || !gridElite) return;
+
+    gridHot.innerHTML = '';
+    gridElite.innerHTML = '';
+
+    Object.keys(itemsData).forEach(id => {
+        const caseInfo = itemsData[id];
+        const cardHtml = `
+            <div class="case-card-premium" onclick="selectCase('${id}')">
+                ${caseInfo.tag ? `<div class="case-card-tag ${caseInfo.tag.toLowerCase()}">${caseInfo.tag}</div>` : ''}
+                <div class="case-img-wrap">
+                    <img src="${caseInfo.img}" alt="${caseInfo.name}">
+                </div>
+                <h3>${caseInfo.name}</h3>
+                <div class="case-card-price">$${formatCurrency(caseInfo.price)}</div>
+            </div>
+        `;
+
+        // Adiciona à secção HOT se tiver a tag HOT
+        if (caseInfo.tag === 'HOT') {
+            gridHot.innerHTML += cardHtml;
+        } 
+        
+        // Adiciona à secção ELITE se tiver a tag ELITE ou custar mais de $50
+        if (caseInfo.tag === 'ELITE' || caseInfo.price >= 50) {
+            gridElite.innerHTML += cardHtml;
+        }
+    });
+
+    // Esconde a secção inteira se estiver vazia
+    document.getElementById('grid-hot').parentElement.style.display = gridHot.innerHTML === '' ? 'none' : 'block';
+    document.getElementById('grid-elite').parentElement.style.display = gridElite.innerHTML === '' ? 'none' : 'block';
 }
 async function init() {
     const caseRes = await fetch('/api/cases');
@@ -780,10 +873,13 @@ async function init() {
     // Desenha as caixas na página inicial
     renderHomeCases();
 
-    const res = await fetch('/api/me');
+     const res = await fetch('/api/me');
     const data = await res.json();
     if (data.loggedIn) {
         currentUser = data.user;
+        // AGORA PODES VER O TEU PERFIL
+        console.log("Logado como:", currentUser.username, "ID:", currentUser.steamId);
+        
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
         updateUI();
@@ -925,17 +1021,14 @@ function selectCase(id) {
     
     if (!itemsData || !itemsData[id]) {
         console.error("Caixa não encontrada no sistema:", id);
-        alert("Erro: Dados da caixa não carregados.");
         return;
     }
 
-    // 1. Mostrar a aba de abertura
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.getElementById('opening-tab').style.display = 'block';
     
     const caseInfo = itemsData[id]; 
     
-    // 2. Atualizar Título e Botão
     document.getElementById('case-title').innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
             <img src="${caseInfo.img}" style="width: 80px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5))">
@@ -944,48 +1037,56 @@ function selectCase(id) {
     `;
     document.getElementById('open-btn').innerText = `OPEN FOR $${formatCurrency(caseInfo.price)}`;
     document.getElementById('open-btn').disabled = false;
-    document.getElementById('open-btn').classList.remove('btn-loading');
 
-    // --- NOVO: GERAR PREVIEW NO SPINNER ---
+    // --- PREVIEW TRACK GENERATION ---
     const spinner = document.getElementById('spinner');
-    
-    // Resetar posição da roleta para o início
     spinner.style.transition = 'none';
     spinner.style.transform = 'translateX(0)';
 
-    // Criar uma trilha de "espera" com os itens da caixa
     let previewTrack = [];
     const itemsPool = caseInfo.items;
     
-    // Preenchemos a roleta com 80 itens repetidos para ela parecer cheia
     for (let i = 0; i < 80; i++) {
         const item = itemsPool[i % itemsPool.length];
+        // Pick the first rarity as a visual placeholder for the static preview
+        const firstRarity = item.rarities[0];
         previewTrack.push({
             ...item,
-            value: item.maxVal, // Mostra o valor máximo no preview
-            conditionShort: ""  // Oculta a condição no preview estático
+            value: firstRarity.price,
+            conditionShort: firstRarity.short
         });
     }
-
-    // Renderiza essa trilha no spinner
     renderTrack('spinner', previewTrack);
-    // --------------------------------------
 
-    // 3. Renderizar a lista de conteúdos abaixo (Preview List)
+    // --- CASE CONTENTS LIST (FIX FOR NaN AND UNDEFINED) ---
     const preview = document.getElementById('preview-items');
-    const sortedItems = [...caseInfo.items].sort((a, b) => a.chance - b.chance);
+    
+    // Sort items by total drop chance (sum of all rarities)
+    const sortedItems = [...caseInfo.items].sort((a, b) => {
+        const chanceA = a.rarities.reduce((sum, r) => sum + r.chance, 0);
+        const chanceB = b.rarities.reduce((sum, r) => sum + r.chance, 0);
+        return chanceA - chanceB;
+    });
 
     preview.innerHTML = sortedItems.map(item => {
-        let priceDisplay = formatCurrency(item.minVal) + " - " + formatCurrency(item.maxVal);
-        if (item.minVal === item.maxVal) priceDisplay = formatCurrency(item.minVal);
+        // Calculate the lowest and highest price from the rarities array
+        const prices = item.rarities.map(r => r.price);
+        const minP = Math.min(...prices);
+        const maxP = Math.max(...prices);
+        
+        // Calculate the total drop chance for this skin
+        const totalChance = item.rarities.reduce((sum, r) => sum + r.chance, 0);
+
+        let priceDisplay = formatCurrency(minP) + " - " + formatCurrency(maxP);
+        if (minP === maxP) priceDisplay = formatCurrency(minP);
 
         return `
             <div class="preview-item" style="border-color: ${item.color}">
-                <img src="${item.img || 'https://via.placeholder.com/80x60?text=CSGO'}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
+                <img src="${item.img || ''}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
                 <div class="preview-info">
                     <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
                     <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">$${priceDisplay}</span>
-                    <small style="color: #666; display: block; margin-top: 5px;">${item.chance}% Drop</small>
+                    <small style="color: #666; display: block; margin-top: 5px;">${totalChance.toFixed(3)}% Drop</small>
                 </div>
             </div>
         `;
@@ -1029,7 +1130,7 @@ function renderTrack(trackId, trackData) {
         else if (color === '#d32ce6') rarityClass = 'rarity-pink';
         else if (color === '#8847ff') rarityClass = 'rarity-purple';
         else if (color === '#4b69ff') rarityClass = 'rarity-blue';
-
+        else if (color === '#5e98d9') rarityClass = 'rarity-light-blue';
         return `
             <div class="item-node ${rarityClass}" data-index="${index}">
                 <img src="${item.img || ''}" alt="">
@@ -1099,12 +1200,22 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
         spinSound.currentTime = 0;
     spinSound.play().catch(e => {}); 
         // Monta track do segundo giro (skins caras)
-        const topItems = itemsPool.filter(i => (i.maxVal || i.minVal) >= (casePrice * 2.5));
-        const superTrack = [];
-        for(let i=0; i<60; i++) {
-            const pick = topItems[Math.floor(Math.random() * topItems.length)];
-            superTrack.push(i === 50 ? { ...winnerData, isSuperSpin: false } : { ...pick, value: pick.maxVal, conditionShort: 'FN', isSuperSpin: false });
-        }
+        const topItems = itemsPool.filter(item => {
+        const maxPriceInRarities = Math.max(...item.rarities.map(r => r.price));
+        return maxPriceInRarities >= (casePrice * 2.5);
+    });
+
+    const superTrack = [];
+    for(let i=0; i<60; i++) {
+        const pick = topItems[Math.floor(Math.random() * topItems.length)];
+        const highestRarity = pick.rarities[0]; // Just a placeholder for visual super track
+        superTrack.push(i === 50 ? { ...winnerData, isSuperSpin: false } : { 
+            ...pick, 
+            value: highestRarity.price, 
+            conditionShort: highestRarity.short, 
+            isSuperSpin: false 
+        });
+    }
 
         spinner.style.transition = 'none';
         spinner.style.transform = 'translateX(0)';
@@ -1302,46 +1413,41 @@ async function loadInventory() {
     currentUser = data.user;
     const grid = document.getElementById('inventory-grid');
     
-    // 1. Pegar os valores dos filtros do HTML
-    const sortBy = document.getElementById('sort-price').value;
-    const filterRarity = document.getElementById('filter-rarity').value;
+    // --- ATUALIZAÇÃO AQUI ---
+    // Em vez de ler do document.getElementById('sort-price').value
+    const sortBy = filters.invPrice; 
+    const filterRarity = filters.invRarity;
 
-    // 2. Criar uma cópia do inventário para não alterar o original
     let items = [...data.user.inventory];
 
-    // 3. Aplicar Filtro de Raridade
+    // Aplicar Filtro de Raridade
     if (filterRarity !== 'all') {
         items = items.filter(item => item.color === filterRarity);
     }
 
-    // 4. Aplicar Ordenação
+    // Aplicar Ordenação
     if (sortBy === 'low') {
         items.sort((a, b) => a.value - b.value);
     } else if (sortBy === 'high') {
         items.sort((a, b) => b.value - a.value);
     } else if (sortBy === 'newest') {
-        // Assume que os últimos itens adicionados estão no fim do array
         items.reverse();
     }
 
-    // 5. Renderizar a lista filtrada/ordenada
     if (items.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #555; padding: 40px;">No items found with these filters.</div>`;
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #555; padding: 40px;">No items found.</div>`;
         return;
     }
 
     grid.innerHTML = items.map(item => {
         const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
-        
         let badgesHtml = '<div class="loadout-badges">';
         if (item.equippedTeam === 2 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge t">T</span>';
         if (item.equippedTeam === 3 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge ct">CT</span>';
         badgesHtml += '</div>';
 
         return `
-            <div class="inventory-card" 
-                 style="--rarity-color: ${item.color};" 
-                 onclick='openSkinModal(${itemJson})'>
+            <div class="inventory-card" style="--rarity-color: ${item.color};" onclick='openSkinModal(${itemJson})'>
                 ${badgesHtml}
                 <img src="${item.img}">
                 <div class="inv-info">
@@ -1386,9 +1492,6 @@ async function sellItem(event, id) {
         const data = await res.json();
         
         if (data.success) {
-            // 3. Som de dinheiro (opcional, usa o landSound se quiseres)
-            landSound.currentTime = 0;
-            landSound.play();
 
             // 4. Atualizar o saldo com animação
             updateBalanceUI(data.balance);
@@ -1723,3 +1826,32 @@ function trackCenterItem(spinnerId) {
 }
 
 async function logout() { await fetch('/api/logout', {method: 'POST'}); location.reload(); }
+
+// Listen for Live Drops
+socket.on('newLiveDrop', (data) => {
+    const track = document.getElementById('live-drops-track');
+    if (!track) return;
+
+    const drop = document.createElement('div');
+    drop.className = 'drop-item';
+    drop.style.setProperty('--item-color', data.item.color);
+    // Adiciona evento de clique para abrir perfil
+    drop.onclick = () => openProfileModal(data.steamId);
+    drop.style.cursor = "pointer";
+    
+    drop.innerHTML = `
+        <img src="${data.item.img}">
+        <div class="drop-info">
+            <b>${data.item.name}</b>
+            <small>${data.user}</small>
+        </div>
+    `;
+
+    track.prepend(drop);
+    if (track.children.length > 15) track.removeChild(track.lastChild);
+});
+// Update Online Count
+socket.on('updateOnlineCount', (count) => {
+    const el = document.getElementById('users-online');
+    if (el) el.innerText = count;
+});

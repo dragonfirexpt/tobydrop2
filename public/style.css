@@ -4,7 +4,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 /* Fixed Layout */
 #game-screen { display: flex; flex-direction: column; width: 100%; height: 100vh; }
 .app-body { display: flex; flex: 1; overflow: hidden; }
-.main-content { flex: 1; overflow-y: auto; background: radial-gradient(circle at top, #0e1015 0%, #050608 100%); padding: 40px; }
+.main-content {
+    flex: 1;
+    overflow-y: auto; /* Changed from hidden to auto */
+    background: radial-gradient(circle at top, #0e1015 0%, #050608 100%);
+    padding: 40px;
+    scroll-behavior: smooth;
+}
 
 /* Navbar */
 .top-nav { height: 80px; background: #000; border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -1119,17 +1125,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 
 
-/* --- IMAGENS DE RARIDADE ATRÁS DOS ITENS --- */
-/* Substitua os links abaixo pelas imagens que você tem */
-
-.rarity-gold { background-image: url('LINK_DA_SUA_IMAGEM_GOLD'); }
-.rarity-red { background-image: url('LINK_DA_SUA_IMAGEM_VERMELHA'); }
-.rarity-pink { background-image: url('https://clash.gg/_next/image?url=%2F_next%2Fstatic…Fmedia%2Fgraphic_legendary.47fcd7a2.png&w=96&q=75'); }
-.rarity-purple { background-image: url('LINK_DA_SUA_IMAGEM_ROXA'); }
-.rarity-blue { background-image: url('LINK_DA_SUA_IMAGEM_AZUL'); }
-
-
-
 /* --- ROLETA PREMIUM AJUSTADA --- */
 .spinner-wrapper {
     margin: 30px 0;
@@ -1161,15 +1156,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 
 
-/* Classes para as tuas imagens em ./public/assets/ */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-
 /* --- SPINNER CLEAN & SIMPLE --- */
 .spinner-wrapper {
     margin: 40px 0;
@@ -1194,16 +1180,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 }
 .pointer-top { top: 0; border-top: 12px solid var(--accent); }
 .pointer-bottom { bottom: 0; border-bottom: 12px solid var(--accent); }
-
-
-
-/* Caminhos para as tuas imagens em ./public/assets/ */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
 
 
 /* --- SPINNER CLEAN V3 --- */
@@ -1241,15 +1217,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .pointer-bottom { bottom: 0; border-bottom: 14px solid var(--accent); }
 
 
-/* Imagens em ./public/assets/ */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-
 /* SETAS AJUSTADAS */
 .pointer-top, .pointer-bottom {
     border-left: 8px solid transparent;
@@ -1281,15 +1248,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     display: flex;
     flex-direction: column;
 }
-
-
-/* Classes de raridade */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
 
 
 /* SETAS DENTRO DO CONTAINER */
@@ -1330,16 +1288,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 }
 
 
-
-/* Raridades locais */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-
 /* Setas maiores para o novo tamanho */
 .pointer-top, .pointer-bottom {
     position: absolute;
@@ -1355,22 +1303,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 
 
-/* Imagens locais em ./public/assets/ */
-.rarity-gold { background-image: url('/assets/gold.png'); }
-.rarity-red { background-image: url('/assets/red.png'); }
-.rarity-pink { background-image: url('/assets/pink.png'); }
-.rarity-purple { background-image: url('/assets/purple.png'); }
-.rarity-blue { background-image: url('/assets/blue.png'); }
-
-
-
-
 /* CLASSES DE RARIDADE - Verifique se os nomes dos arquivos no PC estão corretos */
 .rarity-gold { background-image: url('/assets/gold.png'); }
 .rarity-red { background-image: url('/assets/red.png'); }
 .rarity-pink { background-image: url('/assets/pink.png'); }
 .rarity-purple { background-image: url('/assets/purple.png'); }
 .rarity-blue { background-image: url('/assets/blue.png'); }
+.rarity-light-blue { background-image: url('/assets/light-blue.png'); }
 
 
 
@@ -3905,4 +3844,1083 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 #modal-float-val, #modal-seed-val {
     color: var(--accent); /* O valor em si fica branco para destacar */
+}
+/* Container Geral */
+.custom-dropdown {
+    position: relative;
+    font-family: 'Outfit', sans-serif;
+    min-width: 140px;
+    user-select: none;
+    z-index: 100;
+}
+
+/* O botão principal */
+.dropdown-selected {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 8px 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.dropdown-selected:hover {
+    border-color: var(--accent);
+    background: rgba(0, 242, 255, 0.05);
+}
+
+.dropdown-selected.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+
+.dropdown-selected .arrow {
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+    opacity: 0.5;
+}
+
+.dropdown-selected.active .arrow {
+    transform: rotate(180deg);
+    color: var(--accent);
+    opacity: 1;
+}
+
+/* Lista de Opções */
+.dropdown-options {
+    position: absolute;
+    background: #0e1015;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+    display: none; /* Escondido por padrão */
+    animation: dropdownAnim 0.2s ease;
+    z-index: 999;
+}
+
+.dropdown-options.show {
+    display: block;
+}
+
+.dropdown-options div {
+    color: #888;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.dropdown-options div:last-child { border-bottom: none; }
+
+.dropdown-options div:hover {
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--accent);
+    padding-left: 20px; /* Efeito de deslize no hover */
+}
+
+@keyframes dropdownAnim {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Live Drops Bar */
+.live-drops-container {
+    height: 60px;
+    background: #06070a;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.live-drops-track {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px;
+    transition: all 0.5s ease;
+}
+
+.drop-item {
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    height: 45px;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 10px;
+    border-left: 3px solid var(--item-color);
+    animation: slideInDrop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.drop-item img { height: 30px; object-fit: contain; }
+.drop-info { display: flex; flex-direction: column; }
+.drop-info b { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+.drop-info small { font-size: 9px; color: #555; }
+
+@keyframes slideInDrop {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Online Counter */
+.online-counter {
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px solid rgba(0, 255, 136, 0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #00ff88;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+}
+
+.online-counter .dot {
+    width: 6px; height: 6px;
+    background: #00ff88;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ff88;
+    animation: pulseOnline 2s infinite;
+}
+
+@keyframes pulseOnline {
+    0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; }
+}
+.live-drops-track {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px;
+    transition: transform 0.3s ease-in-out;
+    flex-direction: row;
+}
+
+/* Garante que o item novo não "empurre" os outros de forma brusca */
+.drop-item {
+    animation: dropEnter 0.4s ease-out forwards;
+}
+
+@keyframes dropEnter {
+    from { opacity: 0; transform: scale(0.8) translateX(-20px); }
+    to { opacity: 1; transform: scale(1) translateX(0); }
+}
+
+/* --- PREMIUM CASE GRID --- */
+.view-header {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #444;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* slightly smaller for better density */
+    gap: 30px;
+    padding: 10px;
+}
+
+/* The Card Container */
+.case-card {
+    position: relative;
+    background: rgba(13, 15, 20, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 40px 20px 25px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+/* Background Glow Effect */
+.case-card::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.05;
+    transition: opacity 0.4s;
+    z-index: 0;
+}
+
+.case-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(0, 242, 255, 0.3);
+    background: rgba(18, 21, 28, 0.9);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(0, 242, 255, 0.1);
+}
+
+.case-card:hover::before {
+    opacity: 0.15;
+}
+
+/* Case Image Floating Animation */
+.case-card-img {
+    width: 160px;
+    height: 120px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8));
+    transition: all 0.4s ease;
+    animation: caseFloat 4s infinite ease-in-out;
+}
+
+@keyframes caseFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.case-card:hover .case-card-img {
+    transform: scale(1.15) translateY(-5px);
+    animation-play-state: paused;
+}
+
+/* Typography */
+.case-card h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 20px 0 10px;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+}
+
+/* Modern Price Tag */
+.case-price-tag {
+    display: inline-block;
+    background: #000;
+    color: var(--accent);
+    padding: 8px 20px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 14px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+    position: relative;
+    z-index: 2;
+}
+
+.case-card:hover .case-price-tag {
+    background: var(--accent);
+    color: #000;
+    transform: scale(1.1);
+}
+
+/* Label/Badge (HOT, NEW, etc) */
+.case-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(90deg, #ff0055, #ff5500);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 50px;
+    letter-spacing: 1px;
+    z-index: 3;
+    box-shadow: 0 5px 15px rgba(255, 0, 85, 0.4);
+}
+
+.case-badge.elite { background: linear-gradient(90deg, #ffb703, #ffcc33); box-shadow: 0 5px 15px rgba(255, 183, 3, 0.4); }
+.case-badge.new { background: linear-gradient(90deg, #00f2ff, #0066ff); box-shadow: 0 5px 15px rgba(0, 242, 255, 0.4); }
+
+/* Container da Grade */
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 40px;
+    padding: 20px;
+}
+
+/* O Card com aspecto de cápsula/vidro */
+.case-card {
+    position: relative;
+    background: linear-gradient(180deg, rgba(20, 22, 28, 0.8) 0%, rgba(10, 11, 14, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 30px;
+    padding: 30px;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.15, 0.85, 0.35, 1);
+    overflow: visible; /* Para o brilho sair para fora */
+}
+
+/* Efeito de hover no Card */
+.case-card:hover {
+    transform: translateY(-12px);
+    border-color: var(--accent);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 242, 255, 0.1);
+}
+
+/* Container da Imagem para remover os cantos retos */
+.case-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* MÁSCARA MÁGICA: Esfumaça as bordas da imagem quadrada */
+.case-card-img {
+    width: 180px;
+    height: 140px;
+    object-fit: contain;
+    z-index: 2;
+    /* Isso aqui remove os cantos retos da imagem original */
+    mask-image: radial-gradient(circle, black 50%, transparent 95%);
+    -webkit-mask-image: radial-gradient(circle, black 50%, transparent 95%);
+    
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+    transition: all 0.5s ease;
+}
+
+.case-card:hover .case-card-img {
+    transform: scale(1.1) rotate(3deg);
+    filter: drop-shadow(0 15px 30px rgba(0, 242, 255, 0.3));
+}
+
+/* O Pedestal / Chão de Luz (Para a caixa não flutuar sozinha) */
+.case-glow-base {
+    position: absolute;
+    bottom: 20px;
+    width: 120px;
+    height: 20px;
+    background: var(--accent);
+    filter: blur(25px);
+    opacity: 0.1;
+    border-radius: 50%;
+    transition: all 0.5s ease;
+    z-index: 1;
+}
+
+.case-card:hover .case-glow-base {
+    opacity: 0.4;
+    width: 160px;
+    filter: blur(35px);
+}
+
+/* Estilo do Nome e Preço */
+.case-card h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin: 15px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.case-price-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--accent);
+    padding: 10px 25px;
+    border-radius: 100px;
+    font-weight: 900;
+    font-size: 15px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.case-card:hover .case-price-tag {
+    background: var(--accent);
+    color: #000;
+    transform: scale(1.05);
+}
+
+/* Badge (HOT, NEW) flutuando no canto */
+.case-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    padding: 6px 15px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+    z-index: 10;
+    text-transform: uppercase;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Container da Grade */
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 50px;
+    padding: 40px;
+}
+
+/* Card Estilo "Objeto Principal" */
+.case-hero-card {
+    position: relative;
+    width: 100%;
+    height: 320px; /* Altura para a caixa brilhar */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Container da Imagem */
+.case-hero-img-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+/* A IMAGEM DA CAIXA - Sem cantos retos e com sombra forte */
+.case-hero-img {
+    width: 260px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9));
+    transition: all 0.5s ease;
+    
+    /* MÁSCARA: Garante que qualquer resquício de fundo quadrado da imagem suma */
+    mask-image: radial-gradient(circle, black 55%, transparent 95%);
+    -webkit-mask-image: radial-gradient(circle, black 55%, transparent 95%);
+    
+    animation: caseFloat 4s infinite ease-in-out;
+}
+
+/* Brilho atrás da caixa */
+.case-hero-glow {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(40px);
+    z-index: -1;
+    transition: opacity 0.5s ease;
+}
+
+/* HOVER: A caixa cresce e brilha mais */
+.case-hero-card:hover {
+    transform: scale(1.05);
+}
+
+.case-hero-card:hover .case-hero-img {
+    filter: drop-shadow(0 0 30px rgba(0, 242, 255, 0.4));
+    transform: translateY(-10px) rotate(2deg);
+    animation-play-state: paused;
+}
+
+.case-hero-card:hover .case-hero-glow {
+    opacity: 0.3;
+}
+
+/* OVERLAY - O conteúdo EM CIMA da caixa */
+.case-hero-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Badge no topo, Info na base */
+    padding: 20px;
+    z-index: 2;
+    pointer-events: none; /* Deixa o clique passar para a caixa */
+}
+
+/* Badge flutuando no topo da caixa */
+.case-hero-badge {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #ff0055, #ff5500);
+    color: #fff;
+    padding: 6px 15px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    transform: rotate(5deg);
+}
+
+.case-hero-badge.elite { background: linear-gradient(135deg, #ffb703, #ffcc33); }
+.case-hero-badge.new { background: linear-gradient(135deg, #00f2ff, #0066ff); }
+
+/* Bloco de Nome e Preço na Base da Caixa */
+.case-hero-content {
+    text-align: center;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    padding-bottom: 10px;
+    border-radius: 0 0 20px 20px;
+}
+
+.case-hero-name {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    /* Blur no fundo do texto para destacar se a caixa for clara */
+    text-shadow: 0 0 15px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.5);
+}
+
+.case-hero-price {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+/* Animação de flutuar */
+@keyframes caseFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Container Principal - Configurado para 6 colunas */
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 colunas exatas */
+    gap: 15px; /* Espaço reduzido para caberem 6 */
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* O Card Invisível (Apenas a caixa e o texto contam) */
+.case-hero-card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1.2; /* Mantém proporção vertical */
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Container da Imagem - Onde a mágica acontece */
+.case-img-container {
+    position: relative;
+    width: 100%;
+    height: 70%; /* Imagem ocupa 70% do card */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* A IMAGEM DA CAIXA - Máscara Corrigida */
+.case-hero-img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    z-index: 2;
+    
+    /* MÁSCARA CORRIGIDA: Segue o tamanho da imagem */
+    -webkit-mask-image: radial-gradient(circle, black 55%, transparent 100%);
+    mask-image: radial-gradient(circle, black 55%, transparent 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    animation: caseFloat 4s infinite ease-in-out;
+}
+
+/* Brilho de fundo circular */
+.case-glow {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(20px);
+    z-index: 1;
+    transition: opacity 0.4s ease;
+}
+
+/* Info sobreposta (Overlay) */
+.case-info-overlay {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 3;
+    pointer-events: none;
+    text-align: center;
+}
+
+.case-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    /* Sombras para ler em cima de qualquer imagem */
+    text-shadow: 0 2px 10px rgba(0,0,0,1), 0 0 5px rgba(0,0,0,0.5);
+}
+
+.case-price {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-top: 4px;
+    text-shadow: 0 2px 10px rgba(0,0,0,1);
+}
+
+/* Badge flutuando no topo */
+.case-tag {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: linear-gradient(135deg, #ff0055, #ff5500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 5px;
+    z-index: 4;
+    transform: rotate(3deg);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+
+/* Hover Effects */
+.case-hero-card:hover {
+    transform: scale(1.08);
+}
+
+.case-hero-card:hover .case-hero-img {
+    filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.4));
+    animation-play-state: paused;
+}
+
+.case-hero-card:hover .case-glow {
+    opacity: 0.4;
+    width: 140px;
+    height: 140px;
+}
+
+/* Animação flutuante */
+@keyframes caseFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Responsividade: No telemóvel não cabem 6 */
+@media (max-width: 1200px) { .case-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 768px) { .case-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* Container da Grade - Ocupa a altura da tela disponível */
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 colunas */
+    gap: 10px; /* Espaço mínimo entre elas */
+    padding: 10px 20px;
+    height: calc(100vh - 160px); /* Ajusta para caber sem scroll */
+    align-items: center;
+    box-sizing: border-box;
+}
+
+/* O Card - Agora é apenas um wrapper para o objeto */
+.case-hero-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: 240px; /* Limita a altura para não gerar scroll */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* CONTAINER DA IMAGEM - É aqui que a Mask reside */
+.case-img-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* MÁSCARA RADIAL: Esconde os cantos retos da imagem original */
+    -webkit-mask-image: radial-gradient(circle, black 40%, transparent 75%);
+    mask-image: radial-gradient(circle, black 40%, transparent 75%);
+    overflow: hidden;
+}
+
+/* A IMAGEM - Ocupa todo o espaço do container */
+.case-hero-img {
+    width: 110%; /* Ligeiramente maior para preencher a mask */
+    height: 110%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    z-index: 1;
+    animation: caseFloatSmall 3s infinite ease-in-out;
+}
+
+/* Brilho Neon atrás da caixa */
+.case-glow {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.15;
+    filter: blur(20px);
+    z-index: 0;
+}
+
+/* INFO SOBREPOSTA - DENTRO DA IMAGEM */
+.case-info-overlay {
+    position: absolute;
+    bottom: 15%; /* Sobe o texto para dentro da caixa */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10; /* Sempre acima da imagem */
+    pointer-events: none;
+}
+
+.case-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0;
+    line-height: 1.1;
+    /* Stroke/Sombra forte para ler em cima da imagem */
+    text-shadow: 0 0 10px #000, 0 0 5px #000, 2px 2px 2px #000;
+}
+
+.case-price {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-top: 2px;
+    text-shadow: 0 0 10px #000, 2px 2px 2px #000;
+}
+
+/* Badge (TAG) */
+.case-tag {
+    position: absolute;
+    top: 15%;
+    right: 15%;
+    background: linear-gradient(135deg, #ff0055, #ff5500);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    z-index: 11;
+    transform: rotate(5deg);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+
+/* Efeito Hover */
+.case-hero-card:hover {
+    transform: scale(1.1);
+}
+.case-hero-card:hover .case-glow {
+    opacity: 0.4;
+    transform: scale(1.2);
+}
+
+/* Animação mais curta para não sair dos limites */
+@keyframes caseFloatSmall {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Remover scrollbar da main-content para look mais limpo */
+.main-content {
+    overflow-y: hidden; /* Força o "no-scroll" */
+}
+
+/* Container da Grade - Ajustado para ocupar o espaço sem scroll */
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 15px; 
+    padding: 20px;
+    height: calc(100vh - 180px); /* Garante que cabe na tela */
+    align-items: center;
+    box-sizing: border-box;
+}
+
+/* O Card wrapper */
+.case-hero-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-height: 220px; 
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* CONTAINER DA IMAGEM - Máscara mais aberta para não esconder a caixa toda */
+.case-img-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* MÁSCARA: Black 60% deixa o centro nítido, Transparent 100% esfumaça as pontas quadradas */
+    -webkit-mask-image: radial-gradient(circle, black 60%, transparent 98%);
+    mask-image: radial-gradient(circle, black 60%, transparent 98%);
+    overflow: hidden;
+}
+
+/* A IMAGEM - Movimento reduzido ao mínimo */
+.case-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 15px 25px rgba(0,0,0,0.7));
+    z-index: 1;
+    /* Animação MUITO lenta e curta */
+    animation: subtleFloat 6s ease-in-out infinite;
+}
+
+/* Brilho neon de fundo fixo */
+.case-glow {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.1;
+    filter: blur(20px);
+    z-index: 0;
+}
+
+/* INFO SOBREPOSTA */
+.case-info-overlay {
+    position: absolute;
+    bottom: 20%; /* Posição estratégica sobre a base da caixa */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.case-name {
+    font-size: 12px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0;
+    letter-spacing: 0.5px;
+    /* Sombra pesada para legibilidade */
+    text-shadow: 0 0 8px #000, 1px 1px 2px #000;
+}
+
+.case-price {
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-top: 2px;
+    text-shadow: 0 0 10px #000;
+}
+
+/* TAG (Novo/Hot) */
+.case-tag {
+    position: absolute;
+    top: 15%;
+    right: 10%;
+    background: linear-gradient(135deg, #ff0055, #ff5500);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+    z-index: 11;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Hover: Apenas um Zoom elegante, sem balançar */
+.case-hero-card:hover {
+    transform: scale(1.05);
+}
+.case-hero-card:hover .case-glow {
+    opacity: 0.3;
+}
+
+/* MOVIMENTO CALIBRADO: Apenas 3 pixels de oscilação */
+@keyframes subtleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* Estabilizar a página principal */
+.main-content {
+    overflow-y: auto; /* Change to auto to allow scrolling */
+    background-attachment: fixed;
+}
+
+/* Container Spacing */
+.case-section {
+    margin-bottom: 60px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.section-title span {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #444;
+    white-space: nowrap;
+}
+
+.glow-text {
+    color: var(--accent) !important;
+    text-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+}
+
+.section-title .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+}
+
+.case-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 15px; 
+    padding: 20px;
+    /* height: calc(100vh - 180px);  <--- REMOVE OR COMMENT THIS LINE */
+    align-items: center;
+    box-sizing: border-box;
+}
+
+/* The New Card Design */
+.case-card-premium {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.case-card-premium:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent);
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 20px rgba(0, 242, 255, 0.05);
+}
+
+/* Case Image */
+.case-card-premium img {
+    width: 160px;
+    height: 120px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+    margin-bottom: 15px;
+    transition: transform 0.4s ease;
+}
+
+.case-card-premium:hover img {
+    transform: scale(1.1) rotate(3deg);
+}
+
+/* Tag/Badge */
+.case-card-tag {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+/* Text Content */
+.case-card-premium h3 {
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+}
+
+.case-card-price {
+    display: inline-block;
+    background: #000;
+    color: var(--accent);
+    padding: 6px 20px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 13px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.case-card-premium:hover .case-card-price {
+    background: var(--accent);
+    color: #000;
+}
+
+/* Background Glow behind the case */
+.case-card-premium::after {
+    content: '';
+    position: absolute;
+    top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.1;
+    z-index: -1;
 }
