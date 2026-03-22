@@ -696,7 +696,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     position: absolute; top: 0; left: 50%; width: 4px; height: 50%;
     background: #fff; transform-origin: bottom center;
     margin-left: -2px; border-radius: 4px; z-index: 5;
-    box-shadow: 0 0 15px rgba(255,255,255,0.5);
     transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1);
 }
 
@@ -760,7 +759,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .wheel-box { position: relative; width: 340px; height: 340px; }
 .wheel-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 6; }
 #win-slice { 
-    fill: none; stroke-width: 6; stroke-linecap: round; 
+    fill: none; 
+    stroke-width: 6; 
+    stroke-linecap: butt; /* Mude de round para butt */
     filter: drop-shadow(0 0 8px var(--accent));
 }
 
@@ -769,7 +770,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .wheel-content small { letter-spacing: 3px; color: var(--accent); font-weight: 800; margin-top: -5px; }
 
 #upgrade-needle {
-    position: absolute; top: -10px; left: 50%; width: 4px; height: 180px;
+    position: absolute; top: -10px; left: 50%; width: 2px; height: 180px;
     background: #fff; transform-origin: center 180px; margin-left: -2px;
     border-radius: 10px; z-index: 10;
     box-shadow: 0 0 20px #fff;
@@ -917,8 +918,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     background: #fff;
     /* This creates a triangle pointing DOWN (inside) */
     clip-path: polygon(50% 100%, 0 0, 100% 0); 
-    box-shadow: 0 10px 15px rgba(255,255,255,0.5);
-    filter: drop-shadow(0 0 10px #fff);
 }
 
 /* Optional: Add a little glow line leading from the arrow to the circle */
@@ -2888,12 +2887,12 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 }
 
 .inventory-card img {
+    position: relative;
+    z-index: 10; /* Menor que o das badges (50) */
     width: 100%;
     height: 90px;
     object-fit: contain;
-    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
-    transition: filter 0.2s;
-    pointer-events: none;
+    margin-top: 10px; /* Dá um pequeno espaço para as etiquetas */
 }
 
 .inventory-card:hover img {
@@ -2903,21 +2902,28 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 /* Badges de Loadout */
 .loadout-badges {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 10px;
+    left: 10px;
     display: flex;
-    gap: 4px;
+    flex-direction: row; /* Alinha horizontalmente para a direita */
+    gap: 5px;
+    z-index: 99; /* Garante que fica por cima de TUDO no card */
+    pointer-events: none;
 }
 
 .l-badge {
     font-size: 9px;
     font-weight: 900;
-    padding: 2px 5px;
-    border-radius: 3px;
+    padding: 2px 6px;
+    border-radius: 4px;
     color: #000;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Sombra para destacar da skin */
+    width: fit-content;
+    text-transform: uppercase;
 }
-.l-badge.ct { background: #5d79ae; } /* Azul CT */
-.l-badge.t { background: #de9b35; }  /* Laranja T */
+.l-badge.ct { background: #5d79ae; color: #fff; }
+.l-badge.t { background: #de9b35; color: #fff; }
 
 /* Container lateral na Arena */
 .arena-inventory {
@@ -4913,6 +4919,56 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     color: #000;
 }
 
+/* Badge de Cadeado no Inventário */
+.l-badge.lock {
+    background: #ff4444; /* Changed to red to make it more visible like a security lock */
+    color: white;
+    width: 18px;         /* Fixed width for square look */
+    height: 18px;        /* Fixed height for square look */
+    padding: 0;          /* Remove padding to center icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.l-badge.lock svg {
+    display: block;
+}
+
+/* Efeito visual para item trancado no inventário */
+.inventory-card[style*="--is-locked: true"] {
+    opacity: 0.8;
+}
+
+/* Botão de Lock Ativo no Modal */
+.active-lock {
+    border-color: #ff4444 !important;
+    color: #ff4444 !important;
+}
+
+/* Estilo para avisar o Underdog na Arena */
+.underdog-active-notice {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    display: inline-block;
+    border: 1px solid #ff4444;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
 /* Background Glow behind the case */
 .case-card-premium::after {
     content: '';
@@ -4923,4 +4979,102 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
     opacity: 0.1;
     z-index: -1;
+}
+
+.changelog-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.ch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ch-date {
+    font-weight: 800;
+    font-size: 12px;
+    color: #555;
+    letter-spacing: 1px;
+}
+
+.ch-tag {
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.ch-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #bbb;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.ch-list li {
+    margin-bottom: 5px;
+}
+
+.ch-list b {
+    color: #fff;
+}
+
+/* Scrollbar fina para o changelog */
+.changelog-scroll::-webkit-scrollbar {
+    width: 3px;
+}
+.changelog-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}
+/* --- CORREÇÃO DA GRELA DE CAIXAS --- */
+.case-grid {
+    display: grid;
+    /* Ajusta automaticamente o número de colunas conforme o tamanho da tela */
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); 
+    gap: 25px; 
+    padding: 20px 0;
+    width: 100%;
+    /* REMOVE estas linhas se existirem: height, max-height, align-items */
+    height: auto !important; 
+    align-items: start !important; 
+}
+
+/* Espaçamento entre as secções (NEW e BOXES) */
+.case-section {
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+/* Garante que o card tem um tamanho consistente e não colapsa */
+.case-card-premium {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 25px 15px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 250px; /* Altura mínima para todas ficarem iguais */
+}
+
+.case-card-premium img {
+    width: 140px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
 }

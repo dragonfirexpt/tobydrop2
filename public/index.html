@@ -217,19 +217,19 @@
     <!-- Featured Section -->
     <div class="case-section">
         <div class="section-title">
-            <span class="glow-text">🔥 HOT SELECTION</span>
+            <span class="glow-text">NEW</span>
             <div class="line"></div>
         </div>
-        <div id="grid-hot" class="case-grid"></div>
+        <div id="grid-new" class="case-grid"></div>
     </div>
 
     <!-- Elite Section -->
     <div class="case-section">
         <div class="section-title">
-            <span>💎 ELITE BOXES</span>
+            <span>BOXES</span>
             <div class="line"></div>
         </div>
-        <div id="grid-elite" class="case-grid"></div>
+        <div id="grid-boxes" class="case-grid"></div>
     </div>
 </section>
 
@@ -386,8 +386,10 @@
             <p style="color: #555; font-size: 12px; margin-top: 10px;">Your profile information is synced with Steam.</p>
         </div>
         
-        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
             <button class="btn-secondary" onclick="logout()" style="width: 100%">LOGOUT FROM STEAM</button>
+            <!-- NOVO BOTÃO AQUI -->
+            <button class="btn-secondary" onclick="openChangelog()" style="width: 100%">VIEW CHANGELOG</button>
         </div>
     </div>
 </section>
@@ -438,8 +440,12 @@
                     <h4>Battle Cases (<span id="total-battle-price">$0.00</span>)</h4>
                     <div id="modal-selected-cases" class="selected-list"></div>
                     <div class="bot-toggle">
-                        <label><input type="checkbox" id="bot-checkbox"> Play against BOT</label>
-                    </div>
+    <label><input type="checkbox" id="bot-checkbox"> Play against BOT</label>
+    <label style="margin-top: 10px;">
+        <input type="checkbox" id="underdog-checkbox"> 
+        UNDERDOG
+    </label>
+</div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -568,6 +574,35 @@
                 <div id="p-grid" class="inventory-grid">
                     <!-- Skins injetadas aqui -->
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="changelog-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="margin: 0; color: var(--accent);">CHANGELOG</h3>
+            <div class="close-modal" onclick="closeChangelog()" style="position: static; font-size: 32px;">×</div>
+        </div>
+
+        <div class="changelog-scroll" style="overflow-y: auto; flex: 1; padding-right: 15px;">
+            <!-- VERSÃO MAIS RECENTE -->
+            <div class="changelog-item">
+                <div class="ch-header">
+                    <span class="ch-date">22 MAR, 2026</span>
+                    <span class="ch-tag">NEW</span>
+                </div>
+                <ul class="ch-list">
+                    <li>Adicionado novo modo <b>UNDERDOG</b> nas batalhas de caixas.</li>
+                    <li>Adicionada opção para dar <b>"Lock"</b> a certas skins para não serem afetadas pelo <b>"Sell All"</b>.</li>
+                    <li>Adicionadas 4 caixas novas. <b>(ICONICO, SIIIIUUUU, SORTUDO, PATRAO)</b></li>
+                    <li>Adicionada opção de ver as <b>"Changelogs"</b> nas Settings.</li>
+                    <li>Corrigido bug no upgrader em que podia se selecionar outras skins enquanto um upgrade estava a decorrer.</li>
+                    <li>Corrigido bug da cor de condição dos itens serem diferentes no inventário do upgrade.</li>
+                    <li>Corrigido bug raro no upgrader de perder upgrade mesmo quando calhava na parte certa.</li>
+                    <li>Corrigido bug de ao clicar "Sell All" as skins vendidas continuaram equipadas dentro do jogo.</li>
+                    <li>Corrigida a sorte do player "MestreEiro".</li>
+                </ul>
             </div>
         </div>
     </div>

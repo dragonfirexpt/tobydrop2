@@ -28,6 +28,7 @@ let upgraderState = {
     selectedInputs: [], // DEVE ser um array vazio
     selectedTarget: null
 };
+let isUpgrading = false;
 const WEAPON_TEAMS = {
     // Terroristas (TR) Only
     4: 'tr',   // Glock-18
@@ -138,6 +139,18 @@ function getWeaponCategory(weaponId) {
 
     return "OTHER";
 }
+async function toggleItemLock(itemId) {
+    const res = await fetch('/api/toggle-lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId })
+    });
+    const data = await res.json();
+    if (data.success) {
+        closeSkinModal();
+        loadInventory(); // Recarrega para mostrar o ícone de cadeado
+    }
+}
 function openSkinModal(item) {
     const modal = document.getElementById('skin-action-modal');
     const container = document.getElementById('modal-actions-container');
@@ -190,7 +203,11 @@ function openSkinModal(item) {
     if (item.equippedTeam > 0) {
         html += `<button class="btn-action btn-unequip-action btn-full" onclick="executeSkinAction('${item.id}', 0, 'unequip')">UNEQUIP FROM LOADOUT</button>`;
     }
-
+html += `
+    <button class="btn-action btn-full ${item.isLocked ? 'active-lock' : ''}" onclick="toggleItemLock('${item.id}')">
+        ${item.isLocked ? 'UNLOCK ITEM' : 'LOCK ITEM'}
+    </button>
+`;
     html += `<button class="btn-action btn-sell-action btn-full" onclick="executeSellFromModal('${item.id}')">SELL SKIN FOR $${formatCurrency(item.value)}</button>`;
 
     container.innerHTML = html;
@@ -246,17 +263,17 @@ function renderInventory() {
     document.getElementById('upgrade-count').innerText = `${upgraderState.selectedInputs.length}/5`;
 
     grid.innerHTML = pageItems.map(item => {
-        const isSelected = upgraderState.selectedInputs.some(i => i.id === item.id);
-        return `
-            <div class="up-card ${isSelected ? 'selected' : ''}" onclick="selectUpInput(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                <div class="badge">${item.conditionShort}</div>
-                <img src="${item.img}">
-                <b>${item.name}</b>
-                <span>$${formatCurrency(item.value)}</span>
-            </div>
-        `;
-    }).join('');
-
+    const isSelected = upgraderState.selectedInputs.some(i => i.id === item.id);
+    return `
+        <div class="up-card ${isSelected ? 'selected' : ''}" onclick="selectUpInput(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+            <!-- UPDATED LINE BELOW: Added cond-${item.conditionShort} -->
+            <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
+            <img src="${item.img}">
+            <b>${item.name}</b>
+            <span>$${formatCurrency(item.value)}</span>
+        </div>
+    `;
+}).join('');
     renderPagination('inv-pagination', displayInv.length, upgraderPageInv, (p) => {
         upgraderPageInv = p;
         renderInventory();
@@ -367,6 +384,7 @@ window.addEventListener('click', function(e) {
     }
 });
 function jumpToMult(m) {
+    if (isUpgrading) return;
     const totalVal = getTotalSelectedValue();
     
     if (totalVal === 0) {
@@ -390,6 +408,7 @@ function jumpToMult(m) {
     }
 }
 function selectUpInput(el, item) {
+    if (isUpgrading) return;
     const index = upgraderState.selectedInputs.findIndex(i => i.id === item.id);
     
     if (index > -1) {
@@ -417,6 +436,7 @@ function selectUpInput(el, item) {
 }
 
 function selectUpTarget(el, item) {
+    if (isUpgrading) return;
     const totalInputValue = getTotalSelectedValue();
 
     // 1. Impede seleção se for mais barato que o total selecionado
@@ -454,8 +474,8 @@ function calcUpgradeChance() {
     let chance = (totalInputVal / targetVal) * 95;
     if (chance > 95) chance = 95;
 
-    const dash = (chance / 100) * 283;
-    slice.style.strokeDasharray = `${dash} 283`;
+    const dash = (chance / 100) * 282.74;
+    slice.style.strokeDasharray = `${dash} 282.74`;
     display.innerText = chance.toFixed(2) + "%";
     btn.disabled = false;
 }
@@ -511,7 +531,7 @@ function closeUpgradeModal() {
 }
 async function startUpgrade() {
     if (upgraderState.selectedInputs.length === 0 || !upgraderState.selectedTarget) return;
-
+isUpgrading = true;
     const btn = document.getElementById('btn-do-upgrade');
     btn.disabled = true;
 
@@ -567,6 +587,7 @@ async function startUpgrade() {
             // Resetar estados de seleção
             upgraderState.selectedInputs = [];
             upgraderState.selectedTarget = null;
+            isUpgrading = false;
             btn.disabled = false;
             
             // --- CORREÇÃO AQUI ---
@@ -754,7 +775,15 @@ function sellAllItems() {
 function closeSellAllModal() {
     closeModalWithAnim('sell-all-modal');
 }
+function openChangelog() {
+    const modal = document.getElementById('changelog-modal');
+    modal.style.display = 'flex';
+}
 
+function closeChangelog() {
+    // Usamos a função de animação que já tens no site
+    closeModalWithAnim('changelog-modal');
+}
 async function confirmSellAll() {
     const btn = document.getElementById('confirm-sell-all-btn');
     const mainBtn = document.getElementById('btn-sell-all');
@@ -821,17 +850,19 @@ function getSafeAvatar(url) {
 function confirmCreateBattle() {
     if (selectedCasesForBattle.length === 0) return alert("Add at least one case!");
     const isBot = document.getElementById('bot-checkbox').checked;
+    const isUnderdog = document.getElementById('underdog-checkbox').checked; // <--- ADICIONADO
     
     socket.emit('createBattle', {
         userId: currentUser._id,
         caseIds: selectedCasesForBattle,
-        isBot: isBot
+        isBot: isBot,
+        isUnderdog: isUnderdog // <--- ADICIONADO
     });
     closeBattleModal();
 }
 function renderHomeCases() {
-    const gridHot = document.getElementById('grid-hot');
-    const gridElite = document.getElementById('grid-elite');
+    const gridHot = document.getElementById('grid-new');
+    const gridElite = document.getElementById('grid-boxes');
 
     if (!gridHot || !gridElite) return;
 
@@ -852,19 +883,19 @@ function renderHomeCases() {
         `;
 
         // Adiciona à secção HOT se tiver a tag HOT
-        if (caseInfo.tag === 'HOT') {
+        if (caseInfo.tag === 'NEW') {
             gridHot.innerHTML += cardHtml;
         } 
         
         // Adiciona à secção ELITE se tiver a tag ELITE ou custar mais de $50
-        if (caseInfo.tag === 'ELITE' || caseInfo.price >= 50) {
+        if (caseInfo.tag === 'BOXES') {
             gridElite.innerHTML += cardHtml;
         }
     });
 
     // Esconde a secção inteira se estiver vazia
-    document.getElementById('grid-hot').parentElement.style.display = gridHot.innerHTML === '' ? 'none' : 'block';
-    document.getElementById('grid-elite').parentElement.style.display = gridElite.innerHTML === '' ? 'none' : 'block';
+    document.getElementById('grid-new').parentElement.style.display = gridHot.innerHTML === '' ? 'none' : 'block';
+    document.getElementById('grid-boxes').parentElement.style.display = gridElite.innerHTML === '' ? 'none' : 'block';
 }
 async function init() {
     const caseRes = await fetch('/api/cases');
@@ -1442,9 +1473,15 @@ async function loadInventory() {
     grid.innerHTML = items.map(item => {
         const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
         let badgesHtml = '<div class="loadout-badges">';
-        if (item.equippedTeam === 2 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge t">T</span>';
-        if (item.equippedTeam === 3 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge ct">CT</span>';
-        badgesHtml += '</div>';
+if (item.equippedTeam === 2 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge t">T</span>';
+if (item.equippedTeam === 3 || item.equippedTeam === 4) badgesHtml += '<span class="l-badge ct">CT</span>';
+if (item.isLocked) badgesHtml += `
+    <span class="l-badge lock">
+        <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path>
+        </svg>
+    </span>`;
+badgesHtml += '</div>';
 
         return `
             <div class="inventory-card" style="--rarity-color: ${item.color};" onclick='openSkinModal(${itemJson})'>
