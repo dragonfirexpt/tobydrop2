@@ -54,8 +54,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return', // Mude para o seu domínio depois
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return', // Mude para o seu domínio depois
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5' // Cole a chave que você pegou no site da Steam
   },
   async (identifier, profile, done) => {
@@ -73,6 +73,13 @@ passport.use(new SteamStrategy({
     return done(null, user);
   }
 ));
+let skinCrashState = {
+    multiplier: 1.00,
+    status: 'waiting', 
+    timer: 15,
+    bets: [], // { userId, username, initialValue, itemsSent, avatar, cashedOut: false }
+    suggestedSkin: null
+};
 const KNIFE_NAMES = {
     500: "weapon_bayonet",
     503: "weapon_knife_css",
@@ -114,6 +121,8 @@ const User = mongoose.model('User', new mongoose.Schema({
     password: { type: String }, // Remova o required: true
     avatar: { type: String },
     balance: { type: Number, default: 50 },
+    dailyWager: { type: Number, default: 0 }, // Total apostado na semana
+    rewardCases: [{ type: String }],
     // Procure o campo inventory dentro do User model e adicione o wear:
 inventory: [{
     id: String,
@@ -132,6 +141,12 @@ inventory: [{
 }));
 // Função para gerar números aleatórios baseados numa semente (Seed)
 // Isso garante que o mesmo ID de bot resulte sempre nos mesmos valores
+function getClosestSkin(targetValue) {
+    if (globalSkinPool.length === 0) return null;
+    return globalSkinPool.reduce((prev, curr) => {
+        return (Math.abs(curr.value - targetValue) < Math.abs(prev.value - targetValue) ? curr : prev);
+    });
+}
 function seededRandom(seed) {
     var x = Math.sin(seed) * 10000;
     return x - Math.floor(x);
@@ -143,6 +158,50 @@ const CONDITIONS = [
     { name: "Well-Worn", short: "WW", chance: 25, multiplier: 0.2 },
     { name: "Battle-Scarred", short: "BS", chance: 30, multiplier: 0.0 }
 ];
+
+function startSkinCrashLoop() {
+    skinCrashState.status = 'waiting';
+    skinCrashState.timer = 15;
+    skinCrashState.multiplier = 1.00;
+    skinCrashState.bets = [];
+    skinCrashState.suggestedSkin = null;
+
+    const waitInterval = setInterval(() => {
+        skinCrashState.timer -= 0.1;
+        io.emit('skinCrashTick', skinCrashState);
+
+        if (skinCrashState.timer <= 0) {
+            clearInterval(waitInterval);
+            runSkinCrashGame();
+        }
+    }, 100);
+}
+
+function runSkinCrashGame() {
+    skinCrashState.status = 'running';
+    const crashPoint = (1 / (Math.random() || 0.001) * 0.97).toFixed(2);
+    
+    const gameInterval = setInterval(() => {
+        skinCrashState.multiplier += 0.01 + (skinCrashState.multiplier * 0.005);
+        
+        // Se houver alguém jogando, pegamos a skin baseada na aposta dele
+        if(skinCrashState.bets.length > 0) {
+            let userBet = skinCrashState.bets[0].initialValue;
+            let targetValue = userBet * skinCrashState.multiplier;
+            // Função getClosestSkin deve estar definida no server.js como mandei na mensagem anterior
+            skinCrashState.suggestedSkin = getClosestSkin(targetValue);
+        }
+
+        io.emit('skinCrashTick', skinCrashState);
+
+        if (skinCrashState.multiplier >= crashPoint) {
+            clearInterval(gameInterval);
+            skinCrashState.status = 'crashed';
+            io.emit('skinCrashTick', skinCrashState);
+            setTimeout(startSkinCrashLoop, 5000);
+        }
+    }, 100);
+}
 const generateRandomWear = (conditionShort) => {
     const ranges = {
         "FN": { min: 0.00, max: 0.07 },
@@ -251,6 +310,7 @@ function getBotData(botId) {
     
     return { name, avatar };
 }
+
 const caseData = {
 yakuza_bite: {
     name: "YAKUZA BITE",
@@ -3483,7 +3543,7 @@ iconico: {
     name: "ICONICO",
     price: 0.80,
     img: "https://key-drop.com/uploads/skins/ICONICO1.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "★ Gut Knife | Doppler",
@@ -3533,7 +3593,7 @@ siiiiuuuu: {
     name: "SIIIIUUUU",
     price: 6.50,
     img: "https://key-drop.com/uploads/skins/SIIIIUUUU1.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "★ M9 Bayonet | Tiger Tooth",
@@ -3730,7 +3790,7 @@ patrao: {
     name: "PATRAO",
     price: 13.50,
     img: "https://key-drop.com/uploads/skins/PATRAO1.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "★ Karambit | Doppler Phase 3",
@@ -3945,7 +4005,7 @@ sortudo: {
     name: "SORTUDO",
     price: 50.00,
     img: "https://key-drop.com/uploads/skins/SORTUDO1.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "AK-47 | Wild Lotus",
@@ -4048,11 +4108,1250 @@ sortudo: {
             rarities: [{ short: "FT", price: 4.02, chance: 16.49 }]
         }
     ]
+},
+fang: {
+    name: "FANG",
+    price: 29.21,
+    img: "https://key-drop.com/uploads/skins/FANG1.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "M4A4 | Poseidon",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 1765.85, chance: 0.02 }
+            ]
+        },
+        {
+            name: "AWP | Fade",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 1677.62, chance: 0.039 }
+            ]
+        },
+        {
+            name: "★ M9 Bayonet | Tiger Tooth",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 1085.36, chance: 0.05 }
+            ]
+        },
+        {
+            name: "★ Karambit | Lore",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 918.29, chance: 0.049 }
+            ]
+        },
+        {
+            name: "AK-47 | Fire Serpent",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "BS", price: 822.24, chance: 0.049 }
+            ]
+        },
+        {
+            name: "M4A4 | Bullet Rain",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 647.54, chance: 0.03 },
+                { short: "MW", price: 158.63, chance: 0.111 },
+                { short: "FT", price: 116.75, chance: 1.178 }
+            ]
+        },
+        {
+            name: "AK-47 | Neon Revolution",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 512.24, chance: 0.015 },
+                { short: "WW", price: 157.14, chance: 0.026 },
+                { short: "FT", price: 135.54, chance: 0.015 }
+            ]
+        },
+        {
+            name: "★ Flip Knife | Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 476.42, chance: 0.035 }
+            ]
+        },
+        {
+            name: "AUG | Akihabara Accept",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "BS", price: 412.22, chance: 0.027 }
+            ]
+        },
+        {
+            name: "★ Gut Knife | Gamma Doppler",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 243.10, chance: 0.052 }
+            ]
+        },
+        {
+            name: "★ Bowie Knife | Tiger Tooth",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 211.54, chance: 0.048 }
+            ]
+        },
+        {
+            name: "AK-47 | Vulcan",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 198.57, chance: 0.105 },
+                { short: "BS", price: 175.60, chance: 0.284 }
+            ]
+        },
+        {
+            name: "AK-47 | Fuel Injector",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 197.98, chance: 0.125 }
+            ]
+        },
+        {
+            name: "★ Navaja Knife | Slaughter",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 151.26, chance: 0.027 }
+            ]
+        },
+        {
+            name: "AK-47 | The Empress",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 139.99, chance: 0.06 },
+                { short: "WW", price: 135.65, chance: 0.051 },
+                { short: "BS", price: 131.51, chance: 0.032 }
+            ]
+        },
+        {
+            name: "AK-47 | Neon Rider",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "MW", price: 113.11, chance: 0.50 },
+                { short: "FT", price: 70.02, chance: 0.286 },
+                { short: "BS", price: 63.12, chance: 0.263 }
+            ]
+        },
+        {
+            name: "M4A1-S | Player Two",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "MW", price: 85.45, chance: 0.215 },
+                { short: "WW", price: 82.71, chance: 0.24 },
+                { short: "FT", price: 79.94, chance: 0.259 },
+                { short: "BS", price: 77.10, chance: 0.27 }
+            ]
+        },
+        {
+            name: "AWP | Containment Breach",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 85.21, chance: 0.258 },
+                { short: "BS", price: 78.54, chance: 0.264 }
+            ]
+        },
+        {
+            name: "Desert Eagle | Code Red",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "MW", price: 84.85, chance: 0.279 },
+                { short: "FT", price: 63.33, chance: 0.75 },
+                { short: "WW", price: 61.53, chance: 0.839 },
+                { short: "BS", price: 60.29, chance: 1.949 }
+            ]
+        },
+        {
+            name: "AWP | Hyper Beast",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "MW", price: 82.81, chance: 0.291 },
+                { short: "FT", price: 53.96, chance: 1.763 },
+                { short: "WW", price: 48.82, chance: 1.906 },
+                { short: "BS", price: 48.47, chance: 1.945 }
+            ]
+        },
+        {
+            name: "AK-47 | Nouveau Rouge",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 79.59, chance: 0.286 },
+                { short: "FT", price: 21.97, chance: 17.281 },
+                { short: "BS", price: 16.55, chance: 3.103 },
+                { short: "WW", price: 15.54, chance: 2.811 }
+            ]
+        },
+        {
+            name: "AWP | Neo-Noir",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "MW", price: 66.18, chance: 0.768 },
+                { short: "BS", price: 63.92, chance: 1.015 },
+                { short: "FT", price: 61.01, chance: 0.81 },
+                { short: "WW", price: 61.01, chance: 0.923 }
+            ]
+        },
+        {
+            name: "AWP | Wildfire",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 63.30, chance: 0.247 },
+                { short: "BS", price: 60.90, chance: 0.86 }
+            ]
+        },
+        {
+            name: "USP-S | Bleeding Edge",
+            color: "#8847ff",
+            rarities: [
+                { short: "FN", price: 19.37, chance: 18.111 },
+                { short: "MW", price: 7.51, chance: 3.347 },
+                { short: "WW", price: 3.00, chance: 5.215 },
+                { short: "FT", price: 2.75, chance: 5.255 },
+                { short: "BS", price: 2.43, chance: 5.166 }
+            ]
+        },
+        {
+            name: "Glock-18 | Coral Bloom",
+            color: "#4b69ff",
+            rarities: [
+                { short: "FN", price: 5.05, chance: 4.595 },
+                { short: "MW", price: 1.59, chance: 4.511 },
+                { short: "WW", price: 0.59, chance: 4.888 },
+                { short: "FT", price: 0.49, chance: 3.805 },
+                { short: "BS", price: 0.40, chance: 2.298 }
+            ]
+        }
+    ]
+},
+// Adicione isto ao seu objeto caseData no server.js
+razor: {
+    name: "RAZOR",
+    price: 8.69,
+    img: "https://key-drop.com/uploads/skins/RAZOR.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "★ Butterfly Knife | Marble Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 2332.19, chance: 0.01 }
+            ]
+        },
+        {
+            name: "★ Survival Knife | Doppler Phase 4",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 323.48, chance: 0.029 }
+            ]
+        },
+        {
+            name: "AK-47 | Fuel Injector",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "BS", price: 166.00, chance: 0.052 }
+            ]
+        },
+        {
+            name: "★ Ursus Knife | Blue Steel",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 153.70, chance: 0.097 }
+            ]
+        },
+        {
+            name: "AK-47 | Neon Revolution",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 135.54, chance: 0.108 }
+            ]
+        },
+        {
+            name: "AK-47 | The Empress",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "BS", price: 131.51, chance: 0.101 }
+            ]
+        },
+        {
+            name: "AWP | Asiimov",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 120.55, chance: 0.162 }
+            ]
+        },
+        {
+            name: "★ Survival Knife | Stained",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 104.64, chance: 0.271 }
+            ]
+        },
+        {
+            name: "★ Gut Knife | Bright Water",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 95.82, chance: 0.461 }
+            ]
+        },
+        {
+            name: "USP-S | Kill Confirmed",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 94.35, chance: 0.108 }
+            ]
+        },
+        {
+            name: "★ Shadow Daggers | Lore",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 92.08, chance: 0.351 }
+            ]
+        },
+        {
+            name: "★ Navaja Knife | Blue Steel",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 85.20, chance: 0.481 }
+            ]
+        },
+        {
+            name: "M4A4 | Radiation Hazard",
+            color: "#4b69ff",
+            rarities: [
+                { short: "FT", price: 62.94, chance: 0.605 }
+            ]
+        },
+        {
+            name: "SSG 08 | Bloodshot",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 29.54, chance: 1.947 }
+            ]
+        },
+        {
+            name: "AWP | Fever Dream",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 22.93, chance: 0.502 },
+                { short: "FT", price: 16.55, chance: 5.307 }
+            ]
+        },
+        {
+            name: "CZ75-Auto | Xiangliu",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 17.57, chance: 5.386 }
+            ]
+        },
+        {
+            name: "AK-47 | Rat Rod",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 15.13, chance: 0.605 },
+                { short: "BS", price: 7.12, chance: 3.111 },
+                { short: "WW", price: 6.96, chance: 3.208 },
+                { short: "FT", price: 6.23, chance: 4.09 }
+            ]
+        },
+        {
+            name: "Glock-18 | Mirror Mosaic",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 10.87, chance: 5.629 },
+                { short: "WW", price: 9.53, chance: 5.344 }
+            ]
+        },
+        {
+            name: "M4A1-S | Rose Hex",
+            color: "#4b69ff",
+            rarities: [
+                { short: "FN", price: 2.47, chance: 0.63 },
+                { short: "MW", price: 0.78, chance: 4.429 },
+                { short: "FT", price: 0.45, chance: 13.639 },
+                { short: "WW", price: 0.40, chance: 18.038 },
+                { short: "BS", price: 0.40, chance: 4.619 }
+            ]
+        },
+        {
+            name: "Tec-9 | Red Quartz",
+            color: "#8847ff",
+            rarities: [
+                { short: "FN", price: 2.05, chance: 1.906 },
+                { short: "MW", price: 0.53, chance: 17.80 },
+                { short: "FT", price: 0.46, chance: 0.974 }
+            ]
+        }
+    ]
+},
+// Adicione isto ao seu objeto caseData no server.js
+strike: {
+    name: "STRIKE",
+    price: 4.72,
+    img: "https://key-drop.com/uploads/skins/STRIKE.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "★ Skeleton Knife | Marble Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 646.93, chance: 0.036 }
+            ]
+        },
+        {
+            name: "Glock-18 | Bullet Queen",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 307.42, chance: 0.007 },
+                { short: "MW", price: 89.71, chance: 0.026 },
+                { short: "FT", price: 82.66, chance: 0.017 }
+            ]
+        },
+        {
+            name: "AK-47 | Wasteland Rebel",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 120.04, chance: 0.031 }
+            ]
+        },
+        {
+            name: "M4A1-S | Golden Coil",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 75.49, chance: 0.06 }
+            ]
+        },
+        {
+            name: "AWP | Hyper Beast",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 53.96, chance: 0.144 }
+            ]
+        },
+        {
+            name: "AK-47 | Redline",
+            color: "#d32ce6",
+            rarities: [
+                { short: "WW", price: 41.91, chance: 0.158 }
+            ]
+        },
+        {
+            name: "M4A4 | Cyber Security",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 41.49, chance: 0.173 }
+            ]
+        },
+        {
+            name: "AK-47 | Frontside Misty",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 26.00, chance: 0.255 }
+            ]
+        },
+        {
+            name: "P2000 | Imperial Dragon",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 23.58, chance: 0.051 },
+                { short: "FT", price: 16.25, chance: 1.242 }
+            ]
+        },
+        {
+            name: "M4A4 | Desolate Space",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 18.45, chance: 0.437 },
+                { short: "WW", price: 16.89, chance: 0.45 },
+                { short: "BS", price: 16.23, chance: 1.102 }
+            ]
+        },
+        {
+            name: "M4A1-S | Decimator",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 16.31, chance: 0.891 }
+            ]
+        },
+        {
+            name: "M4A1-S | Nightmare",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 12.41, chance: 0.504 },
+                { short: "BS", price: 11.85, chance: 1.975 },
+                { short: "WW", price: 10.60, chance: 1.828 }
+            ]
+        },
+        {
+            name: "AK-47 | Phantom Disruptor",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 12.26, chance: 0.449 },
+                { short: "WW", price: 11.11, chance: 0.962 },
+                { short: "BS", price: 8.43, chance: 0.905 },
+                { short: "FT", price: 8.42, chance: 2.576 }
+            ]
+        },
+        {
+            name: "Galil AR | Signal",
+            color: "#8847ff",
+            rarities: [
+                { short: "FN", price: 12.11, chance: 0.152 },
+                { short: "MW", price: 1.66, chance: 3.988 },
+                { short: "WW", price: 1.04, chance: 5.222 },
+                { short: "BS", price: 1.00, chance: 5.988 },
+                { short: "FT", price: 0.90, chance: 7.615 }
+            ]
+        },
+        {
+            name: "FAMAS | ZX Spectron",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 10.42, chance: 0.446 },
+                { short: "FT", price: 4.94, chance: 9.916 }
+            ]
+        },
+        {
+            name: "FAMAS | Valence",
+            color: "#8847ff",
+            rarities: [
+                { short: "FT", price: 5.32, chance: 4.235 },
+                { short: "WW", price: 5.08, chance: 2.781 },
+                { short: "BS", price: 4.53, chance: 3.419 }
+            ]
+        },
+        {
+            name: "CZ75-Auto | Tigris",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 4.29, chance: 4.321 },
+                { short: "FT", price: 3.08, chance: 4.234 }
+            ]
+        },
+        {
+            name: "M4A1-S | Nitro",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 1.40, chance: 5.655 },
+                { short: "WW", price: 0.63, chance: 11.878 },
+                { short: "FT", price: 0.61, chance: 12.086 },
+                { short: "BS", price: 0.60, chance: 3.785 }
+            ]
+        }
+    ]
+},
+// Adicione isto ao seu objeto caseData no server.js
+dragon: {
+    name: "DRAGON",
+    price: 3.88,
+    img: "https://key-drop.com/uploads/skins/DRAGON.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "M4A4 | Howl",
+            color: "#ffb703",
+            rarities: [
+                { short: "FT", price: 6394.61, chance: 0.005 }
+            ]
+        },
+        {
+            name: "★ Navaja Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 419.15, chance: 0.003 }
+            ]
+        },
+        {
+            name: "P90 | Death by Kitty",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 140.37, chance: 0.005 }
+            ]
+        },
+        {
+            name: "AK-47 | The Oligarch",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "WW", price: 65.78, chance: 0.021 }
+            ]
+        },
+        {
+            name: "P250 | Mehndi",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 35.82, chance: 0.192 }
+            ]
+        },
+        {
+            name: "USP-S | Overgrowth",
+            color: "#8847ff",
+            rarities: [
+                { short: "FT", price: 31.66, chance: 0.121 }
+            ]
+        },
+        {
+            name: "Desert Eagle | Kumicho Dragon",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 29.70, chance: 0.244 }
+            ]
+        },
+        {
+            name: "MAC-10 | Graven",
+            color: "#8847ff",
+            rarities: [
+                { short: "FT", price: 29.39, chance: 0.201 }
+            ]
+        },
+        {
+            name: "AK-47 | Cartel",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 26.81, chance: 0.246 }
+            ]
+        },
+        {
+            name: "Dual Berettas | Hemoglobin",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 22.23, chance: 0.404 }
+            ]
+        },
+        {
+            name: "Nova | Rising Skull",
+            color: "#8847ff",
+            rarities: [
+                { short: "FN", price: 17.38, chance: 0.416 },
+                { short: "MW", price: 7.43, chance: 2.994 }
+            ]
+        },
+        {
+            name: "M4A1-S | Decimator",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 16.31, chance: 0.401 }
+            ]
+        },
+        {
+            name: "M4A1-S | Leaded Glass",
+            color: "#d32ce6",
+            rarities: [
+                { short: "MW", price: 14.31, chance: 0.918 },
+                { short: "FT", price: 13.31, chance: 1.255 }
+            ]
+        },
+        {
+            name: "M4A4 | Griffin",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 13.98, chance: 0.797 }
+            ]
+        },
+        {
+            name: "Desert Eagle | Mecha Industries",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FT", price: 8.43, chance: 1.091 },
+                { short: "BS", price: 8.28, chance: 0.754 }
+            ]
+        },
+        {
+            name: "FAMAS | Eye of Athena",
+            color: "#d32ce6",
+            rarities: [
+                { short: "BS", price: 7.62, chance: 1.277 },
+                { short: "FT", price: 7.36, chance: 1.261 }
+            ]
+        },
+        {
+            name: "AK-47 | Rat Rod",
+            color: "#8847ff",
+            rarities: [
+                { short: "BS", price: 7.12, chance: 0.938 },
+                { short: "WW", price: 6.96, chance: 0.946 },
+                { short: "FT", price: 6.23, chance: 2.175 }
+            ]
+        },
+        {
+            name: "Glock-18 | Royal Legion",
+            color: "#8847ff",
+            rarities: [
+                { short: "FT", price: 4.38, chance: 1.899 },
+                { short: "WW", price: 3.69, chance: 3.182 }
+            ]
+        },
+        {
+            name: "SG 553 | Tiger Moth",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 4.27, chance: 0.48 },
+                { short: "FT", price: 1.66, chance: 6.063 },
+                { short: "WW", price: 1.39, chance: 4.549 },
+                { short: "BS", price: 1.29, chance: 6.548 }
+            ]
+        },
+        {
+            name: "Sawed-Off | Serenity",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 3.69, chance: 5.098 }
+            ]
+        },
+        {
+            name: "AWP | Phobos",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 3.67, chance: 2.991 },
+                { short: "FT", price: 3.35, chance: 3.075 }
+            ]
+        },
+        {
+            name: "AK-47 | Steel Delta",
+            color: "#4b69ff",
+            rarities: [
+                { short: "WW", price: 3.60, chance: 3.36 },
+                { short: "FT", price: 3.30, chance: 1.658 },
+                { short: "BS", price: 3.30, chance: 2.122 }
+            ]
+        },
+        {
+            name: "SG 553 | Dragon Tech",
+            color: "#8847ff",
+            rarities: [
+                { short: "MW", price: 1.15, chance: 4.873 },
+                { short: "WW", price: 0.69, chance: 4.921 },
+                { short: "BS", price: 0.63, chance: 5.551 },
+                { short: "FT", price: 0.55, chance: 6.686 }
+            ]
+        },
+        {
+            name: "Nova | Dark Sigil",
+            color: "#4b69ff",
+            rarities: [
+                { short: "FN", price: 0.78, chance: 4.044 },
+                { short: "MW", price: 0.23, chance: 2.083 },
+                { short: "WW", price: 0.09, chance: 7.131 },
+                { short: "FT", price: 0.08, chance: 1.406 },
+                { short: "BS", price: 0.08, chance: 5.615 }
+            ]
+        }
+    ]
 }
+};
+const rewardCases = {
+    rank1_reward: {
+        name: "CHAMPION BOX",
+        price: 9999999999, // Grátis para o vencedor
+        img: "https://key-drop.com/uploads/skins/high_premium_1.png", // Imagem da caixa Emerald
+        tag: "REWARD",
+        items: [
+            {
+                name: "★ Butterfly Knife | Gamma Doppler Emerald",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 14495.72, chance: 0.352 }]
+            },
+            {
+                name: "AWP | Medusa",
+                color: "#eb4b4b",
+                rarities: [{ short: "MW", price: 4341.87, chance: 0.175 }]
+            },
+            {
+                name: "M4A1-S | Welcome to the Jungle",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 4127.71, chance: 0.186 }]
+            },
+            {
+                name: "★ Butterfly Knife | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 3761.11, chance: 0.199 }]
+            },
+            {
+                name: "★ Karambit | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 3146.53, chance: 0.805 }]
+            },
+            {
+                name: "★ Specialist Gloves | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 3126.55, chance: 0.872 }]
+            },
+            {
+                name: "★ Bayonet | Doppler Ruby",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 3124.81, chance: 0.762 }]
+            },
+            {
+                name: "★ Specialist Gloves | Crimson Kimono",
+                color: "#ffb703",
+                rarities: [{ short: "WW", price: 2988.49, chance: 0.873 }]
+            },
+            {
+                name: "AK-47 | Gold Arabesque",
+                color: "#eb4b4b",
+                rarities: [{ short: "WW", price: 2570.04, chance: 0.82 }]
+            },
+            {
+                name: "★ Butterfly Knife | Slaughter",
+                color: "#ffb703",
+                rarities: [{ short: "MW", price: 2033.19, chance: 5.752 }]
+            },
+            {
+                name: "★ Butterfly Knife | Tiger Tooth",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1769.78, chance: 6.105 }]
+            },
+            {
+                name: "AWP | Fade",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 1575.89, chance: 1.031 }]
+            },
+            {
+                name: "Desert Eagle | Blaze",
+                color: "#d32ce6",
+                rarities: [{ short: "FN", price: 1144.07, chance: 5.688 }]
+            },
+            {
+                name: "★ Falchion Knife | Doppler Ruby",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1046.81, chance: 5.31 }]
+            },
+            {
+                name: "AK-47 | Fuel Injector",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 991.48, chance: 5.233 }]
+            },
+            {
+                name: "★ Sport Gloves | Omega",
+                color: "#ffb703",
+                rarities: [{ short: "MW", price: 961.53, chance: 5.63 }]
+            },
+            {
+                name: "AWP | Lightning Strike",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 880.60, chance: 6.281 }]
+            },
+            {
+                name: "★ Falchion Knife | Gamma Doppler Emerald",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 869.43, chance: 5.472 }]
+            },
+            {
+                name: "AK-47 | X-Ray",
+                color: "#eb4b4b",
+                rarities: [{ short: "WW", price: 784.92, chance: 5.656 }]
+            },
+            {
+                name: "★ Skeleton Knife | Case Hardened",
+                color: "#ffb703",
+                rarities: [{ short: "MW", price: 501.58, chance: 0.975 }]
+            },
+            {
+                name: "★ Bayonet | Lore",
+                color: "#ffb703",
+                rarities: [{ short: "MW", price: 498.87, chance: 1.004 }]
+            },
+            {
+                name: "★ Shadow Daggers | Doppler Sapphire",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 370.42, chance: 0.976 }]
+            },
+            {
+                name: "★ Bowie Knife | Gamma Doppler Phase 3",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 321.46, chance: 1.019 }]
+            },
+            {
+                name: "M4A1-S | Printstream",
+                color: "#eb4b4b",
+                rarities: [{ short: "FT", price: 307.73, chance: 1.133 }]
+            },
+            {
+                name: "★ Moto Gloves | Polygon",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 193.10, chance: 7.555 }]
+            },
+            {
+                name: "★ Paracord Knife | Case Hardened",
+                color: "#ffb703",
+                rarities: [{ short: "MW", price: 192.31, chance: 6.385 }]
+            },
+            {
+                name: "M4A1-S | Vaporwave",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 169.82, chance: 7.46 },
+                    { short: "FT", price: 83.84, chance: 5.689 },
+                    { short: "WW", price: 82.78, chance: 3.305 }
+                ]
+            },
+            {
+                name: "★ Huntsman Knife | Autotronic",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 145.39, chance: 7.297 }]
+            }
+        ]
+    },
+    rank2_reward: {
+        name: "CHALLENGER BOX",
+        price: 9999999999,
+        img: "https://key-drop.com/uploads/skins/1_5.png", // Imagem da caixa Bloodshot
+        tag: "REWARD",
+        items: [
+            {
+                name: "AWP | Dragon Lore",
+                color: "#eb4b4b",
+                rarities: [{ short: "FT", price: 9843.56, chance: 0.072 }]
+            },
+            {
+                name: "M4A4 | Howl",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 6652.74, chance: 0.111 }]
+            },
+            {
+                name: "AK-47 | Wild Lotus",
+                color: "#eb4b4b",
+                rarities: [{ short: "BS", price: 6341.58, chance: 0.157 }]
+            },
+            {
+                name: "AWP | The Prince",
+                color: "#eb4b4b",
+                rarities: [{ short: "MW", price: 3857.09, chance: 0.157 }]
+            },
+            {
+                name: "★ Specialist Gloves | Crimson Kimono",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 3278.02, chance: 0.231 }]
+            },
+            {
+                name: "★ Butterfly Knife | Tiger Tooth",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1769.78, chance: 0.163 }]
+            },
+            {
+                name: "★ Karambit | Tiger Tooth",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1435.84, chance: 0.365 }]
+            },
+            {
+                name: "★ M9 Bayonet | Marble Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1300.02, chance: 0.222 }]
+            },
+            {
+                name: "★ Karambit | Blue Steel",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 1218.39, chance: 0.218 }]
+            },
+            {
+                name: "AK-47 | Asiimov",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "FN", price: 1031.45, chance: 0.604 },
+                    { short: "MW", price: 83.57, chance: 6.998 },
+                    { short: "WW", price: 62.43, chance: 6.367 },
+                    { short: "BS", price: 60.93, chance: 7.755 },
+                    { short: "FT", price: 53.71, chance: 3.263 }
+                ]
+            },
+            {
+                name: "★ Talon Knife | Slaughter",
+                color: "#ffb703",
+                rarities: [
+                    { short: "MW", price: 873.28, chance: 0.589 },
+                    { short: "FT", price: 751.49, chance: 0.64 }
+                ]
+            },
+            {
+                name: "★ Bowie Knife | Gamma Doppler Emerald",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 837.00, chance: 0.604 }]
+            },
+            {
+                name: "★ Bayonet | Gamma Doppler Phase 3",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 814.76, chance: 0.603 }]
+            },
+            {
+                name: "★ M9 Bayonet | Lore",
+                color: "#ffb703",
+                rarities: [
+                    { short: "WW", price: 717.59, chance: 4.51 },
+                    { short: "BS", price: 609.95, chance: 4.313 }
+                ]
+            },
+            {
+                name: "★ Nomad Knife | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 492.65, chance: 0.307 }]
+            },
+            {
+                name: "M4A1-S | Vaporwave",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "FN", price: 439.43, chance: 0.341 },
+                    { short: "MW", price: 169.82, chance: 0.96 },
+                    { short: "FT", price: 83.84, chance: 1.102 },
+                    { short: "WW", price: 82.78, chance: 6.716 },
+                    { short: "BS", price: 72.16, chance: 6.781 }
+                ]
+            },
+            {
+                name: "★ Classic Knife | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 423.50, chance: 0.326 }]
+            },
+            {
+                name: "AWP | Containment Breach",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 353.45, chance: 5.143 },
+                    { short: "FT", price: 177.96, chance: 0.991 },
+                    { short: "WW", price: 86.65, chance: 1.014 },
+                    { short: "BS", price: 75.08, chance: 6.966 }
+                ]
+            },
+            {
+                name: "★ Ursus Knife | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 332.73, chance: 4.985 }]
+            },
+            {
+                name: "★ Specialist Gloves | Fade",
+                color: "#ffb703",
+                rarities: [
+                    { short: "WW", price: 305.06, chance: 5.617 },
+                    { short: "BS", price: 207.49, chance: 6.907 }
+                ]
+            },
+            {
+                name: "★ Shadow Daggers | Doppler Phase 2",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 288.52, chance: 5.921 }]
+            },
+            {
+                name: "★ Gut Knife | Gamma Doppler Phase 2",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 275.02, chance: 6.06 }]
+            },
+            {
+                name: "★ Gut Knife | Tiger Tooth",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 159.25, chance: 0.961 }]
+            },
+            {
+                name: "★ Navaja Knife | Marble Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 147.14, chance: 0.96 }]
+            }
+        ]
+    },
+    rank3_reward: {
+        name: "CONTENDER BOX",
+        price: 9999999999,
+        img: "https://key-drop.com/uploads/skins/1_4.png", // Imagem da caixa VEST
+        tag: "REWARD",
+        items: [
+            {
+                name: "AWP | Medusa",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 7520.88, chance: 0.062 }]
+            },
+            {
+                name: "★ Butterfly Knife | Gamma Doppler Phase 2",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 4126.06, chance: 0.053 }]
+            },
+            {
+                name: "★ Butterfly Knife | Tiger Tooth",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 1769.78, chance: 0.044 }]
+            },
+            {
+                name: "★ Karambit | Autotronic",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 1431.43, chance: 0.061 }]
+            },
+            {
+                name: "M4A1-S | Blue Phosphor",
+                color: "#d32ce6",
+                rarities: [{ short: "FN", price: 1243.06, chance: 0.103 }]
+            },
+            {
+                name: "AK-47 | Vulcan",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "FN", price: 1100.87, chance: 0.029 },
+                    { short: "MW", price: 627.89, chance: 0.47 },
+                    { short: "FT", price: 294.30, chance: 1.563 },
+                    { short: "WW", price: 208.45, chance: 2.5 },
+                    { short: "BS", price: 180.26, chance: 2.647 }
+                ]
+            },
+            {
+                name: "★ Karambit | Lore",
+                color: "#ffb703",
+                rarities: [{ short: "FT", price: 904.26, chance: 0.07 }]
+            },
+            {
+                name: "★ Talon Knife | Marble Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 901.45, chance: 0.096 }]
+            },
+            {
+                name: "AWP | Lightning Strike",
+                color: "#eb4b4b",
+                rarities: [{ short: "FN", price: 880.60, chance: 0.161 }]
+            },
+            {
+                name: "AUG | Akihabara Accept",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "FT", price: 837.88, chance: 0.138 },
+                    { short: "WW", price: 509.85, chance: 0.728 },
+                    { short: "BS", price: 387.40, chance: 1.656 }
+                ]
+            },
+            {
+                name: "★ Bayonet | Autotronic",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 782.83, chance: 0.095 }]
+            },
+            {
+                name: "★ Flip Knife | Gamma Doppler Phase 3",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 614.68, chance: 0.669 }]
+            },
+            {
+                name: "★ Nomad Knife | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 492.65, chance: 0.683 }]
+            },
+            {
+                name: "★ Flip Knife | Doppler Phase 1",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 481.28, chance: 0.681 }]
+            },
+            {
+                name: "AK-47 | Case Hardened",
+                color: "#d32ce6",
+                rarities: [
+                    { short: "MW", price: 403.70, chance: 1.646 },
+                    { short: "WW", price: 246.23, chance: 0.355 }
+                ]
+            },
+            {
+                name: "★ Sport Gloves | Amphibious",
+                color: "#ffb703",
+                rarities: [{ short: "BS", price: 403.34, chance: 0.618 }]
+            },
+            {
+                name: "AWP | Containment Breach",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 353.45, chance: 1.77 },
+                    { short: "FT", price: 177.96, chance: 2.878 },
+                    { short: "WW", price: 86.65, chance: 0.288 },
+                    { short: "BS", price: 75.08, chance: 0.292 }
+                ]
+            },
+            {
+                name: "★ Flip Knife | Autotronic",
+                color: "#ffb703",
+                rarities: [
+                    { short: "MW", price: 311.96, chance: 1.68 },
+                    { short: "FT", price: 256.51, chance: 0.281 }
+                ]
+            },
+            {
+                name: "★ Specialist Gloves | Fade",
+                color: "#ffb703",
+                rarities: [{ short: "WW", price: 305.06, chance: 1.442 }]
+            },
+            {
+                name: "★ Falchion Knife | Marble Fade",
+                color: "#ffb703",
+                rarities: [{ short: "FN", price: 287.49, chance: 0.317 }]
+            },
+            {
+                name: "USP-S | Printstream",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "FN", price: 208.04, chance: 2.986 },
+                    { short: "MW", price: 94.41, chance: 0.355 },
+                    { short: "FT", price: 56.18, chance: 0.329 },
+                    { short: "WW", price: 53.83, chance: 0.272 },
+                    { short: "BS", price: 51.19, chance: 42.795 }
+                ]
+            },
+            {
+                name: "★ Paracord Knife | Case Hardened",
+                color: "#ffb703",
+                rarities: [
+                    { short: "MW", price: 192.31, chance: 2.365 },
+                    { short: "FT", price: 159.75, chance: 2.427 },
+                    { short: "BS", price: 147.02, chance: 2.401 },
+                    { short: "WW", price: 146.25, chance: 2.726 }
+                ]
+            },
+            {
+                name: "USP-S | Kill Confirmed",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 183.09, chance: 2.536 },
+                    { short: "FT", price: 98.46, chance: 0.261 },
+                    { short: "WW", price: 89.94, chance: 0.296 },
+                    { short: "BS", price: 83.24, chance: 0.309 }
+                ]
+            },
+            {
+                name: "★ Gut Knife | Autotronic",
+                color: "#ffb703",
+                rarities: [
+                    { short: "MW", price: 182.45, chance: 2.348 },
+                    { short: "FT", price: 154.58, chance: 2.342 },
+                    { short: "BS", price: 148.32, chance: 2.605 }
+                ]
+            },
+            {
+                name: "★ Shadow Daggers | Lore",
+                color: "#ffb703",
+                rarities: [
+                    { short: "FN", price: 169.22, chance: 2.731 },
+                    { short: "MW", price: 118.85, chance: 0.245 },
+                    { short: "FT", price: 92.32, chance: 0.327 },
+                    { short: "WW", price: 91.25, chance: 0.3 },
+                    { short: "BS", price: 87.77, chance: 0.269 }
+                ]
+            },
+            {
+                name: "M4A1-S | Golden Coil",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 159.41, chance: 2.705 },
+                    { short: "FT", price: 97.36, chance: 0.288 },
+                    { short: "WW", price: 82.94, chance: 0.244 },
+                    { short: "BS", price: 73.59, chance: 0.313 }
+                ]
+            },
+            {
+                name: "AK-47 | Neon Rider",
+                color: "#eb4b4b",
+                rarities: [
+                    { short: "MW", price: 109.85, chance: 0.296 },
+                    { short: "WW", price: 75.21, chance: 0.288 },
+                    { short: "FT", price: 68.61, chance: 0.277 },
+                    { short: "BS", price: 62.15, chance: 0.288 }
+                ]
+            }
+        ]
+    }
+    // Adicione isto dentro do seu objeto caseData no server.js
 };
 
 const axios = require('axios'); // Você pode precisar instalar: npm install axios
-
+Object.assign(caseData, rewardCases);
 let skinDatabase = []; // Agora é um Array
 
 
@@ -4102,6 +5401,8 @@ const calculateValue = (rolledItem) => {
     return parseFloat(rolledItem.pickedRarity.price.toFixed(2));
 };
 const isItemSuperSpin = (itemValue, casePrice) => {
+    // If the case is free (price 0), it is NEVER a super spin
+    if (casePrice <= 0) return false; 
     return itemValue >= (casePrice * 2.5);
 };
 const generateTrack = (winner, items, casePrice) => {
@@ -4547,7 +5848,38 @@ app.get('/api/profile/:steamId', async (req, res) => {
         res.status(500).json({ error: "Erro ao carregar perfil" });
     }
 });
+// ROTA DE TESTE: Distribui os prêmios agora (chame isso para testar)
+app.post('/api/admin/force-rewards', async (req, res) => {
+    try {
+        console.log("🛠️ FORCING REWARD DISTRIBUTION...");
+        
+        // 1. Pega os top 3 atuais
+        const winners = await User.find({ dailyWager: { $gt: 0 } })
+            .sort({ dailyWager: -1 })
+            .limit(3);
 
+        if (winners.length === 0) return res.json({ msg: "No players with wagers today." });
+
+        // 2. Entrega as caixas correspondentes
+        if (winners[0]) {
+            await User.findByIdAndUpdate(winners[0]._id, { $push: { rewardCases: 'rank1_reward' } });
+        }
+        if (winners[1]) {
+            await User.findByIdAndUpdate(winners[1]._id, { $push: { rewardCases: 'rank2_reward' } });
+        }
+        if (winners[2]) {
+            await User.findByIdAndUpdate(winners[2]._id, { $push: { rewardCases: 'rank3_reward' } });
+        }
+
+        res.json({ 
+            success: true, 
+            msg: "Rewards sent to top players!",
+            winners: winners.map(w => w.username)
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 app.post('/api/open-case', async (req, res) => {
     try {
         const { caseId } = req.body;
@@ -4556,16 +5888,29 @@ app.post('/api/open-case', async (req, res) => {
 
         if (!user || !selectedCase) return res.status(400).json({ error: "Erro ao carregar dados" });
 
-        const casePrice = Number(selectedCase.price);
-        if (user.balance < casePrice) return res.status(400).json({ error: "Saldo insuficiente" });
+        const rewardIds = ['rank1_reward', 'rank2_reward', 'rank3_reward'];
+        const isRewardCase = rewardIds.includes(caseId);
 
-        // NEW LOGIC
+        // Se for caixa de recompensa, verifica se o usuário realmente a tem
+        if (isRewardCase) {
+            const rewardIndex = user.rewardCases.indexOf(caseId);
+            if (rewardIndex === -1) {
+                return res.status(400).json({ error: "You don't have this reward case or it was already opened." });
+            }
+            // Remove a caixa das recompensas (ela desaparece após abrir)
+            user.rewardCases.splice(rewardIndex, 1);
+        } else {
+            // Se for caixa normal, cobra o saldo
+            const casePrice = Number(selectedCase.price);
+            if (user.balance < casePrice) return res.status(400).json({ error: "Saldo insuficiente" });
+            user.balance = parseFloat((user.balance - casePrice).toFixed(2));
+            user.dailyWager = (user.dailyWager || 0) + casePrice;
+        }
+
         const rolledResult = rollItem(selectedCase.items);
         const cond = getConditionForItem(rolledResult);
         const finalValue = calculateValue(rolledResult);
 
-        user.balance = parseFloat((user.balance - casePrice).toFixed(2));
-        
         const newItem = { 
             name: rolledResult.name, 
             conditionShort: cond.short, 
@@ -4582,13 +5927,12 @@ app.post('/api/open-case', async (req, res) => {
         user.inventory.push(newItem);
         await user.save();
 
-        const isSuperSpin = newItem.value >= (casePrice * 2.5);
+        // REGRA: Super Spin apenas se NÃO for caixa de recompensa e o valor for alto
+        const isSuperSpin = !isRewardCase && newItem.value >= (selectedCase.price * 2.5);
         
-        // If Super Spin: ~5.5s (1st spin) + 3s (video) + 5s (2nd spin) = ~13.5 seconds
-        // If Normal: ~5.5 seconds
         const dropDelay = isSuperSpin ? 13500 : 5500;
-// We wait 5.5 seconds (adjust this to match your CSS transition time)
-setTimeout(() => {
+
+        setTimeout(() => {
             io.emit('newLiveDrop', {
                 user: user.username,
                 avatar: user.avatar,
@@ -4601,14 +5945,17 @@ setTimeout(() => {
                 }
             });
         }, dropDelay);
+
         res.json({ 
             winner: newItem, 
-            track: generateTrack(newItem, selectedCase.items, casePrice),
-            balanceAfterDeduction: user.balance,
-            finalBalance: user.balance 
+            track: generateTrack(newItem, selectedCase.items, selectedCase.price),
+            finalBalance: user.balance,
+            rewardCases: user.rewardCases, // Envia a lista atualizada para o front
+            isSuperSpin: isSuperSpin // Informa o front se deve fazer o super spin
         });
 
     } catch (e) {
+        console.error(e);
         res.status(500).json({ error: "Erro interno" });
     }
 });
@@ -4653,7 +6000,58 @@ io.on('connection', (socket) => {
 
     io.emit('chatMessage', payload);
 });
+socket.on('skinCrashBet', async (data) => {
+        const user = await User.findById(data.userId);
+        if (!user || skinCrashState.status !== 'waiting') return;
 
+        const itemsToBet = user.inventory.filter(i => data.itemIds.includes(i.id));
+        if (itemsToBet.length === 0) return;
+
+        const totalValue = itemsToBet.reduce((sum, i) => sum + i.value, 0);
+
+        // Remove do inventário
+        user.inventory = user.inventory.filter(i => !data.itemIds.includes(i.id));
+        await user.save();
+
+        skinCrashState.bets.push({
+            userId: user._id.toString(),
+            username: user.username,
+            avatar: user.avatar,
+            initialValue: totalValue,
+            itemsCount: itemsToBet.length,
+            cashedOut: false
+        });
+
+        socket.emit('inventoryUpdate', user.inventory);
+        io.emit('skinCrashTick', skinCrashState);
+    });
+
+    socket.on('skinCrashCashOut', async (data) => {
+        const bet = skinCrashState.bets.find(b => b.userId === data.userId && !b.cashedOut);
+        if (skinCrashState.status === 'running' && bet) {
+            const finalValue = bet.initialValue * skinCrashState.multiplier;
+            const wonSkinTemplate = getClosestSkin(finalValue);
+
+            bet.cashedOut = true;
+            bet.payout = finalValue;
+            bet.wonSkin = wonSkinTemplate;
+
+            const user = await User.findById(data.userId);
+            const newSkin = {
+                ...wonSkinTemplate,
+                id: Math.random().toString(36).substr(2, 9),
+                wear: generateRandomWear(wonSkinTemplate.conditionShort),
+                seed: generateRandomSeed(),
+                equippedTeam: 0
+            };
+
+            user.inventory.push(newSkin);
+            await user.save();
+
+            socket.emit('inventoryUpdate', user.inventory);
+            io.emit('skinCrashTick', skinCrashState);
+        }
+    });
     socket.on('createBattle', async (data) => {
     const user = await User.findById(data.userId);
     if (!user) return;
@@ -4745,6 +6143,7 @@ if (b.isUnderdog) {
 
             // 1. DEDUZIR DINHEIRO DO P2
             user2.balance = parseFloat((user2.balance - b.price).toFixed(2));
+            user2.dailyWager = (user2.dailyWager || 0) + b.price; // ADICIONE ESTA LINHA
             await user2.save();
             socket.emit('balanceUpdate', user2.balance);
 
@@ -4831,6 +6230,7 @@ if (b.isUnderdog) {
         }
     });
 });
+
 let globalSkinPool = [];
 // Criar uma lista plana de todas as skins disponíveis para os bots usarem
 function refreshSkinPool() {
@@ -4893,7 +6293,7 @@ function runCrashGame() {
 }
 
 startCrashLoop(); // Initialize the loop
-
+setTimeout(startSkinCrashLoop, 10000);
 io.on('connection', (socket) => {
     socket.on('crashBet', async (data, callback) => {
         const user = await User.findById(data.userId);
@@ -5034,6 +6434,33 @@ app.post('/api/equip-item', async (req, res) => {
         console.error("ERRO LOADOUT:", e);
         res.status(500).json({ error: "Erro interno" });
     }
+});
+app.get('/api/leaderboard', async (req, res) => {
+    const top = await User.find({}, 'username avatar dailyWager')
+        .sort({ dailyWager: -1 }).limit(10);
+    res.json(top);
+});
+
+// Lógica para resetar o ranking toda segunda-feira à meia-noite
+Object.assign(caseData, rewardCases);
+
+// 3. Automated Prize Distribution (Cron Job)
+const cron = require('node-cron');
+cron.schedule('0 0 * * *', async () => {
+    console.log("🏆 DISTRIBUTING DAILY REWARDS...");
+    
+    // Find top 3 players
+    const winners = await User.find({ dailyWager: { $gt: 0 } })
+        .sort({ dailyWager: -1 })
+        .limit(3);
+
+    if (winners[0]) await User.findByIdAndUpdate(winners[0]._id, { $push: { rewardCases: 'rank1_reward' } });
+    if (winners[1]) await User.findByIdAndUpdate(winners[1]._id, { $push: { rewardCases: 'rank2_reward' } });
+    if (winners[2]) await User.findByIdAndUpdate(winners[2]._id, { $push: { rewardCases: 'rank3_reward' } });
+
+    // Reset all wagers for the new day
+    await User.updateMany({}, { $set: { dailyWager: 0 } });
+    console.log("✅ Rewards sent and wagers reset.");
 });
 // ROTA PÚBLICA PARA O PLUGIN DO SERVIDOR CS2
 app.get('/api/plugin/skins/:steamId', async (req, res) => {

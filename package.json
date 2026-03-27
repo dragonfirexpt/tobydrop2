@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
     "mysql2": "^3.17.2",
+    "node-cron": "^4.2.1",
     "passport": "^0.7.0",
     "passport-steam": "^1.0.18",
     "socket.io": "^4.8.3"

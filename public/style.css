@@ -5078,3 +5078,428 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     margin-bottom: 10px;
     filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
 }
+/* Leaderboard Container */
+.leaderboard-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.leaderboard-header { text-align: center; margin-bottom: 50px; }
+.leaderboard-header h1 span { color: var(--accent); }
+
+/* Pódio */
+.leaderboard-podium {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr; /* O 1º fica maior no meio */
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 40px;
+}
+
+.podium-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px 20px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.podium-card:hover { transform: translateY(-5px); }
+
+/* Destaque para o 1º Lugar */
+.rank-1 { 
+    order: 2; 
+    border-color: #ffb703; 
+    box-shadow: 0 0 30px rgba(255, 183, 3, 0.15);
+}
+.rank-1 .podium-avatar { border-color: #ffb703; width: 100px; height: 100px; }
+
+.rank-2 { order: 1; }
+.rank-3 { order: 3; }
+
+.podium-avatar {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    margin-bottom: 15px;
+}
+
+.rank-badge {
+    position: absolute; top: -15px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #000;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.rank-1 .rank-badge { background: #ffb703; }
+
+/* Lista de Outros */
+.leaderboard-row {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 10px;
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.row-rank { width: 50px; font-weight: 800; color: #555; }
+.leaderboard-row img { width: 35px; height: 35px; border-radius: 50%; margin-right: 15px; }
+.row-name { flex: 1; font-weight: 600; }
+.row-value { color: var(--accent); font-weight: 800; }
+/* Leaderboard Styling */
+.leaderboard-container { max-width: 1000px; margin: 0 auto; }
+.leaderboard-header { text-align: center; margin-bottom: 60px; }
+
+.podium { display: flex; align-items: flex-end; justify-content: center; gap: 20px; margin-bottom: 50px; }
+.podium-card { background: var(--card); border: 1px solid var(--border); padding: 30px; border-radius: 24px; text-align: center; width: 250px; position: relative; }
+.podium-card.rank-1 { height: 350px; border-color: #ffb703; box-shadow: 0 0 30px rgba(255, 183, 3, 0.2); order: 2; }
+.podium-card.rank-2 { height: 300px; order: 1; }
+.podium-card.rank-3 { height: 280px; order: 3; }
+
+.podium-ava { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent); margin-bottom: 15px; }
+.rank-1 .podium-ava { width: 110px; height: 110px; border-color: #ffb703; }
+
+.prize-info { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: 900; white-space: nowrap; }
+
+.leaderboard-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); padding: 15px 30px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+.leaderboard-row .rank { width: 40px; color: #555; font-weight: 900; }
+.leaderboard-row img { width: 35px; height: 35px; border-radius: 50%; margin-right: 15px; }
+.leaderboard-row .name { flex: 1; font-weight: 600; }
+.leaderboard-row .value { color: var(--accent); font-weight: 800; }
+
+/* Reward Box Highlight */
+.reward-box { border-color: #00ff88 !important; animation: rewardPulse 2s infinite; }
+@keyframes rewardPulse {
+    0% { box-shadow: 0 0 0px rgba(0, 255, 136, 0); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+    100% { box-shadow: 0 0 0px rgba(0, 255, 136, 0); }
+}
+/* Container */
+.leaderboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.leaderboard-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+/* New Podium Layout */
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 60px;
+    align-items: center;
+}
+
+.tier-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* Rank Specific Accents (No emojis, just colors) */
+.rank-1 { border-top: 4px solid #ffb703; order: 2; transform: scale(1.05); background: rgba(255, 183, 3, 0.02); }
+.rank-2 { border-top: 4px solid #9ea0a3; order: 1; }
+.rank-3 { border-top: 4px solid #cd7f32; order: 3; }
+
+.tier-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.rank-1 .tier-label { color: #ffb703; }
+
+.avatar-container {
+    position: relative;
+    width: 100px;
+    margin: 0 auto 20px;
+}
+
+.tier-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 24px; /* Squircle look */
+    border: 2px solid var(--border);
+    object-fit: cover;
+}
+
+.rank-number {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 35px;
+    height: 35px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 14px;
+}
+
+.rank-1 .rank-number { border-color: #ffb703; color: #ffb703; }
+
+.user-info .username {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.user-info .wager-amount {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.potential-prize {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.potential-prize small {
+    display: block;
+    font-size: 9px;
+    color: #444;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.potential-prize b {
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+/* List Style */
+.leaderboard-list {
+    background: rgba(0,0,0,0.2);
+    border-radius: 20px;
+    padding: 10px;
+}
+
+.leaderboard-row {
+    display: grid;
+    grid-template-columns: 60px 50px 1fr 150px;
+    align-items: center;
+    padding: 15px 25px;
+    border-radius: 15px;
+    transition: background 0.2s;
+}
+
+.leaderboard-row:hover { background: rgba(255,255,255,0.02); }
+
+.row-rank { font-weight: 900; color: #333; font-size: 18px; }
+.row-avatar { width: 32px; height: 32px; border-radius: 8px; }
+.row-name { font-weight: 600; color: #eee; }
+.row-value { text-align: right; color: var(--accent); font-weight: 800; font-family: monospace; }
+/* Leaderboard Section Sharp UI */
+.leaderboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    -webkit-font-smoothing: antialiased; /* Torna a fonte mais nítida */
+}
+
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 60px;
+    align-items: center;
+}
+
+.tier-card {
+    background: #0f1118; /* Fundo sólido para evitar blur */
+    border: 1px solid #1e222d;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+}
+
+/* Rank Colors */
+.rank-1 { border-top: 4px solid #ffb703; order: 2; transform: scale(1.05); z-index: 2; }
+.rank-2 { border-top: 4px solid #aeb1b9; order: 1; }
+.rank-3 { border-top: 4px solid #cd7f32; order: 3; }
+
+.tier-label {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #4b5263;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.rank-1 .tier-label { color: #ffb703; }
+
+.tier-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px; /* Squircle */
+    border: 2px solid #1e222d;
+    object-fit: cover;
+    margin-bottom: 15px;
+    /* Sombra projetada para profundidade */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+.rank-1 .tier-avatar {
+    width: 110px;
+    height: 110px;
+    border-color: #ffb703;
+}
+
+.user-info .username {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.user-info .wager-amount {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.potential-prize {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.potential-prize small {
+    display: block;
+    font-size: 9px;
+    color: #4b5263;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.potential-prize b {
+    font-size: 11px;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+/* Rank Number Badge */
+.rank-number {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.03); /* Número grande e sutil no fundo */
+}
+.crash-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    height: 500px;
+}
+
+.crash-main {
+    flex: 2;
+    background: #1a1a22;
+    border-radius: 12px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.crash-display {
+    text-align: center;
+    position: relative;
+}
+
+#skincrash-multiplier {
+    font-size: 80px;
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(255, 183, 3, 0.3);
+}
+
+.reward-preview {
+    margin-top: 40px;
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.reward-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+}
+
+.reward-card img {
+    width: 120px;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+}
+
+.crash-inventory-side {
+    flex: 1;
+    background: #15151c;
+    border-radius: 12px;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.mini-inv-card {
+    background: #252530;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mini-inv-card.selected {
+    border-color: var(--accent);
+    background: #302a18;
+}
+
+.mini-inv-card img {
+    width: 40px;
+}

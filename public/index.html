@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="assets/logo.png"> 
 </head>
 <body>
-    <!-- Novo Separador de Perfil -->
+
 <section id="profile-tab" class="tab-view" style="display:none">
     <div class="profile-header-box">
         <div class="profile-info-main">
@@ -64,9 +64,8 @@
     <div class="nav-group">
         <button onclick="showHome()" class="nav-link active">CASES</button>
         <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
-        <!--<button onclick="switchTab('crash-tab', this)" class="nav-link">CRASH</button>-->
+        <!--<button onclick="switchTab('skin-crash-tab', this)" class="nav-link">CRASH</button>-->
         <button onclick="switchTab('upgrade-tab', this); initUpgrader()" class="nav-link">UPGRADER</button>
-
     </div>
 
     <!-- The Separator Line -->
@@ -173,6 +172,16 @@
         </div>
     </div>
 </section>
+<section id="leaderboard-tab" class="tab-view" style="display:none">
+    <div class="leaderboard-container">
+        <div class="leaderboard-header">
+            <h1>DAILY <span>LEADERBOARD</span></h1>
+            <p>Ends at Midnight. Top 3 players win Exclusive Reward Boxes!</p>
+        </div>
+        <div class="podium" id="leaderboard-podium"></div>
+        <div class="leaderboard-list" id="leaderboard-list"></div>
+    </div>
+</section>
                 <section id="inventory-tab" class="tab-view" style="display:none">
     <div class="inventory-header">
         <h2>MY INVENTORY</h2>
@@ -215,6 +224,13 @@
     </div>
 </section>
                 <section id="home-tab" class="tab-view">
+                    <div id="reward-section" class="case-section" style="display:none">
+        <div class="section-title">
+            <span class="glow-text">MY UNCLAIMED REWARDS</span>
+            <div class="line"></div>
+        </div>
+        <div id="reward-grid" class="case-grid"></div>
+    </div>
     <!-- Featured Section -->
     <div class="case-section">
         <div class="section-title">
@@ -233,7 +249,39 @@
         <div id="grid-boxes" class="case-grid"></div>
     </div>
 </section>
+<div id="skin-crash-tab" class="tab-view" style="display:none; padding: 20px;">
+    <div class="crash-wrapper" style="display: flex; gap: 20px; min-height: 500px;">
+        
+        <!-- Lado Esquerdo: O Jogo -->
+        <div class="crash-main-area" style="flex: 2; background: rgba(27, 27, 34, 0.8); border-radius: 12px; padding: 40px; text-align: center; border: 1px solid #2e3244;">
+            <div id="skincrash-multiplier" style="font-size: 80px; font-weight: 900; color: #ffb703; text-shadow: 0 0 20px rgba(255, 183, 3, 0.4);">1.00x</div>
+            <div id="skincrash-status" style="margin-bottom: 30px; text-transform: uppercase; font-weight: bold; color: #8a8ca0;">Waiting for bets...</div>
 
+            <!-- Preview da Skin que você está ganhando -->
+            <div class="reward-preview-box" style="background: #15151c; border-radius: 10px; padding: 20px; border: 2px dashed #2e3244; display: inline-block; min-width: 300px;">
+                <p style="font-size: 10px; color: #ffb703; margin-bottom: 10px; font-weight: bold;">RECOMPENSA ATUAL:</p>
+                <div id="crash-reward-card" style="opacity: 0.5;">
+                    <img id="crash-reward-img" src="https://via.placeholder.com/150?text=Select+Skins" style="width: 150px; height: 100px; object-fit: contain;">
+                    <div id="crash-reward-name" style="font-weight: bold; margin-top: 10px;">SELECIONE SKINS</div>
+                    <div id="crash-reward-value" style="color: #ffb703; font-weight: 800;">$0.00</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <div style="margin-bottom: 10px;">Valor total apostado: <span id="current-bet-sum" style="color: #00ff00; font-weight: bold;">$0.00</span></div>
+                <button id="skincrash-btn" class="button" style="background: #ffb703; color: #000; width: 100%; height: 50px; font-weight: bold; border-radius: 8px;" onclick="handleSkinCrashAction()">APOSTAR SKINS SELECIONADAS</button>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Seleção de Skins -->
+        <div class="crash-inventory-area" style="flex: 1; background: #1b1b22; border-radius: 12px; padding: 20px; border: 1px solid #2e3244; overflow-y: auto; max-height: 600px;">
+            <h3 style="font-size: 14px; margin-bottom: 15px; text-transform: uppercase;">Teu Inventário</h3>
+            <div id="crash-inv-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <!-- Skins carregadas via JS -->
+            </div>
+        </div>
+    </div>
+</div>
 <section id="opening-tab" class="tab-view" style="display:none">
     <div class="opening-header">
         <button onclick="showHome()" class="btn-back">
@@ -356,27 +404,7 @@
     </div>
 </section>
 
-                <section id="crash-tab" class="tab-view" style="display:none">
-    <div class="crash-container">
-        <div class="crash-main">
-            <div id="crash-display">
-                <h1 id="crash-multiplier">1.00x</h1>
-                <p id="crash-status">WAITING FOR BETS...</p>
-                <div id="crash-progress-bar"><div id="crash-progress-fill"></div></div>
-            </div>
             
-            <div class="crash-controls">
-                <input type="number" id="crash-amount" placeholder="Bet Amount" value="10">
-                <button id="crash-btn" class="btn-primary" onclick="handleCrashAction()">PLACE BET</button>
-            </div>
-        </div>
-
-        <div class="crash-sidebar">
-            <h3>PLAYERS</h3>
-            <div id="crash-players"></div>
-        </div>
-    </div>
-</section>
 
                 <section id="settings-tab" class="tab-view" style="display:none">
     <div class="settings-card">
@@ -588,6 +616,15 @@
 
         <div class="changelog-scroll" style="overflow-y: auto; flex: 1; padding-right: 15px;">
             <!-- VERSÃO MAIS RECENTE -->
+             <div class="changelog-item">
+                <div class="ch-header">
+                    <span class="ch-date">27 MAR, 2026</span>
+                    <span class="ch-tag">NEW</span>
+                </div>
+                <ul class="ch-list">
+                    <li>Adicionadas 4 caixas novas. <b>(FANG, RAZOR, STRIKE, DRAGON)</b></li>
+                </ul>
+            </div>
             <div class="changelog-item">
                 <div class="ch-header">
                     <span class="ch-date">22 MAR, 2026</span>
@@ -602,7 +639,6 @@
                     <li>Corrigido bug da cor de condição dos itens serem diferentes no inventário do upgrade.</li>
                     <li>Corrigido bug raro no upgrader de perder upgrade mesmo quando calhava na parte certa.</li>
                     <li>Corrigido bug de ao clicar "Sell All" as skins vendidas continuaram equipadas dentro do jogo.</li>
-                    <li>Corrigida a sorte do player "MestreEiro".</li>
                 </ul>
             </div>
         </div>

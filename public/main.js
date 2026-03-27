@@ -28,6 +28,7 @@ let upgraderState = {
     selectedInputs: [], // DEVE ser um array vazio
     selectedTarget: null
 };
+let selectedCrashSkins = [];
 let isUpgrading = false;
 const WEAPON_TEAMS = {
     // Terroristas (TR) Only
@@ -601,13 +602,131 @@ isUpgrading = true;
         btn.disabled = false;
     }
 }
+function handleSkinCrashAction() {
+    if (!currentCrashState) return;
+
+    if (currentCrashState.status === 'waiting') {
+        if (selectedCrashSkins.length === 0) return alert("Selecione skins primeiro!");
+        socket.emit('skinCrashBet', { 
+            userId: currentUser._id, 
+            itemIds: selectedCrashSkins 
+        });
+        selectedCrashSkins = []; // Limpa seleção após apostar
+    } else if (currentCrashState.status === 'running') {
+        socket.emit('skinCrashCashOut', { userId: currentUser._id });
+    }
+}
+
+// Renderiza o inventário do utilizador na lateral do crash
+function renderCrashInventory() {
+    const grid = document.getElementById('crash-inv-grid');
+    if (!grid) return; // Segurança se o elemento não existir
+    
+    if (!currentUser || !currentUser.inventory || currentUser.inventory.length === 0) {
+        grid.innerHTML = '<div style="color: #555; font-size: 12px; text-align: center; grid-column: 1/-1;">Inventário vazio</div>';
+        return;
+    }
+
+    grid.innerHTML = currentUser.inventory.map(item => {
+        const isSelected = selectedCrashSkins.includes(item.id);
+        return `
+            <div class="mini-inv-card ${isSelected ? 'selected' : ''}" 
+                 onclick="toggleCrashSkin('${item.id}')"
+                 style="background: #252530; padding: 10px; border-radius: 6px; cursor: pointer; border: 2px solid ${isSelected ? '#ffb703' : 'transparent'}; text-align: center; position: relative;">
+                <img src="${item.img}" style="width: 100%; height: 40px; object-fit: contain;">
+                <div style="font-size: 10px; font-weight: bold; margin-top: 5px; color: #fff;">$${item.value.toFixed(2)}</div>
+            </div>
+        `;
+    }).join('');
+}
+function toggleCrashSkin(id) {
+    if (selectedCrashSkins.includes(id)) {
+        selectedCrashSkins = selectedCrashSkins.filter(i => i !== id);
+    } else {
+        selectedCrashSkins.push(id);
+    }
+    
+    // Calcula o valor total selecionado
+    const sum = selectedCrashSkins.reduce((acc, itemId) => {
+        const item = currentUser.inventory.find(i => i.id === itemId);
+        return acc + (item ? item.value : 0);
+    }, 0);
+    
+    document.getElementById('current-bet-sum').innerText = `$${sum.toFixed(2)}`;
+    renderCrashInventory(); // Re-renderiza para mostrar a borda amarela
+}
 function formatCurrency(num) {
     return Number(num).toLocaleString('pt-PT', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
     });
 }
+// Escutar o evento do servidor
+socket.on('skinCrashTick', (state) => {
+    // 1. Pegar os elementos
+    const multText = document.getElementById('skincrash-multiplier');
+    const statusText = document.getElementById('skincrash-status');
+    const btn = document.getElementById('skincrash-btn');
+    const rewardCard = document.getElementById('crash-reward-card');
+    
+    // VERIFICAÇÃO DE SEGURANÇA: Se o elemento multText não existir na tela, não faz nada
+    if (!multText) return; 
 
+    if (state.status === 'waiting') {
+        multText.innerText = state.timer.toFixed(1) + "s";
+        multText.style.color = "white";
+        if (statusText) statusText.innerText = "A AGUARDAR APOSTAS...";
+        if (btn) {
+            btn.innerText = "APOSTAR SKINS SELECIONADAS";
+            btn.style.background = "#ffb703";
+        }
+        if (rewardCard) rewardCard.style.opacity = "0.5";
+    } 
+    else if (state.status === 'running') {
+        multText.innerText = state.multiplier.toFixed(2) + "x";
+        multText.style.color = "#ffb703";
+        if (statusText) statusText.innerText = "O FOGUETE ESTÁ NO AR!";
+        if (rewardCard) rewardCard.style.opacity = "1";
+
+        if (state.suggestedSkin) {
+            const img = document.getElementById('crash-reward-img');
+            const name = document.getElementById('crash-reward-name');
+            const val = document.getElementById('crash-reward-value');
+
+            if (img) img.src = state.suggestedSkin.img;
+            if (name) name.innerText = state.suggestedSkin.name;
+            
+            const myBet = state.bets.find(b => b.userId === currentUser._id.toString());
+            if (myBet && val) {
+                val.innerText = `$${(myBet.initialValue * state.multiplier).toFixed(2)}`;
+                if (btn) {
+                    btn.innerText = "RETIRAR AGORA";
+                    btn.style.background = "#00ff00";
+                }
+            }
+        }
+    } 
+    else if (state.status === 'crashed') {
+        multText.innerText = "ESTOUROU!";
+        multText.style.color = "#ff4444";
+        if (statusText) statusText.innerText = "@ " + state.multiplier.toFixed(2) + "x";
+        if (btn) {
+            btn.innerText = "PERDEU TUDO";
+            btn.style.background = "#333";
+        }
+    }
+});
+socket.on('inventoryUpdate', (newInventory) => {
+    if (currentUser) {
+        currentUser.inventory = newInventory;
+        // Se estiveres na aba do crash, atualiza a lista lateral
+        if (document.getElementById('skin-crash-tab').style.display !== 'none') {
+            renderCrashInventory();
+        }
+        // Atualiza também o inventário da aba de perfil
+        loadInventory();
+    }
+});
 socket.on('crashTick', (state) => {
     currentCrashState = state;
     const multText = document.getElementById('crash-multiplier');
@@ -727,19 +846,17 @@ function closeUpgradeModal() {
 // Função de troca de abas (SwitchTab)
 // Já deve funcionar com o CSS novo, mas vamos garantir que ela limpe animações anteriores
 function switchTab(id, el) {
-    const tabs = document.querySelectorAll('.tab-view');
-    tabs.forEach(t => {
-        t.style.display = 'none';
-    });
-
-    const targetTab = document.getElementById(id);
-    if (targetTab) {
-        targetTab.style.display = 'block';
-        // O CSS cuidará do "fade in" automaticamente ao mudar para display: block
-    }
-
+    document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    if (el) el.classList.add('active');
+    
+    const target = document.getElementById(id);
+    if(target) target.style.display = 'block';
+    if(el) el.classList.add('active');
+
+    // SE abrir a aba do crash, renderiza o inventário
+    if (id === 'skin-crash-tab') {
+        renderCrashInventory();
+    }
 }
 
 // Atualize também a função showHome para manter a consistência
@@ -860,6 +977,72 @@ function confirmCreateBattle() {
     });
     closeBattleModal();
 }
+async function checkUserRewards(user) {
+    const rewardSection = document.getElementById('reward-section');
+    const rewardGrid = document.getElementById('reward-grid');
+    
+    if (user.rewardCases && user.rewardCases.length > 0) {
+        rewardSection.style.display = 'block';
+        rewardGrid.innerHTML = user.rewardCases.map((caseId, index) => {
+            const data = itemsData[caseId];
+            return `
+                <div class="case-card-premium reward-box" onclick="selectCase('${caseId}')">
+                    <div class="case-card-tag">WINNER</div>
+                    <img src="${data.img}">
+                    <h3>${data.name}</h3>
+                    <div class="case-card-price">CLAIM FOR FREE</div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        rewardSection.style.display = 'none';
+    }
+}
+async function loadLeaderboard() {
+    const res = await fetch('/api/leaderboard');
+    const users = await res.json();
+    
+    const podiumEl = document.getElementById('leaderboard-podium');
+    const listEl = document.getElementById('leaderboard-list');
+    
+    podiumEl.innerHTML = '';
+    listEl.innerHTML = '';
+
+    users.forEach((user, index) => {
+        const wager = formatCurrency(user.dailyWager);
+        if (index < 3) {
+            const tiers = ["CHAMPION", "CHALLENGER", "CONTENDER"];
+            const caseNames = ["CHAMPION BOX", "CHALLENGER BOX", "CONTENDER BOX"];
+            
+            podiumEl.innerHTML += `
+                <div class="tier-card rank-${index + 1}">
+                    <div class="tier-label">${tiers[index]}</div>
+                    <div class="avatar-container">
+                        <img src="${user.avatar}" class="tier-avatar">
+                        <div class="rank-number">${index + 1}</div>
+                    </div>
+                    <div class="user-info">
+                        <span class="username">${user.username}</span>
+                        <span class="wager-amount">$${wager}</span>
+                    </div>
+                    <div class="potential-prize">
+                        <small>CURRENT PRIZE</small>
+                        <b>${caseNames[index]}</b>
+                    </div>
+                </div>
+            `;
+        } else {
+            listEl.innerHTML += `
+                <div class="leaderboard-row">
+                    <div class="row-rank">${index + 1}</div>
+                    <img src="${user.avatar}" class="row-avatar">
+                    <div class="row-name">${user.username}</div>
+                    <div class="row-value">$${wager}</div>
+                </div>
+            `;
+        }
+    });
+}
 function renderHomeCases() {
     const gridHot = document.getElementById('grid-new');
     const gridElite = document.getElementById('grid-boxes');
@@ -871,6 +1054,10 @@ function renderHomeCases() {
 
     Object.keys(itemsData).forEach(id => {
         const caseInfo = itemsData[id];
+        
+        // CORREÇÃO: A definição deve estar dentro do loop forEach
+        const priceDisplay = caseInfo.price === 0 ? "FREE" : `$${formatCurrency(caseInfo.price)}`;
+
         const cardHtml = `
             <div class="case-card-premium" onclick="selectCase('${id}')">
                 ${caseInfo.tag ? `<div class="case-card-tag ${caseInfo.tag.toLowerCase()}">${caseInfo.tag}</div>` : ''}
@@ -878,22 +1065,19 @@ function renderHomeCases() {
                     <img src="${caseInfo.img}" alt="${caseInfo.name}">
                 </div>
                 <h3>${caseInfo.name}</h3>
-                <div class="case-card-price">$${formatCurrency(caseInfo.price)}</div>
+                <div class="case-card-price">${priceDisplay}</div>
             </div>
         `;
 
-        // Adiciona à secção HOT se tiver a tag HOT
         if (caseInfo.tag === 'NEW') {
             gridHot.innerHTML += cardHtml;
         } 
         
-        // Adiciona à secção ELITE se tiver a tag ELITE ou custar mais de $50
         if (caseInfo.tag === 'BOXES') {
             gridElite.innerHTML += cardHtml;
         }
     });
 
-    // Esconde a secção inteira se estiver vazia
     document.getElementById('grid-new').parentElement.style.display = gridHot.innerHTML === '' ? 'none' : 'block';
     document.getElementById('grid-boxes').parentElement.style.display = gridElite.innerHTML === '' ? 'none' : 'block';
 }
@@ -913,6 +1097,8 @@ async function init() {
         
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('game-screen').style.display = 'flex';
+        loadLeaderboard(); // Carrega o ranking
+    checkUserRewards(currentUser); // Mostra as caixas de prêmio se houver
         updateUI();
     }
 }
@@ -1174,7 +1360,7 @@ function renderTrack(trackId, trackData) {
         `;
     }).join('');
 }
-async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false) {
+async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false, forcedSuperSpin = null) {
     const spinner = document.getElementById(spinnerId);
     if (!spinner) return;
 
@@ -1182,7 +1368,8 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
     const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
     const targetX = centerPrecisionX + (Math.random() * 60 - 30);
 
-    const isSuperWin = winnerData.value >= (casePrice * 2.5);
+    let isSuperWin = !!forcedSuperSpin;
+
 
     // 1. Reset e Início
     spinner.style.transition = 'none';
@@ -1284,7 +1471,8 @@ async function openCase() {
     const btn = document.getElementById('open-btn');
     const caseInfo = itemsData[activeCaseId];
     
-    if (currentUser.balance < caseInfo.price) return alert("Not enough credits!");
+    // Se não for FREE e não tiver saldo
+    if (caseInfo.price > 0 && currentUser.balance < caseInfo.price) return alert("Not enough credits!");
     
     btn.classList.add('btn-loading');
     btn.disabled = true;
@@ -1297,19 +1485,30 @@ async function openCase() {
         });
         const data = await res.json();
 
-        // 1. Deduz o saldo da interface antes de girar
-        updateBalanceUI(data.balanceAfterDeduction);
+        if (data.error) {
+            alert(data.error);
+            btn.classList.remove('btn-loading');
+            btn.disabled = false;
+            return;
+        }
 
-        // 2. Chama a função que faz o giro (e o Super Spin se necessário)
-        // Passamos 'spinner' porque é o ID do nó no modo individual
+        // 1. Atualiza o saldo localmente
+        updateBalanceUI(data.finalBalance);
+
+        // 2. Executa o giro
+        // Usamos data.isSuperSpin vindo do servidor em vez do cálculo manual
         await executeArenaSpin(1, 'spinner', {
             ...data.winner,
             track: data.track
-        }, caseInfo.price, caseInfo.items);
+        }, caseInfo.price, caseInfo.items, false, data.isSuperSpin);
 
-        // 3. Finaliza
-        updateBalanceUI(data.finalBalance);
+        // 3. Atualiza o inventário e as recompensas
         loadInventory();
+        
+        // Atualiza a lista de recompensas do usuário logado
+        currentUser.rewardCases = data.rewardCases;
+        checkUserRewards(currentUser); 
+
         btn.disabled = false;
         btn.classList.remove('btn-loading');
 
@@ -1406,9 +1605,18 @@ socket.on('updateBattles', (battles) => {
         const totalCases = b.caseIds.length;
         const displayName = totalCases > 1 ? `${firstCaseName} +${totalCases - 1}` : firstCaseName;
 
-        // Avatar logic for the lobby
         const p1Ava = b.player1.avatar;
         const p2Ava = 'https://api.dicebear.com/9.x/bottts/svg?seed=waiting';
+
+        // CORREÇÃO: Verificar se o currentUser existe antes de tentar ler o ._id
+        let actionButton = "";
+        if (!currentUser) {
+            actionButton = `<button class="btn-primary" disabled>LOGIN TO JOIN</button>`;
+        } else if (b.player1.id === currentUser._id.toString()) {
+            actionButton = '<span class="badge-yours">YOUR BATTLE</span>';
+        } else {
+            actionButton = `<button class="btn-primary" onclick="joinBattle('${b.id}', ${b.price})">JOIN $${formatCurrency(b.price)}</button>`;
+        }
 
         return `
             <div class="battle-card">
@@ -1428,9 +1636,7 @@ socket.on('updateBattles', (battles) => {
                     <b style="color: var(--accent)">${displayName.toUpperCase()}</b>
                 </div>
                 <div class="battle-actions">
-                    ${b.player1.id !== currentUser._id ? 
-                        `<button class="btn-primary" onclick="joinBattle('${b.id}', ${b.price})">JOIN $${formatCurrency(b.price)}</button>` : 
-                        '<span class="badge-yours">YOUR BATTLE</span>'}
+                    ${actionButton}
                 </div>
             </div>
         `;
