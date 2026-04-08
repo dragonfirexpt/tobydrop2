@@ -786,11 +786,10 @@ function handleCrashAction() {
 }
 function renderAvailableCasesForBattle() {
     const container = document.getElementById('modal-available-cases');
-    
-    // --- ATUALIZAÇÃO AQUI ---
     const sortType = filters.battleSort; 
     
-    let entries = Object.entries(itemsData);
+    // FILTRO ADICIONADO AQUI: Filtra apenas caixas que NÃO sejam do tipo "REWARD"
+    let entries = Object.entries(itemsData).filter(([id, data]) => data.tag !== "REWARD");
 
     if (sortType === 'high') {
         entries.sort((a, b) => b[1].price - a[1].price);
@@ -1000,7 +999,7 @@ async function checkUserRewards(user) {
 }
 async function loadLeaderboard() {
     const res = await fetch('/api/leaderboard');
-    const users = await res.json();
+    const allUsers = await res.json();
     
     const podiumEl = document.getElementById('leaderboard-podium');
     const listEl = document.getElementById('leaderboard-list');
@@ -1008,39 +1007,63 @@ async function loadLeaderboard() {
     podiumEl.innerHTML = '';
     listEl.innerHTML = '';
 
-    users.forEach((user, index) => {
-        const wager = formatCurrency(user.dailyWager);
-        if (index < 3) {
-            const tiers = ["CHAMPION", "CHALLENGER", "CONTENDER"];
-            const caseNames = ["CHAMPION BOX", "CHALLENGER BOX", "CONTENDER BOX"];
-            
+    const winners = allUsers.filter(u => (Number(u.dailyWager) || 0) > 0);
+    const labels = ["CHAMPION", "CHALLENGER", "CONTENDER"];
+    const prizes = ["CHAMPION BOX", "CHALLENGER BOX", "CONTENDER BOX"];
+
+    for (let i = 0; i < 3; i++) {
+        const user = winners[i];
+
+        if (user) {
             podiumEl.innerHTML += `
-                <div class="tier-card rank-${index + 1}">
-                    <div class="tier-label">${tiers[index]}</div>
-                    <div class="avatar-container">
-                        <img src="${user.avatar}" class="tier-avatar">
-                        <div class="rank-number">${index + 1}</div>
+                <div class="tier-card rank-${i + 1}">
+                    <div class="rank-badge">${i + 1}</div>
+                    <div class="tier-label">${labels[i]}</div>
+                    <div class="avatar-wrapper">
+                        <img src="${user.avatar}" class="tier-pfp">
                     </div>
                     <div class="user-info">
-                        <span class="username">${user.username}</span>
-                        <span class="wager-amount">$${wager}</span>
+                        <div class="username">${user.username}</div>
+                        <div class="wager-val">$${formatCurrency(user.dailyWager)}</div>
                     </div>
-                    <div class="potential-prize">
-                        <small>CURRENT PRIZE</small>
-                        <b>${caseNames[index]}</b>
+                    <div class="prize-section">
+                        <small>DAILY PRIZE</small>
+                        <span>${prizes[i]}</span>
                     </div>
                 </div>
             `;
         } else {
-            listEl.innerHTML += `
-                <div class="leaderboard-row">
-                    <div class="row-rank">${index + 1}</div>
-                    <img src="${user.avatar}" class="row-avatar">
-                    <div class="row-name">${user.username}</div>
-                    <div class="row-value">$${wager}</div>
+            podiumEl.innerHTML += `
+                <div class="tier-card rank-${i + 1} is-empty">
+                    <div class="rank-badge">${i + 1}</div>
+                    <div class="tier-label">${labels[i]}</div>
+                    <div class="avatar-wrapper">
+                        <div class="empty-avatar">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                    </div>
+                    <div class="user-info">
+                        <div class="username">EMPTY SLOT</div>
+                        <div class="wager-val">$0.00</div>
+                    </div>
+                    <div class="prize-section">
+                        <small>REWARD</small>
+                        <span style="opacity: 0.2">${prizes[i]}</span>
+                    </div>
                 </div>
             `;
         }
+    }
+
+    allUsers.forEach((user, index) => {
+        listEl.innerHTML += `
+            <div class="leaderboard-row">
+                <div class="row-pos">${index + 1}</div>
+                <img src="${user.avatar}" class="row-pfp">
+                <div class="row-name">${user.username}</div>
+                <div class="row-val">$${formatCurrency(user.dailyWager)}</div>
+            </div>
+        `;
     });
 }
 function renderHomeCases() {
@@ -1360,6 +1383,37 @@ function renderTrack(trackId, trackData) {
         `;
     }).join('');
 }
+function updateLeaderboardCountdown() {
+    const now = new Date();
+    const target = new Date();
+
+    // HORA DO TEU TESTE (Ex: 17:16)
+    target.setHours(19, 0, 0, 0); 
+
+    // SEGREDO: Se a hora atual já passou do target, o target passa a ser AMANHÃ
+    if (now > target) {
+        target.setDate(target.getDate() + 1);
+    }
+
+    const diff = target - now;
+
+    // Se faltarem menos de 10 segundos para o reset (opcional, para dar efeito)
+    if (diff <= 0) {
+    document.getElementById('leaderboard-countdown').innerText = "DISTRIBUTING...";
+    return;
+}
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    const el = document.getElementById('leaderboard-countdown');
+    if (el) el.innerText = display;
+}
+
+setInterval(updateLeaderboardCountdown, 1000);
+updateLeaderboardCountdown();
 async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false, forcedSuperSpin = null) {
     const spinner = document.getElementById(spinnerId);
     if (!spinner) return;
@@ -1391,15 +1445,16 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
     const node = spinner.querySelector('.item-node[data-index="50"]');
     if(node) node.classList.add('is-winner');
 
-    // Som e Interface Inicial
     if (isSuperWin) {
+        // Se for Super Spin, NÃO adicionamos o item ao inventário lateral ainda
         superLandSound.currentTime = 0;
         superLandSound.play().catch(e => {});
     } else {
         landSound.currentTime = 0;
         landSound.play().catch(e => {});
-        // Revela info se for comum
         if(node) node.classList.add('reveal-final');
+        
+        // APENAS adiciona aqui se NÃO for super spin
         if(isBattle) {
             addWonItemToArena(playerNum, winnerData);
             showBattleGain(playerNum, winnerData.value);
@@ -1453,9 +1508,7 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
         spinner.style.transform = `translateX(-${centerPrecisionX}px)`;
 
         const finalNode = spinner.querySelector('.item-node[data-index="50"]');
-        if(finalNode) {
-            finalNode.classList.add('is-winner', 'reveal-final'); 
-        }
+        if(finalNode) finalNode.classList.add('is-winner', 'reveal-final'); 
 
         if(isBattle) {
             addWonItemToArena(playerNum, winnerData);
@@ -1594,7 +1647,20 @@ function joinBattle(id, price) {
     // Envia para o servidor. O servidor vai validar se você pode entrar ou não.
     socket.emit('joinBattle', { battleId: id, userId: currentUser._id });
 }
+socket.on('leaderboardReset', async () => {
+    console.log("Recebido aviso de reset do servidor!");
+    
+    // 1. Atualiza os dados do utilizador (para a caixa aparecer)
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.loggedIn) {
+        currentUser = data.user;
+        checkUserRewards(currentUser); // Faz a caixa aparecer no topo
+    }
 
+    // 2. Atualiza o Ranking (para os valores voltarem a $0.00)
+    loadLeaderboard();
+});
 socket.on('updateBattles', (battles) => {
     const list = document.getElementById('battle-list');
     if (!list) return;
@@ -1804,8 +1870,9 @@ socket.on('startBattleSpin', async (data) => {
         spinSound.play().catch(e => {});
 
         await Promise.all([
-            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true),
-            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true)
+            // Adicionado o 7º argumento: data.p1Rolls[i].isSuperSpin
+            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true, data.p1Rolls[i].isSuperSpin),
+            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true, data.p2Rolls[i].isSuperSpin)
         ]);
         const oldP1 = p1Acc;
         const oldP2 = p2Acc;

@@ -73,6 +73,7 @@
 
     <!-- Account/Utility Group -->
     <div class="nav-group">
+                <button onclick="switchTab('leaderboard-tab', this)" class="nav-link">RANKING</button>
         <button onclick="switchTab('inventory-tab', this); loadInventory()" class="nav-link">INVENTORY</button>
         <button onclick="switchTab('settings-tab', this)" class="nav-link">SETTINGS</button>
     </div>
@@ -176,7 +177,12 @@
     <div class="leaderboard-container">
         <div class="leaderboard-header">
             <h1>DAILY <span>LEADERBOARD</span></h1>
-            <p>Ends at Midnight. Top 3 players win Exclusive Reward Boxes!</p>
+            <!-- NOVO BLOCO DO TIMER ABAIXO -->
+            <div class="leaderboard-timer">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                ENDS IN: <span id="leaderboard-countdown">00:00:00</span>
+            </div>
+            <p>Top 3 players win exclusive daily rewards!</p>
         </div>
         <div class="podium" id="leaderboard-podium"></div>
         <div class="leaderboard-list" id="leaderboard-list"></div>
@@ -618,17 +624,29 @@
             <!-- VERSÃO MAIS RECENTE -->
              <div class="changelog-item">
                 <div class="ch-header">
-                    <span class="ch-date">27 MAR, 2026</span>
+                    <span class="ch-date">8 APR, 2026</span>
                     <span class="ch-tag">NEW</span>
                 </div>
                 <ul class="ch-list">
-                    <li>Adicionadas 4 caixas novas. <b>(FANG, RAZOR, STRIKE, DRAGON)</b></li>
+                    <li>Adicionado Ranking Diário com as caixas <b>(CHAMPION BOX, CHALLANGER BOX e CONTENDER BOX)</b> como recompensa para os top 3 usuários.</li>
+                    <li>Adicionadas 6 caixas novas. <b>(DRINK ME, TICK TOCK, DREAM OR REAL, MAD TEA, CHECKMATE, UTOPIA)</b>.</li>
+                    <li>Adicionadas 149 skins novas.</li>
+                    <li>Corrigido bug de qualquer item de <b>REROLL</b> ser mostrado imediatamente no modo de jogo <b>Battles</b>.</li>
+                    <li>Corrigido bug de aparecer 3 caixas com preços absurdos na seleção de caixas no modo de jogo <b>Battles</b>.</li>
+                    <li>Removida a possibilidade dos <b>Bots</b> criarem <b>Battles</b>.</li>
+                </ul>
+            </div>
+             <div class="changelog-item">
+                <div class="ch-header">
+                    <span class="ch-date">27 MAR, 2026</span>
+                </div>
+                <ul class="ch-list">
+                    <li>Adicionadas 4 caixas novas. <b>(FANG, RAZOR, STRIKE, DRAGON)</b>.</li>
                 </ul>
             </div>
             <div class="changelog-item">
                 <div class="ch-header">
                     <span class="ch-date">22 MAR, 2026</span>
-                    <span class="ch-tag">NEW</span>
                 </div>
                 <ul class="ch-list">
                     <li>Adicionado novo modo <b>UNDERDOG</b> nas batalhas de caixas.</li>

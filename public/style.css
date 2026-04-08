@@ -5503,3 +5503,364 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .mini-inv-card img {
     width: 40px;
 }
+
+.leaderboard-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    padding: 10px 25px;
+    border-radius: 12px;
+    margin: 20px 0;
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+#leaderboard-countdown {
+    font-family: monospace; /* Fonte fixa para os números não "dançarem" */
+    font-size: 18px;
+    min-width: 85px;
+    display: inline-block;
+}
+
+.leaderboard-header p {
+    color: #555;
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+/* Card Vazio no Pódio */
+.podium-empty {
+    opacity: 0.6;
+    border-style: dashed !important; /* Borda tracejada */
+    background: rgba(255, 255, 255, 0.01) !important;
+    filter: grayscale(1);
+}
+
+.empty-slot-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto;
+    background: #08090b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    border: 2px dashed #1a1a1a;
+}
+
+.rank-1.podium-empty .empty-slot-icon {
+    width: 110px;
+    height: 110px;
+}
+
+.podium-empty .rank-number {
+    background: #08090b;
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+}
+
+/* Container da foto para posicionar o número */
+.avatar-container {
+    position: relative;
+    width: 90px;
+    margin: 0 auto 20px;
+}
+
+.rank-1 .avatar-container {
+    width: 110px; /* Foto do 1º lugar um pouco maior */
+}
+
+/* O Número do Lugar (Rank Number) */
+.rank-number {
+    position: absolute;
+    bottom: 0px;  /* No canto inferior */
+    right: 0px;   /* No canto direito */
+    width: 24px;  /* Mais pequeno */
+    height: 24px; /* Mais pequeno */
+    background: #000;
+    border: 2px solid #1e222d;
+    border-radius: 6px; /* Quadrado arredondado mais moderno */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 11px; /* Texto pequeno */
+    color: #fff;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Cor especial para o vencedor */
+.rank-1 .rank-number {
+    border-color: #ffb703;
+    color: #ffb703;
+}
+
+/* Estilo do Slot Vazio */
+.podium-empty {
+    opacity: 0.4;
+    border-style: dashed !important;
+    filter: grayscale(1);
+    background: transparent !important;
+}
+
+.empty-slot-icon {
+    width: 90px;
+    height: 90px;
+    background: #08090b;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #151515;
+    border: 2px dashed #151515;
+}
+
+.rank-1.podium-empty .empty-slot-icon {
+    width: 110px;
+    height: 110px;
+}
+
+.podium-empty .rank-number {
+    opacity: 0.5;
+    border-color: #151515;
+    color: #151515;
+}
+/* Container do Pódio */
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: flex-end; /* O 1º lugar pode ser mais alto */
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+/* Card Individual */
+.tier-card {
+    background: #0d0f14;
+    border: 1px solid #1e222d;
+    border-radius: 20px;
+    padding: 30px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* CENTRA TUDO HORIZONTALMENTE */
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+/* Destaque para o 1º lugar */
+.tier-card.rank-1 {
+    transform: scale(1.05);
+    border-color: #ffb703;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(255, 183, 3, 0.05) 0%, #0d0f14 100%);
+}
+
+.tier-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+.rank-1 .tier-label { color: #ffb703; }
+
+/* Avatar e Badge de Ranking */
+.avatar-wrapper {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.rank-1 .avatar-wrapper { width: 100px; height: 100px; }
+
+.tier-pfp {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #1e222d;
+    object-fit: cover;
+}
+
+/* O NÚMERO PEQUENO NO CANTO */
+.rank-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+    background: #000;
+    border: 2px solid #1e222d;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.rank-1 .rank-badge {
+    border-color: #ffb703;
+    color: #ffb703;
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+}
+
+/* Textos do Usuário */
+.user-info { margin-bottom: 20px; }
+.username { font-weight: 800; font-size: 16px; color: #fff; margin-bottom: 4px; }
+.wager-val { font-weight: 700; color: var(--accent); font-size: 13px; }
+
+/* Secção do Prémio */
+.prize-section {
+    width: 100%;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+.prize-section small { display: block; font-size: 9px; color: #444; font-weight: 800; margin-bottom: 5px; }
+.prize-section span { font-size: 11px; font-weight: 700; color: #eee; }
+
+/* Estado Vazio */
+.is-empty { opacity: 0.4; border-style: dashed; }
+.empty-avatar {
+    width: 100%; height: 100%;
+    background: #08090b;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #1a1d24; border: 2px dashed #1a1d24;
+}
+
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    align-items: flex-end;
+    margin-top: 40px; /* Espaço para os badges de cima */
+    margin-bottom: 40px;
+}
+
+.tier-card {
+    background: #0d0f14;
+    border: 1px solid #1e222d;
+    border-radius: 24px;
+    padding: 40px 15px 30px; /* Padding superior aumentado para o badge */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza tudo */
+    justify-content: center;
+    position: relative;
+    text-align: center;
+}
+
+/* O NÚMERO EM CIMA DO CARD */
+.rank-badge {
+    position: absolute;
+    top: -18px; /* Metade para fora do card */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    background: #000;
+    border: 3px solid #1e222d;
+    border-radius: 12px; /* Estilo squircle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+    color: #fff;
+    z-index: 10;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.rank-1 .rank-badge {
+    background: #ffb703;
+    color: #000;
+    border-color: #ffb703;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+}
+
+.tier-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #444;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.rank-1 .tier-label { color: #ffb703; }
+
+/* Imagem centralizada */
+.avatar-wrapper {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.rank-1 .avatar-wrapper { width: 100px; height: 100px; }
+
+.tier-pfp {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.05);
+    object-fit: cover;
+}
+
+/* Textos */
+.username { 
+    font-weight: 800; 
+    font-size: 16px; 
+    color: #fff; 
+    margin-bottom: 5px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wager-val { 
+    font-weight: 700; 
+    color: var(--accent); 
+    font-size: 14px; 
+}
+
+/* Slot Vazio */
+.is-empty {
+    opacity: 0.3;
+    border: 2px dashed #1e222d;
+    background: transparent;
+}
+
+.empty-avatar {
+    width: 100%;
+    height: 100%;
+    background: #08090b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1d24;
+}
+
+.is-empty .rank-badge {
+    background: #08090b;
+    color: #1a1d24;
+}
