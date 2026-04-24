@@ -5864,3 +5864,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     background: #08090b;
     color: #1a1d24;
 }
+#skin-crash-tab .upgrade-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#skin-crash-tab .reward-preview-box #crash-reward-card {
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.05);
+}
+
+/* Efeito quando a skin é selecionada no crash */
+.mini-inv-card.selected, .up-card.selected {
+    border-color: var(--accent) !important;
+    background: rgba(0, 242, 255, 0.1) !important;
+}
+
+.up-card.locked-inv {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    filter: grayscale(0.8);
+    pointer-events: none; /* Isso impede que o clique chegue na função JS */
+}
+
+/* Deixa as skins que você escolheu brilhantes mesmo bloqueadas */
+.up-card.selected.locked-inv {
+    opacity: 1;
+    filter: none;
+    border-color: var(--accent);
+}

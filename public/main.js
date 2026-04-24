@@ -17,6 +17,8 @@ upgradeWinSound.volume = 0.3;
 upgradeStartSound.volume = 0.3;
 spinSound.volume = 0.5;
 landSound.volume = 0.3;
+let crashPageInv = 0;
+let crashSortMode = 'newest';
 // No topo do main.js
 let itemsData = {}; 
 let cases = {}; 
@@ -105,6 +107,14 @@ function renderTargets() {
         renderTargets();
     });
 }
+function selectCrashOption(val, text) {
+    document.getElementById('selected-crash-inv').innerText = text;
+    document.getElementById('crash-inv-options').classList.remove('show');
+    crashSortMode = val;
+    crashPageInv = 0;
+    renderCrashInventory();
+}
+
 function getWeaponCategory(weaponId) {
     const id = parseInt(weaponId);
 
@@ -603,16 +613,28 @@ isUpgrading = true;
     }
 }
 function handleSkinCrashAction() {
+    // 1. Verifica se temos o estado do jogo
     if (!currentCrashState) return;
 
+    const btn = document.getElementById('skincrash-btn');
+
+    // 2. Se o jogo estiver à espera de apostas (Waiting)
     if (currentCrashState.status === 'waiting') {
         if (selectedCrashSkins.length === 0) return alert("Selecione skins primeiro!");
+        
         socket.emit('skinCrashBet', { 
             userId: currentUser._id, 
             itemIds: selectedCrashSkins 
         });
-        selectedCrashSkins = []; // Limpa seleção após apostar
-    } else if (currentCrashState.status === 'running') {
+        
+        // Feedback visual imediato
+        if (btn) {
+            btn.disabled = true;
+            btn.querySelector('span').innerText = "BET PLACED...";
+        }
+    } 
+    // 3. Se o jogo estiver a decorrer (Running)
+    else if (currentCrashState.status === 'running') {
         socket.emit('skinCrashCashOut', { userId: currentUser._id });
     }
 }
@@ -620,40 +642,96 @@ function handleSkinCrashAction() {
 // Renderiza o inventário do utilizador na lateral do crash
 function renderCrashInventory() {
     const grid = document.getElementById('crash-inv-grid');
-    if (!grid) return; // Segurança se o elemento não existir
-    
+    if (!grid) return;
+
     if (!currentUser || !currentUser.inventory || currentUser.inventory.length === 0) {
-        grid.innerHTML = '<div style="color: #555; font-size: 12px; text-align: center; grid-column: 1/-1;">Inventário vazio</div>';
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #444; padding: 40px; font-weight: 800;">INVENTORY EMPTY</div>';
         return;
     }
 
-    grid.innerHTML = currentUser.inventory.map(item => {
+    // Verifica se já apostou para aplicar estilo visual (bloqueio)
+    const hasBet = currentCrashState?.bets.some(b => b.userId === currentUser._id.toString());
+
+    // 1. Clonar e Ordenar os itens
+    let items = [...currentUser.inventory];
+    if (crashSortMode === 'high') {
+        items.sort((a, b) => b.value - a.value);
+    } else if (crashSortMode === 'low') {
+        items.sort((a, b) => a.value - b.value);
+    } else {
+        items.reverse(); // Newest (Padrão)
+    }
+
+    // 2. Lógica de Paginação (9 itens por página)
+    const start = crashPageInv * 9; 
+    const pageItems = items.slice(start, start + 9);
+
+    // 3. Renderizar
+    grid.innerHTML = pageItems.map(item => {
         const isSelected = selectedCrashSkins.includes(item.id);
         return `
-            <div class="mini-inv-card ${isSelected ? 'selected' : ''}" 
-                 onclick="toggleCrashSkin('${item.id}')"
-                 style="background: #252530; padding: 10px; border-radius: 6px; cursor: pointer; border: 2px solid ${isSelected ? '#ffb703' : 'transparent'}; text-align: center; position: relative;">
-                <img src="${item.img}" style="width: 100%; height: 40px; object-fit: contain;">
-                <div style="font-size: 10px; font-weight: bold; margin-top: 5px; color: #fff;">$${item.value.toFixed(2)}</div>
+            <div class="up-card ${isSelected ? 'selected' : ''} ${hasBet ? 'locked-inv' : ''}" 
+                 onclick="toggleCrashSkin('${item.id}')">
+                <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
+                <img src="${item.img}">
+                <b>${item.name}</b>
+                <span>$${formatCurrency(item.value)}</span>
             </div>
         `;
     }).join('');
+
+    renderCrashPagination(items.length);
 }
-function toggleCrashSkin(id) {
-    if (selectedCrashSkins.includes(id)) {
-        selectedCrashSkins = selectedCrashSkins.filter(i => i !== id);
-    } else {
-        selectedCrashSkins.push(id);
+function renderCrashPagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / 9);
+    const container = document.getElementById('crash-inv-pagination');
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+    let html = '';
+    for (let i = 0; i < totalPages; i++) {
+        html += `<button class="${i === crashPageInv ? 'active' : ''}" onclick="crashPageInv=${i}; renderCrashInventory();">${i + 1}</button>`;
     }
-    
-    // Calcula o valor total selecionado
+    container.innerHTML = html;
+}
+function updateCrashBetUI() {
+    const betSumEl = document.getElementById('current-bet-sum');
+    const countEl = document.getElementById('crash-upgrade-count'); // Certifica que este ID existe
+    const btn = document.getElementById('skincrash-btn');
+
+    if (!currentUser) return;
+
     const sum = selectedCrashSkins.reduce((acc, itemId) => {
         const item = currentUser.inventory.find(i => i.id === itemId);
         return acc + (item ? item.value : 0);
     }, 0);
     
-    document.getElementById('current-bet-sum').innerText = `$${sum.toFixed(2)}`;
-    renderCrashInventory(); // Re-renderiza para mostrar a borda amarela
+    if (betSumEl) betSumEl.innerText = `$${formatCurrency(sum)}`;
+    if (countEl) countEl.innerText = `${selectedCrashSkins.length}/5`;
+
+    if (btn && currentCrashState && currentCrashState.status === 'waiting') {
+        btn.disabled = selectedCrashSkins.length === 0;
+    }
+}
+function toggleCrashSkin(id) {
+    if (!currentCrashState) return;
+
+    // Bloqueia se o jogo já estiver a correr ou se o utilizador já tiver apostado
+    if (currentCrashState.status !== 'waiting') return;
+
+    const hasBet = currentCrashState.bets.some(b => b.userId === currentUser._id.toString());
+    if (hasBet) return; // <-- Não deixa selecionar se já apostou
+
+    const index = selectedCrashSkins.indexOf(id);
+    if (index > -1) {
+        selectedCrashSkins.splice(index, 1);
+    } else {
+        if (selectedCrashSkins.length < 5) {
+            selectedCrashSkins.push(id);
+        }
+    }
+    
+    updateCrashBetUI();
+    renderCrashInventory(); 
 }
 function formatCurrency(num) {
     return Number(num).toLocaleString('pt-PT', { 
@@ -663,118 +741,95 @@ function formatCurrency(num) {
 }
 // Escutar o evento do servidor
 socket.on('skinCrashTick', (state) => {
-    // 1. Pegar os elementos
+    currentCrashState = state;
     const multText = document.getElementById('skincrash-multiplier');
     const statusText = document.getElementById('skincrash-status');
     const btn = document.getElementById('skincrash-btn');
+
     const rewardCard = document.getElementById('crash-reward-card');
     
-    // VERIFICAÇÃO DE SEGURANÇA: Se o elemento multText não existir na tela, não faz nada
-    if (!multText) return; 
+    if (!multText || !btn) return;
+
+    // Verifica se EU (usuário logado) já apostei nesta rodada
+    const myBet = state.bets.find(b => b.userId === currentUser._id.toString());
 
     if (state.status === 'waiting') {
         multText.innerText = state.timer.toFixed(1) + "s";
         multText.style.color = "white";
-        if (statusText) statusText.innerText = "A AGUARDAR APOSTAS...";
-        if (btn) {
-            btn.innerText = "APOSTAR SKINS SELECIONADAS";
-            btn.style.background = "#ffb703";
+        statusText.innerText = "ACCEPTING BETS";
+        
+        if (myBet) {
+            // Se eu já apostei, desativa o botão e mostra que estou "Dentro"
+            btn.disabled = true;
+            btn.style.filter = "grayscale(1)";
+            btn.querySelector('span').innerText = "BET PLACED";
+        } else {
+            // Se não apostei, deixa o botão normal
+            btn.disabled = selectedCrashSkins.length === 0;
+            btn.style.filter = "none";
+            btn.querySelector('span').innerText = "PLACE BET";
         }
-        if (rewardCard) rewardCard.style.opacity = "0.5";
+        
+        if (rewardCard) rewardCard.style.opacity = "0.3";
     } 
     else if (state.status === 'running') {
         multText.innerText = state.multiplier.toFixed(2) + "x";
         multText.style.color = "#ffb703";
-        if (statusText) statusText.innerText = "O FOGUETE ESTÁ NO AR!";
-        if (rewardCard) rewardCard.style.opacity = "1";
+        statusText.innerText = "FLYING...";
 
-        if (state.suggestedSkin) {
-            const img = document.getElementById('crash-reward-img');
-            const name = document.getElementById('crash-reward-name');
-            const val = document.getElementById('crash-reward-value');
+        const myBet = state.bets.find(b => b.userId === currentUser._id.toString());
+        
+        if (myBet && !myBet.cashedOut) {
+            btn.disabled = false;
+            btn.style.filter = "none"; // MANTÉM AZUL NO CASH OUT
+            btn.querySelector('span').innerText = `CASH OUT ($${formatCurrency(myBet.initialValue * state.multiplier)})`;
+            if (rewardCard) rewardCard.style.opacity = "1";
 
-            if (img) img.src = state.suggestedSkin.img;
-            if (name) name.innerText = state.suggestedSkin.name;
-            
-            const myBet = state.bets.find(b => b.userId === currentUser._id.toString());
-            if (myBet && val) {
-                val.innerText = `$${(myBet.initialValue * state.multiplier).toFixed(2)}`;
-                if (btn) {
-                    btn.innerText = "RETIRAR AGORA";
-                    btn.style.background = "#00ff00";
-                }
+            if (state.suggestedSkin) {
+                document.getElementById('crash-reward-img').src = state.suggestedSkin.img;
+                document.getElementById('crash-reward-name').innerText = state.suggestedSkin.name;
+                document.getElementById('crash-reward-value').innerText = `$${formatCurrency(myBet.initialValue * state.multiplier)}`;
+                const badge = document.getElementById('crash-reward-badge');
+                badge.innerText = state.suggestedSkin.conditionShort;
+                badge.className = `badge cond-${state.suggestedSkin.conditionShort}`;
             }
+        } else {
+            btn.disabled = true;
+            btn.style.filter = "grayscale(1)"; // Cinzento apenas se não estiver a jogar
+            btn.querySelector('span').innerText = myBet?.cashedOut ? "CASHED OUT" : "IN PROGRESS";
         }
     } 
     else if (state.status === 'crashed') {
-        multText.innerText = "ESTOUROU!";
+        multText.innerText = "CRASHED";
         multText.style.color = "#ff4444";
-        if (statusText) statusText.innerText = "@ " + state.multiplier.toFixed(2) + "x";
-        if (btn) {
-            btn.innerText = "PERDEU TUDO";
-            btn.style.background = "#333";
-        }
+        statusText.innerText = "@ " + state.multiplier.toFixed(2) + "x";
+        btn.disabled = true;
+        btn.style.filter = "grayscale(1)";
+        btn.querySelector('span').innerText = "BOOM";
+        
+        selectedCrashSkins = [];
+        updateCrashBetUI();
+    }
+    if (document.getElementById('skin-crash-tab').style.display !== 'none') {
+        renderCrashInventory();
     }
 });
 socket.on('inventoryUpdate', (newInventory) => {
     if (currentUser) {
         currentUser.inventory = newInventory;
-        // Se estiveres na aba do crash, atualiza a lista lateral
+        
+        // Limpa IDs selecionados que já não existem no inventário novo
+        selectedCrashSkins = selectedCrashSkins.filter(id => 
+            newInventory.some(item => item.id === id)
+        );
+
         if (document.getElementById('skin-crash-tab').style.display !== 'none') {
+            updateCrashBetUI();
             renderCrashInventory();
         }
-        // Atualiza também o inventário da aba de perfil
         loadInventory();
     }
 });
-socket.on('crashTick', (state) => {
-    currentCrashState = state;
-    const multText = document.getElementById('crash-multiplier');
-    const statusText = document.getElementById('crash-status');
-    const btn = document.getElementById('crash-btn');
-    const fill = document.getElementById('crash-progress-fill');
-
-    if (state.status === 'waiting') {
-        multText.style.color = 'white';
-        multText.innerText = `${state.timer.toFixed(1)}s`;
-        statusText.innerText = "PREPARING...";
-        btn.innerText = "PLACE BET";
-        btn.disabled = false;
-        btn.classList.remove('btn-danger');
-        fill.style.width = `${(state.timer / 10) * 100}%`;
-    } else if (state.status === 'running') {
-        multText.innerText = `${state.multiplier.toFixed(2)}x`;
-        multText.style.color = 'var(--accent)';
-        statusText.innerText = "ROCKET IS FLYING...";
-        fill.style.width = '0%';
-        
-        const myBet = state.bets.find(b => b.userId === currentUser._id && !b.cashedOut);
-        if (myBet) {
-            btn.innerText = `CASH OUT ($${(myBet.amount * state.multiplier).toFixed(2)})`;
-            btn.classList.add('btn-danger');
-            btn.disabled = false;
-        } else {
-            btn.disabled = true;
-        }
-    } else if (state.status === 'crashed') {
-        multText.innerText = `CRASHED @ ${state.multiplier.toFixed(2)}x`;
-        multText.style.color = '#ff4444';
-        statusText.innerText = "BOOM!";
-        btn.disabled = true;
-    }
-
-    // Update player list
-    const playerList = document.getElementById('crash-players');
-    playerList.innerHTML = state.bets.map(b => `
-        <div class="crash-player-row ${b.cashedOut ? 'cashed' : ''}">
-            <img src="${b.avatar}">
-            <span>${b.username}</span>
-            <b>$${b.amount}</b>
-            ${b.cashedOut ? `<small>+ $${b.payout.toFixed(2)}</small>` : ''}
-        </div>
-    `).join('');
-});
-
 function handleCrashAction() {
     if (currentCrashState.status === 'waiting') {
         const amount = parseFloat(document.getElementById('crash-amount').value);
@@ -845,17 +900,28 @@ function closeUpgradeModal() {
 // Função de troca de abas (SwitchTab)
 // Já deve funcionar com o CSS novo, mas vamos garantir que ela limpe animações anteriores
 function switchTab(id, el) {
+    // Esconder todas as views
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
+    // Remover active de todos os links
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     
+    // Mostrar a view correta
     const target = document.getElementById(id);
     if(target) target.style.display = 'block';
+    // Marcar botão como ativo
     if(el) el.classList.add('active');
 
-    // SE abrir a aba do crash, renderiza o inventário
-    if (id === 'skin-crash-tab') {
-        renderCrashInventory();
-    }
+    // CARREGAR INVENTÁRIO SE FOR A ABA DE CRASH
+   if (id === 'skin-crash-tab') {
+    crashPageInv = 0;
+    selectedCrashSkins = []; // Limpa seleções ao entrar
+    document.getElementById('current-bet-sum').innerText = "$0.00";
+    renderCrashInventory();
+}
+    
+    // Outras inicializações
+    if (id === 'upgrade-tab') initUpgrader();
+    if (id === 'inventory-tab') loadInventory();
 }
 
 // Atualize também a função showHome para manter a consistência
@@ -1333,12 +1399,6 @@ function selectCase(id) {
     }).join('');
 }
 
-function switchTab(id, el) {
-    document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    if(el) el.classList.add('active');
-}
 
 function renderTrack(trackId, trackData) {
     const track = document.getElementById(trackId);

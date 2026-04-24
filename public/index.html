@@ -255,39 +255,65 @@
         <div id="grid-boxes" class="case-grid"></div>
     </div>
 </section>
-<div id="skin-crash-tab" class="tab-view" style="display:none; padding: 20px;">
-    <div class="crash-wrapper" style="display: flex; gap: 20px; min-height: 500px;">
+<section id="skin-crash-tab" class="tab-view" style="display:none">
+    <!-- Usamos grid-template-columns para fixar a esquerda em 320px igual ao Upgrader -->
+    <div class="upgrade-container" style="grid-template-columns: 320px 1fr; gap: 30px;">
         
-        <!-- Lado Esquerdo: O Jogo -->
-        <div class="crash-main-area" style="flex: 2; background: rgba(27, 27, 34, 0.8); border-radius: 12px; padding: 40px; text-align: center; border: 1px solid #2e3244;">
-            <div id="skincrash-multiplier" style="font-size: 80px; font-weight: 900; color: #ffb703; text-shadow: 0 0 20px rgba(255, 183, 3, 0.4);">1.00x</div>
-            <div id="skincrash-status" style="margin-bottom: 30px; text-transform: uppercase; font-weight: bold; color: #8a8ca0;">Waiting for bets...</div>
+        <!-- LADO ESQUERDO: INVENTÁRIO (Mesmo tamanho e estilo do Upgrader) -->
+        <div class="upgrade-side">
+            <div class="side-header">
+    YOUR INVENTORY 
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <!-- CONTADOR CORRIGIDO -->
+        
+        <div class="custom-dropdown" id="crash-inv-dropdown">
+            <!-- FUNÇÃO toggleDropdown APONTA PARA crash-inv-options -->
+            <div class="dropdown-selected" onclick="toggleDropdown('crash-inv-options')">
+                <span id="selected-crash-inv">Newest</span>
+                <svg class="arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+            </div>
+            <!-- ID DO MENU É crash-inv-options -->
+            <div class="dropdown-options" id="crash-inv-options">
+                <div onclick="selectCrashOption('newest', 'Newest')">Newest</div>
+                <div onclick="selectCrashOption('high', 'Price: High')">Price: High</div>
+                <div onclick="selectCrashOption('low', 'Price: Low')">Price: Low</div>
+            </div>
+        </div>
+                <span id="crash-upgrade-count" style="color: var(--accent); font-size: 12px; font-weight: 800;">0/5</span>
+    </div>
+</div>
+            <div id="crash-inv-grid" class="upgrade-grid"></div>
+            <div class="pagination" id="crash-inv-pagination"></div>
+        </div>
 
-            <!-- Preview da Skin que você está ganhando -->
-            <div class="reward-preview-box" style="background: #15151c; border-radius: 10px; padding: 20px; border: 2px dashed #2e3244; display: inline-block; min-width: 300px;">
-                <p style="font-size: 10px; color: #ffb703; margin-bottom: 10px; font-weight: bold;">RECOMPENSA ATUAL:</p>
-                <div id="crash-reward-card" style="opacity: 0.5;">
-                    <img id="crash-reward-img" src="https://via.placeholder.com/150?text=Select+Skins" style="width: 150px; height: 100px; object-fit: contain;">
-                    <div id="crash-reward-name" style="font-weight: bold; margin-top: 10px;">SELECIONE SKINS</div>
-                    <div id="crash-reward-value" style="color: #ffb703; font-weight: 800;">$0.00</div>
+        <!-- CENTRO/DIREITA: ÁREA DO JOGO -->
+        <div class="upgrade-center" style="background: rgba(0,0,0,0.15); border-radius: 24px; border: 1px solid var(--border); padding: 40px;">
+            <div id="skincrash-multiplier" style="font-size: 90px; font-weight: 900; color: #ffb703; text-shadow: 0 0 40px rgba(255, 183, 3, 0.3); margin-bottom: 5px;">1.00x</div>
+            <div id="skincrash-status" style="margin-bottom: 40px; text-transform: uppercase; font-weight: 800; color: #444; letter-spacing: 3px; font-size: 14px;">Waiting for bets...</div>
+
+            <!-- Preview do Item -->
+            <div class="reward-preview-box" style="margin-bottom: 40px;">
+                <div id="crash-reward-card" class="up-card" style="width: 240px; height: 280px; cursor: default; margin: 0 auto; opacity: 0.3; transform: scale(1.05); background: rgba(255,255,255,0.02);">
+                    <div id="crash-reward-badge" class="badge">??</div>
+                    <img id="crash-reward-img" src="https://via.placeholder.com/150" style="height: 130px; object-fit: contain;">
+                    <b id="crash-reward-name" style="font-size: 14px; margin-top: 15px; display: block;">SELECT SKINS</b>
+                    <span id="crash-reward-value" style="font-size: 22px; font-weight: 900; color: var(--accent);">$0.00</span>
                 </div>
             </div>
 
-            <div style="margin-top: 30px;">
-                <div style="margin-bottom: 10px;">Valor total apostado: <span id="current-bet-sum" style="color: #00ff00; font-weight: bold;">$0.00</span></div>
-                <button id="skincrash-btn" class="button" style="background: #ffb703; color: #000; width: 100%; height: 50px; font-weight: bold; border-radius: 8px;" onclick="handleSkinCrashAction()">APOSTAR SKINS SELECIONADAS</button>
+            <!-- Botão e Info -->
+            <div class="upgrade-controls" style="width: 100%; max-width: 400px;">
+                <div style="margin-bottom: 20px; font-weight: 800; font-size: 14px; color: #fff;">
+                    TOTAL BET: <span id="current-bet-sum" style="color: #00ff88; font-size: 18px; margin-left: 10px;">$0.00</span>
+                </div>
+                <button id="skincrash-btn" class="btn-upgrade-main" onclick="handleSkinCrashAction()" style="width: 100%; padding: 25px;">
+                    <span>PLACE BET</span>
+                </button>
             </div>
         </div>
 
-        <!-- Lado Direito: Seleção de Skins -->
-        <div class="crash-inventory-area" style="flex: 1; background: #1b1b22; border-radius: 12px; padding: 20px; border: 1px solid #2e3244; overflow-y: auto; max-height: 600px;">
-            <h3 style="font-size: 14px; margin-bottom: 15px; text-transform: uppercase;">Teu Inventário</h3>
-            <div id="crash-inv-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                <!-- Skins carregadas via JS -->
-            </div>
-        </div>
     </div>
-</div>
+</section>
 <section id="opening-tab" class="tab-view" style="display:none">
     <div class="opening-header">
         <button onclick="showHome()" class="btn-back">
@@ -453,6 +479,7 @@
         <div class="modal-box">
             <h3>CREATE BATTLE</h3>
             <div class="modal-config">
+         
                 <div class="case-selector-zone">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h4>Available Cases</h4>
