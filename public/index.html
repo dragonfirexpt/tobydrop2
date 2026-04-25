@@ -450,7 +450,7 @@
         <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
             <button class="btn-secondary" onclick="logout()" style="width: 100%">LOGOUT FROM STEAM</button>
             <!-- NOVO BOTÃO AQUI -->
-            <button class="btn-secondary" onclick="openChangelog()" style="width: 100%">VIEW CHANGELOG</button>
+            <button class="btn-secondary" onclick="openChangelog()" style="width: 100%">VIEW WEBSITE CHANGELOG</button>
         </div>
     </div>
 </section>
@@ -643,7 +643,7 @@
 <div id="changelog-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box" style="max-width: 600px; max-height: 80vh; display: flex; flex-direction: column;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h3 style="margin: 0; color: var(--accent);">CHANGELOG</h3>
+            <h3 style="margin: 0; color: var(--accent);">WEBSITE CHANGELOG</h3>
             <div class="close-modal" onclick="closeChangelog()" style="position: static; font-size: 32px;">×</div>
         </div>
 
@@ -651,8 +651,20 @@
             <!-- VERSÃO MAIS RECENTE -->
              <div class="changelog-item">
                 <div class="ch-header">
-                    <span class="ch-date">8 APR, 2026</span>
+                    <span class="ch-date">25 APR, 2026</span>
                     <span class="ch-tag">NEW</span>
+                </div>
+                <ul class="ch-list">
+                    <li>Adicionadas 6 caixas novas. <b>(BUTTERFLY, BLOODSHOT, LORE, MIKEDEV, SPORT, PANDORA)</b>.</li>
+                    <li>Agora o som de spin das <b>CAIXAS</b> é um unico som reproduzido a cada item que passa e não um audio pré-feito.</li>
+                    <li>O bug do <b>RANKING DIÁRIO</b> não resetar agora deve estar corrigido, caso continue a ocorrer, por favor, reporte.</li>
+                    <li>Corrigido bug de ter várias skins iguais com preços diferentes no <b>UPGRADER</b>.</li>
+                    <li>Alterado o spin das <b>CAIXAS</b> para mostrar uma posição mais precisa do item vencedor.</li>
+                </ul>
+            </div>
+             <div class="changelog-item">
+                <div class="ch-header">
+                    <span class="ch-date">8 APR, 2026</span>
                 </div>
                 <ul class="ch-list">
                     <li>Adicionado Ranking Diário com as caixas <b>(CHAMPION BOX, CHALLANGER BOX e CONTENDER BOX)</b> como recompensa para os top 3 usuários.</li>

@@ -716,6 +716,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 
 .upgrade-grid { 
     display: grid; 
+    overflow-x: hidden;
+    overflow-y: auto; 
     grid-template-columns: repeat(3, 1fr); 
     grid-template-rows: repeat(3, 1fr); /* 3x3 Grid */
     gap: 12px; padding: 15px; flex: 1; 

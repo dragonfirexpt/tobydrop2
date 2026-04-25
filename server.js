@@ -52,8 +52,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'http://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -134,8 +134,52 @@ inventory: [{
     isLocked: { type: Boolean, default: false } // <--- ADICIONA ESTA LINHA
 }]
 }));
+const SystemState = mongoose.model('SystemState', new mongoose.Schema({
+    lastResetDate: { type: Date, default: new Date(0) }
+}));
 // Função para gerar números aleatórios baseados numa semente (Seed)
 // Isso garante que o mesmo ID de bot resulte sempre nos mesmos valores
+async function executeDailyReset() {
+    console.log("🏆 PROCESSANDO RANKING DIÁRIO...");
+
+    // 1. Pega os vencedores
+    const winners = await User.find({ dailyWager: { $gt: 0 } })
+        .sort({ dailyWager: -1 })
+        .limit(3);
+
+    if (winners.length > 0) {
+        if (winners[0]) await User.findByIdAndUpdate(winners[0]._id, { $push: { rewardCases: 'rank1_reward' } });
+        if (winners[1]) await User.findByIdAndUpdate(winners[1]._id, { $push: { rewardCases: 'rank2_reward' } });
+        if (winners[2]) await User.findByIdAndUpdate(winners[2]._id, { $push: { rewardCases: 'rank3_reward' } });
+        console.log("✅ Prêmios distribuídos.");
+    }
+
+    // 2. Zera os ganhos de todos
+    await User.updateMany({}, { $set: { dailyWager: 0 } });
+
+    // 3. Atualiza a data do último reset no banco para AGORA
+    await SystemState.findOneAndUpdate({}, { lastResetDate: new Date() }, { upsert: true });
+
+    io.emit('leaderboardReset');
+    console.log("♻️ Sistema de apostas zerado para o novo dia.");
+}
+
+async function checkPendingReset() {
+    const state = await SystemState.findOne() || await SystemState.create({ lastResetDate: new Date(0) });
+    
+    const now = new Date();
+    const lastReset = new Date(state.lastResetDate);
+    
+    // Define qual seria o próximo reset (hoje às 19:00)
+    const todayResetTime = new Date();
+    todayResetTime.setHours(19, 0, 0, 0);
+
+    // Se já passou das 19:00 de hoje E o último reset foi ANTES das 19:00 de hoje...
+    if (now > todayResetTime && lastReset < todayResetTime) {
+        console.log("⚠️ Detectado reset pendente! Executando agora...");
+        await executeDailyReset();
+    }
+}
 function getClosestSkin(targetValue) {
     if (globalSkinPool.length === 0) return null;
     return globalSkinPool.reduce((prev, curr) => {
@@ -4653,7 +4697,7 @@ dragon: {
             ]
         },
         {
-            name: "★ Navaja Knife | Doppler - Ruby",
+            name: "★ Navaja Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 419.15, chance: 0.003 }
@@ -6126,28 +6170,28 @@ butterfly: {
     tag: "NEW",
     items: [
         {
-            name: "★ Butterfly Knife | Doppler - Black Pearl",
+            name: "★ Butterfly Knife | Doppler Black Pearl",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 17852.01, chance: 0.084 }
             ]
         },
         {
-            name: "★ Butterfly Knife | Doppler - Ruby",
+            name: "★ Butterfly Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 16393.48, chance: 0.073 }
             ]
         },
         {
-            name: "★ Butterfly Knife | Gamma Doppler - Emerald",
+            name: "★ Butterfly Knife | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 13194.28, chance: 0.052 }
             ]
         },
         {
-            name: "★ Butterfly Knife | Doppler - Sapphire",
+            name: "★ Butterfly Knife | Doppler Sapphire",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 10158.65, chance: 0.04 }
@@ -6574,7 +6618,7 @@ bloodshot: {
             ]
         },
         {
-            name: "★ Bowie Knife | Gamma Doppler - Emerald",
+            name: "★ Bowie Knife | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 823.61, chance: 0.589 }
@@ -6800,7 +6844,7 @@ lore: {
             ]
         },
         {
-            name: "★ Bowie Knife | Doppler - Ruby",
+            name: "★ Bowie Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 1192.56, chance: 0.259 }
@@ -6971,7 +7015,7 @@ david: {
             ]
         },
         {
-            name: "★ Flip Knife | Doppler - Ruby",
+            name: "★ Flip Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 2223.11, chance: 0.265 }
@@ -6985,7 +7029,7 @@ david: {
             ]
         },
         {
-            name: "★ Falchion Knife | Doppler - Black Pearl",
+            name: "★ Falchion Knife | Doppler Black Pearl",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 1478.67, chance: 0.574 }
@@ -6999,7 +7043,7 @@ david: {
             ]
         },
         {
-            name: "★ Huntsman Knife | Gamma Doppler - Emerald",
+            name: "★ Huntsman Knife | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 1050.86, chance: 0.805 }
@@ -7228,7 +7272,7 @@ sport: {
             ]
         },
         {
-            name: "★ Talon Knife | Doppler - Ruby",
+            name: "★ Talon Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 4305.29, chance: 1.653 }
@@ -7249,7 +7293,7 @@ sport: {
             ]
         },
         {
-            name: "★ Stiletto Knife | Doppler - Ruby",
+            name: "★ Stiletto Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 3041.14, chance: 13.783 }
@@ -7263,7 +7307,7 @@ sport: {
             ]
         },
         {
-            name: "★ Flip Knife | Gamma Doppler - Emerald",
+            name: "★ Flip Knife | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 2149.11, chance: 0.445 }
@@ -7298,7 +7342,7 @@ sport: {
             ]
         },
         {
-            name: "★ Shadow Daggers | Doppler - Black Pearl",
+            name: "★ Shadow Daggers | Doppler Black Pearl",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 828.57, chance: 0.887 }
@@ -7312,14 +7356,14 @@ sport: {
             ]
         },
         {
-            name: "★ Bowie Knife | Doppler - Sapphire",
+            name: "★ Bowie Knife | Doppler Sapphire",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 805.97, chance: 0.797 }
             ]
         },
         {
-            name: "★ Gut Knife | Doppler - Ruby",
+            name: "★ Gut Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [
                 { short: "FN", price: 733.18, chance: 0.817 }
@@ -7442,32 +7486,32 @@ pandora: {
             ]
         },
         {
-            name: "★ Butterfly Knife | Doppler - Ruby",
+            name: "★ Butterfly Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 16393.48, chance: 0.274 }]
         },
         {
-            name: "★ M9 Bayonet | Doppler - Ruby",
+            name: "★ M9 Bayonet | Doppler Ruby",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 13263.11, chance: 0.376 }]
         },
         {
-            name: "★ Butterfly Knife | Gamma Doppler - Emerald",
+            name: "★ Butterfly Knife | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 13194.28, chance: 0.38 }]
         },
         {
-            name: "★ Karambit | Doppler - Black Pearl",
+            name: "★ Karambit | Doppler Black Pearl",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 12805.24, chance: 0.375 }]
         },
         {
-            name: "★ Karambit | Doppler - Ruby",
+            name: "★ Karambit | Doppler Ruby",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 12089.65, chance: 0.373 }]
         },
         {
-            name: "★ M9 Bayonet | Gamma Doppler - Emerald",
+            name: "★ M9 Bayonet | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 11804.85, chance: 0.376 }]
         },
@@ -7492,17 +7536,17 @@ pandora: {
             ]
         },
         {
-            name: "★ Butterfly Knife | Doppler - Sapphire",
+            name: "★ Butterfly Knife | Doppler Sapphire",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 10158.65, chance: 3.55 }]
         },
         {
-            name: "★ M9 Bayonet | Doppler - Sapphire",
+            name: "★ M9 Bayonet | Doppler Sapphire",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 7381.84, chance: 0.118 }]
         },
         {
-            name: "★ Karambit | Doppler - Sapphire",
+            name: "★ Karambit | Doppler Sapphire",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 7246.25, chance: 0.118 }]
         },
@@ -7551,7 +7595,7 @@ pandora: {
             ]
         },
         {
-            name: "★ Talon Knife | Doppler - Ruby",
+            name: "★ Talon Knife | Doppler Ruby",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 4305.29, chance: 2.315 }]
         },
@@ -7570,7 +7614,7 @@ pandora: {
             rarities: [{ short: "FN", price: 3471.55, chance: 2.306 }]
         },
         {
-            name: "★ Bayonet | Doppler - Ruby",
+            name: "★ Bayonet | Doppler Ruby",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 3216.37, chance: 0.352 }]
         },
@@ -7594,83 +7638,19 @@ pandora: {
             rarities: [{ short: "FN", price: 2912.89, chance: 0.351 }]
         },
         {
-            name: "★ Talon Knife | Doppler - Sapphire",
+            name: "★ Talon Knife | Doppler Sapphire",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 2897.79, chance: 0.35 }]
         },
         {
-            name: "★ Bayonet | Gamma Doppler - Emerald",
+            name: "★ Bayonet | Gamma Doppler Emerald",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 2735.95, chance: 0.35 }]
         },
         {
-            name: "★ Flip Knife | Doppler - Black Pearl",
+            name: "★ Flip Knife | Doppler Black Pearl",
             color: "#ffb703",
             rarities: [{ short: "FN", price: 2665.49, chance: 0.349 }]
-        }
-    ]
-},
-titans_vault: {
-    name: "A CAIXA",
-    price: 100000.00,
-    img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497401033414934728/cofre_monobloco_digital_100_CP1.png?ex=69ed62e2&is=69ec1162&hm=14869c528dd0bda0495228b1410a0adb65035b8e9312b59e81bd3b092d3927e4&",
-    tag: "NEW",
-    items: [
-        {
-            name: "Millionare Mansion",
-            color: "#8847ff",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497400811540713492/1-ed79d90a39bdc35cfd9e8e82baf4e8be0abbcdf0-q.png?ex=69ed62ad&is=69ec112d&hm=013eb173a0166efe276b66f0a16334664f936239234e42be35588d6887f1c3aa&",
-            rarities: [
-                { short: "FN", price: 25000000.00, chance: 0.01 } // 2.5x o valor da caixa
-            ]
-        },
-        {
-            name: "Bugatti Chiron",
-            color: "#8847ff",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497401260045897888/Bugatti_Chiron_1.png?ex=69ed6318&is=69ec1198&hm=df10a72addc907a13f4de477f6a4b24a3e588b3beb8bf07eee9628babe8d2552&",
-            rarities: [
-                { short: "FN", price: 1800000.00, chance: 0.05 } // Quase 2x o valor
-            ]
-        },
-        {
-            name: "McLaren Senna",
-            color: "#ffb703",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497401587419709641/2Q.png?ex=69ed6366&is=69ec11e6&hm=c90ccd6ebc7deeaa4b4eb31668a8c6160cf4f9099afc5c9debbcb61ec164890e&",
-            rarities: [
-                { short: "FN", price: 1200000.00, chance: 5.00 } // Pequeno lucro
-            ]
-        },
-        {
-            name: "Rolex Cosmograph Daytona",
-            color: "#eb4b4b",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497401924398354634/image.png?ex=69ed63b7&is=69ec1237&hm=2b62d054586b313508cf3780054d27b98fa6712566108868a80275ad1910d31e&",
-            rarities: [
-                { short: "FN", price: 85000.00, chance: 15.00 } // Perda leve (15k)
-            ]
-        },
-        {
-            name: "1 Bitcoin",
-            color: "#eb4b4b",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497402532941664336/R9XscBDcs0d6QAAAABJRU5ErkJggg.png?ex=69ed6448&is=69ec12c8&hm=f7fd06f2f8e82ddb4dd5015bdd5fa2584e8ee210cfa6068e173c66da667fec1f&",
-            rarities: [
-                { short: "FN", price: 50000.00, chance: 20.00 } // Perda de 25k
-            ]
-        },
-        {
-            name: "Louis Vuitton A Capucines",
-            color: "#ffb703",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497403055635824710/aside4.png?ex=69ed64c4&is=69ec1344&hm=25fd97147d7914fb2fa7179aaf817291f663330113dd57e0caae0b8c126096de&",
-            rarities: [
-                { short: "FN", price: 40000.00, chance: 25.00 } // Perda de 35k
-            ]
-        },
-        {
-            name: "Rolex Submariner",
-            color: "#ffb703",
-            img: "https://cdn.discordapp.com/attachments/1098657839674822656/1497403397937172530/m126610ln-0001-squared.png?ex=69ed6516&is=69ec1396&hm=17547ee8e5fe80558a70857aa25fdb8624edef5254293916d056c7c421dbc048&",
-            rarities: [
-                { short: "FN", price: 20000.00, chance: 34.94 } // O item mais comum (Perda de 40k)
-            ]
         }
     ]
 }
@@ -8747,7 +8727,7 @@ app.post('/api/open-case', async (req, res) => {
 
         // REGRA: Super Spin apenas se NÃO for caixa de recompensa e o valor for alto
         const isSuperSpin = !isRewardCase && newItem.value >= (selectedCase.price * 2.5);
-        
+        const rollOffset = (Math.random() * 164) - 82;
         const dropDelay = isSuperSpin ? 13500 : 5500;
 
         setTimeout(() => {
@@ -8765,7 +8745,7 @@ app.post('/api/open-case', async (req, res) => {
         }, dropDelay);
 
         res.json({ 
-            winner: newItem, 
+            winner: { ...newItem, offset: rollOffset }, // <--- ADICIONAR OFFSET AQUI
             track: generateTrack(newItem, selectedCase.items, selectedCase.price),
             finalBalance: user.balance,
             rewardCases: user.rewardCases, // Envia a lista atualizada para o front
@@ -8796,10 +8776,11 @@ async function resolveBattleRolls(caseIds) {
 
         // CORREÇÃO: Verificar se este item específico é um Super Spin
         const isSuper = isItemSuperSpin(val, selectedCase.price);
-
+const rollOffset = (Math.random() * 164) - 82;
         rolls.push({
             ...winnerObj,
-            isSuperSpin: isSuper, // Envia o booleano para o front-end
+            isSuperSpin: isSuper,
+            offset: rollOffset, // <--- ADICIONADO
             track: generateTrack(winnerObj, its, selectedCase.price)
         });
     }
@@ -9160,6 +9141,14 @@ io.on('connection', (socket) => {
         }
     });
 });
+app.use(async (req, res, next) => {
+    // A cada requisição, verifica se o reset precisa ser feito
+    // (O banco de dados é rápido, não vai pesar no site)
+    if (req.path.startsWith('/api')) {
+        checkPendingReset().catch(err => console.error(err));
+    }
+    next();
+});
 app.post('/api/equip-item', async (req, res) => {
     try {
         const { itemId, team, action } = req.body;
@@ -9277,38 +9266,7 @@ Object.assign(caseData, rewardCases);
 
 const cron = require('node-cron');
 cron.schedule('0 19 * * *', async () => {
-    console.log("🏆 A PROCESSAR RANKING DIÁRIO...");
-    
-    // 1. Procura apenas utilizadores que apostaram MAIS do que 0
-    const winners = await User.find({ dailyWager: { $gt: 0 } })
-        .sort({ dailyWager: -1 })
-        .limit(3);
-
-    // Se ninguém apostou nada, o array 'winners' virá vazio []
-    if (winners.length === 0) {
-        console.log("⚠️ Ninguém apostou hoje. Ranking resetado sem prémios.");
-    } else {
-        // 2. Distribui os prémios apenas para quem está no array (quem apostou > 0)
-        if (winners[0]) {
-            await User.findByIdAndUpdate(winners[0]._id, { $push: { rewardCases: 'rank1_reward' } });
-            console.log(`🥇 Rank 1 entregue a: ${winners[0].username}`);
-        }
-        if (winners[1]) {
-            await User.findByIdAndUpdate(winners[1]._id, { $push: { rewardCases: 'rank2_reward' } });
-            console.log(`🥈 Rank 2 entregue a: ${winners[1].username}`);
-        }
-        if (winners[2]) {
-            await User.findByIdAndUpdate(winners[2]._id, { $push: { rewardCases: 'rank3_reward' } });
-            console.log(`🥉 Rank 3 entregue a: ${winners[2].username}`);
-        }
-    }
-
-    // 3. Reseta o Wager de TODO o servidor para o dia seguinte
-    await User.updateMany({}, { $set: { dailyWager: 0 } });
-
-    // 4. Avisa o site para atualizar a UI dos utilizadores online
-    io.emit('leaderboardReset');
-    console.log("✅ Ciclo diário concluído.");
+    executeDailyReset();
 });
 app.get('/api/plugin/skins/:steamId', async (req, res) => {
     try {
@@ -9328,6 +9286,9 @@ app.get('/api/plugin/skins/:steamId', async (req, res) => {
     } catch (e) {
         res.status(500).json({ error: "Internal Error" });
     }
+});
+mongoose.connection.once('open', () => {
+    checkPendingReset();
 });
 server.listen(3000, "0.0.0.0", () => {
   console.log("🚀 TOBYDROP Running");

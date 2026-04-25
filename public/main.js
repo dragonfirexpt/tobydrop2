@@ -12,16 +12,30 @@ superLandSound.volume = 0.5;
 const upgradeStartSound = new Audio('/assets/upgrade.mp3');
 const upgradeWinSound = new Audio('/assets/upgrade_win.mp3');
 const upgradeLossSound = new Audio('/assets/upgrade_lose.mp3');
+const tickSoundsPool = Array.from({ length: 10 }, () => {
+    const audio = new Audio('/assets/spinner.mp3');
+    audio.volume = 0.5; // Volume um pouco mais baixo para a "metralhadora" não ser estridente
+    return audio;
+});
 upgradeLossSound.volume = 0.3;
 upgradeWinSound.volume = 0.3;
 upgradeStartSound.volume = 0.3;
 spinSound.volume = 0.5;
 landSound.volume = 0.3;
+let tickCounter = 0;
+let lastTickIndex = -1; // Variável global (fora da função) para evitar repetições
 let crashPageInv = 0;
 let crashSortMode = 'newest';
 // No topo do main.js
 let itemsData = {}; 
 let cases = {}; 
+function playTick() {
+    // Escolhe o próximo som da lista de forma circular (0, 1, 2... 9, 0...)
+    const sound = tickSoundsPool[tickCounter % tickSoundsPool.length];
+    sound.currentTime = 0;
+    sound.play().catch(e => {});
+    tickCounter++;
+}
 
 let currentCrashState = null;
 let selectedCasesForBattle = [];
@@ -1474,19 +1488,21 @@ function updateLeaderboardCountdown() {
 
 setInterval(updateLeaderboardCountdown, 1000);
 updateLeaderboardCountdown();
-async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false, forcedSuperSpin = null) {
+async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, itemsPool, isBattle = false, forcedSuperSpin = null, isLocalPlayer = true) {
     const spinner = document.getElementById(spinnerId);
     if (!spinner) return;
 
     const containerWidth = spinner.parentElement.offsetWidth;
     const centerPrecisionX = (50 * NODE_WIDTH) - (containerWidth / 2) + (NODE_WIDTH / 2);
-    const targetX = centerPrecisionX + (Math.random() * 60 - 30);
+    const serverOffset = winnerData.offset !== undefined ? winnerData.offset : 0;
+     const targetX = centerPrecisionX + serverOffset;
 
     let isSuperWin = !!forcedSuperSpin;
 
 
     // 1. Reset e Início
     spinner.style.transition = 'none';
+    lastTickIndex = -1; // Reseta o rastreador de som para o novo giro
     spinner.style.transform = 'translateX(0)';
     renderTrack(spinnerId, winnerData.track); 
     await new Promise(r => setTimeout(r, 50));
@@ -1494,7 +1510,7 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
     // Giro 1
     spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
     spinner.style.transform = `translateX(-${targetX}px)`;
-    trackCenterItem(spinnerId);
+    trackCenterItem(spinnerId, isLocalPlayer); 
     spinSound.currentTime = 0;
     spinSound.play().catch(e => {});
     await new Promise(r => setTimeout(r, 5000));
@@ -1561,7 +1577,7 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
         spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
         spinner.style.transform = `translateX(-${superTargetX}px)`;
 
-        trackCenterItem(spinnerId); // Religa o highlight
+        trackCenterItem(spinnerId, isLocalPlayer); // Religa o highlight
         await new Promise(r => setTimeout(r, 5000));
 
         spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -1609,11 +1625,11 @@ async function openCase() {
         updateBalanceUI(data.finalBalance);
 
         // 2. Executa o giro
-        // Usamos data.isSuperSpin vindo do servidor em vez do cálculo manual
-        await executeArenaSpin(1, 'spinner', {
-            ...data.winner,
-            track: data.track
-        }, caseInfo.price, caseInfo.items, false, data.isSuperSpin);
+      // Dentro da função openCase
+await executeArenaSpin(1, 'spinner', {
+    ...data.winner,
+    track: data.track
+}, caseInfo.price, caseInfo.items, false, data.isSuperSpin, true); // O 'true' final garante o som
 
         // 3. Atualiza o inventário e as recompensas
         loadInventory();
@@ -1907,6 +1923,8 @@ socket.on('startBattleSpin', async (data) => {
 
     let p1Acc = 0;
     let p2Acc = 0;
+const amIPlayer1 = currentUser && currentUser._id === data.battle.player1.id;
+    const amIPlayer2 = currentUser && currentUser._id === data.battle.player2.id;
 
     // LOOP DAS RONDAS
     for (let i = 0; i < data.p1Rolls.length; i++) {
@@ -1930,9 +1948,9 @@ socket.on('startBattleSpin', async (data) => {
         spinSound.play().catch(e => {});
 
         await Promise.all([
-            // Adicionado o 7º argumento: data.p1Rolls[i].isSuperSpin
-            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true, data.p1Rolls[i].isSuperSpin),
-            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true, data.p2Rolls[i].isSuperSpin)
+            // Passamos o resultado da verificação amIPlayerX para o spin
+            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true, data.p1Rolls[i].isSuperSpin, amIPlayer1),
+            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true, data.p2Rolls[i].isSuperSpin, amIPlayer2)
         ]);
         const oldP1 = p1Acc;
         const oldP2 = p2Acc;
@@ -2159,27 +2177,40 @@ async function auth(type) {
 }
 
 // Função para destacar o item no centro em tempo real
-function trackCenterItem(spinnerId) {
+function trackCenterItem(spinnerId, isLocalPlayer) {
     const track = document.getElementById(spinnerId);
     if (!track) return;
     
     const container = track.parentElement;
     const centerPoint = container.offsetWidth / 2;
+    let localLastTickIndex = -1;
 
     function update() {
-        // Pega a posição X atual da track (mesmo durante a transição CSS)
         const style = window.getComputedStyle(track);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        const translateX = matrix.m41;
-
-        const nodes = track.querySelectorAll('.item-node');
+        const transform = style.transform || style.webkitTransform;
         
-        nodes.forEach((node, index) => {
-            // 180 é a largura do seu item-node definido no CSS/JS
-            const nodeLeft = (index * NODE_WIDTH) + translateX;
-            const nodeRight = nodeLeft + NODE_WIDTH;
+        if (!transform || transform === 'none') {
+            requestAnimationFrame(update);
+            return;
+        }
 
-            // Se o ponto central do container estiver dentro da largura deste item
+        const matrix = new WebKitCSSMatrix(transform);
+        const translateX = matrix.m41;
+        const currentIndex = Math.floor((Math.abs(translateX) + centerPoint) / 170);
+
+        // SOM: Só toca se for o jogador local
+        if (currentIndex !== localLastTickIndex) {
+            localLastTickIndex = currentIndex;
+            if (isLocalPlayer) {
+                playTick(); 
+            }
+        }
+
+        // VISUAL: O highlight continua para ambos (para sabermos onde a roleta do outro está)
+        const nodes = track.querySelectorAll('.item-node');
+        nodes.forEach((node, index) => {
+            const nodeLeft = (index * 170) + translateX;
+            const nodeRight = nodeLeft + 170;
             if (centerPoint >= nodeLeft && centerPoint <= nodeRight) {
                 node.classList.add('active-center');
             } else {
@@ -2187,8 +2218,7 @@ function trackCenterItem(spinnerId) {
             }
         });
 
-        // Continua rodando enquanto a transição não acabar
-        if (style.transitionProperty !== 'none') {
+        if (style.transitionProperty.includes('transform')) {
             requestAnimationFrame(update);
         }
     }
