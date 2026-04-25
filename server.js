@@ -6942,320 +6942,6 @@ lore: {
         }
     ]
 },
-premium_knives: {
-    name: "PREMIUM KNIVES",
-    price: 375.00,
-    img: "https://key-drop.com/uploads/skins/1_9.png",
-    tag: "NEW",
-    items: [
-        {
-            name: "★ Butterfly Knife | Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 3471.55, chance: 0.005 }]
-        },
-        {
-            name: "★ Butterfly Knife | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 3398.51, chance: 0.007 }]
-        },
-        {
-            name: "★ Butterfly Knife | Lore",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 3199.90, chance: 0.005 },
-                { short: "MW", price: 1483.33, chance: 0.007 },
-                { short: "FT", price: 964.37, chance: 0.114 },
-                { short: "WW", price: 857.99, chance: 0.006 },
-                { short: "BS", price: 805.48, chance: 0.167 }
-            ]
-        },
-        {
-            name: "★ Butterfly Knife | Gamma Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 2962.65, chance: 0.01 }]
-        },
-        {
-            name: "★ Karambit | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 2912.89, chance: 0.005 }]
-        },
-        {
-            name: "★ Karambit | Case Hardened",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 2827.32, chance: 0.001 },
-                { short: "MW", price: 1347.44, chance: 0.004 },
-                { short: "FT", price: 1082.46, chance: 0.009 },
-                { short: "WW", price: 1015.13, chance: 0.024 },
-                { short: "BS", price: 966.64, chance: 0.22 }
-            ]
-        },
-        {
-            name: "★ Karambit | Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 2036.21, chance: 0.009 }]
-        },
-        {
-            name: "★ Butterfly Knife | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 2030.27, chance: 0.006 }]
-        },
-        {
-            name: "★ M9 Bayonet | Lore",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 1997.17, chance: 0.009 },
-                { short: "MW", price: 1312.61, chance: 0.01 },
-                { short: "WW", price: 765.41, chance: 0.182 },
-                { short: "FT", price: 695.13, chance: 0.239 },
-                { short: "BS", price: 600.69, chance: 0.368 }
-            ]
-        },
-        {
-            name: "★ Karambit | Lore",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 1986.14, chance: 0.005 },
-                { short: "MW", price: 1257.88, chance: 0.01 },
-                { short: "WW", price: 885.14, chance: 0.016 },
-                { short: "FT", price: 857.99, chance: 0.052 },
-                { short: "BS", price: 774.79, chance: 0.29 }
-            ]
-        },
-        {
-            name: "★ M9 Bayonet | Gamma Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1979.05, chance: 0.005 }]
-        },
-        {
-            name: "★ Butterfly Knife | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1672.65, chance: 0.009 }]
-        },
-        {
-            name: "★ Karambit | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1544.76, chance: 0.014 }]
-        },
-        {
-            name: "★ M9 Bayonet | Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1541.57, chance: 0.049 }]
-        },
-        {
-            name: "★ M9 Bayonet | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1475.79, chance: 0.009 }]
-        },
-        {
-            name: "★ M9 Bayonet | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 1324.08, chance: 0.036 },
-                { short: "MW", price: 1107.44, chance: 0.033 },
-                { short: "FT", price: 1022.32, chance: 0.274 }
-            ]
-        },
-        {
-            name: "★ Karambit | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1283.58, chance: 0.042 }]
-        },
-        {
-            name: "★ M9 Bayonet | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1177.44, chance: 0.029 }]
-        },
-        {
-            name: "★ M9 Bayonet | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 1016.85, chance: 0.075 }]
-        },
-        {
-            name: "★ Skeleton Knife | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 825.11, chance: 0.085 }]
-        },
-        {
-            name: "★ Skeleton Knife | Case Hardened",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 816.51, chance: 0.063 },
-                { short: "MW", price: 489.77, chance: 1.442 },
-                { short: "FT", price: 374.77, chance: 1.075 },
-                { short: "WW", price: 355.65, chance: 1.33 },
-                { short: "BS", price: 350.3, chance: 0.864 }
-            ]
-        },
-        {
-            name: "★ Bayonet | Gamma Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 800.68, chance: 0.259 }]
-        },
-        {
-            name: "★ Stiletto Knife | Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 737.93, chance: 0.362 }]
-        },
-        {
-            name: "★ Skeleton Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 677.89, chance: 0.043 },
-                { short: "MW", price: 616.15, chance: 0.594 }
-            ]
-        },
-        {
-            name: "★ Stiletto Knife | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 639.96, chance: 2.146 }]
-        },
-        {
-            name: "★ Bayonet | Doppler - Phase 3",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 622.14, chance: 0.37 }]
-        },
-        {
-            name: "★ Stiletto Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 617.67, chance: 0.07 },
-                { short: "MW", price: 551.67, chance: 1.138 },
-                { short: "FT", price: 549.24, chance: 0.089 }
-            ]
-        },
-        {
-            name: "★ Bayonet | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 558.31, chance: 0.495 }]
-        },
-        {
-            name: "★ Bayonet | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 516.38, chance: 0.903 }]
-        },
-        {
-            name: "★ Falchion Knife | Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 467.11, chance: 0.988 }]
-        },
-        {
-            name: "★ Bayonet | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 451.33, chance: 0.896 }]
-        },
-        {
-            name: "★ Stiletto Knife | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 440.91, chance: 4.066 }]
-        },
-        {
-            name: "★ Flip Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 426.82, chance: 1.137 },
-                { short: "MW", price: 396.11, chance: 1.172 },
-                { short: "FT", price: 379.34, chance: 1.211 }
-            ]
-        },
-        {
-            name: "★ Stiletto Knife | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 423.48, chance: 3.489 }]
-        },
-        {
-            name: "★ Skeleton Knife",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 378.12, chance: 6.013 }]
-        },
-        {
-            name: "★ Falchion Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 368.93, chance: 1.254 },
-                { short: "MW", price: 297.23, chance: 1.343 },
-                { short: "FT", price: 294.63, chance: 1.41 }
-            ]
-        },
-        {
-            name: "★ Falchion Knife | Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 354.02, chance: 4.351 }]
-        },
-        {
-            name: "★ Falchion Knife | Gamma Doppler - Phase 1",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 343.69, chance: 1.39 }]
-        },
-        {
-            name: "★ Bowie Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 341.21, chance: 0.229 },
-                { short: "FT", price: 285.74, chance: 0.378 },
-                { short: "MW", price: 285.72, chance: 0.482 }
-            ]
-        },
-        {
-            name: "★ Flip Knife | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 308.94, chance: 5.0 }]
-        },
-        {
-            name: "★ Flip Knife | Lore",
-            color: "#ffb703",
-            rarities: [
-                { short: "MW", price: 302.48, chance: 1.24 },
-                { short: "WW", price: 259.76, chance: 1.165 },
-                { short: "BS", price: 241.36, chance: 1.106 },
-                { short: "FT", price: 238.21, chance: 1.51 }
-            ]
-        },
-        {
-            name: "★ Stiletto Knife",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 301.12, chance: 5.44 }]
-        },
-        {
-            name: "★ Ursus Knife | Slaughter",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 278.07, chance: 0.573 },
-                { short: "MW", price: 263.89, chance: 2.057 },
-                { short: "FT", price: 262.14, chance: 1.282 }
-            ]
-        },
-        {
-            name: "★ Falchion Knife | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 277.15, chance: 3.396 }]
-        },
-        {
-            name: "★ Bowie Knife | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 253.77, chance: 1.497 }]
-        },
-        {
-            name: "★ Falchion Knife | Lore",
-            color: "#ffb703",
-            rarities: [
-                { short: "FN", price: 249.35, chance: 0.515 },
-                { short: "MW", price: 191.03, chance: 4.418 },
-                { short: "FT", price: 165.70, chance: 15.884 }
-            ]
-        },
-        {
-            name: "★ Ursus Knife | Marble Fade",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 244.72, chance: 3.84 }]
-        },
-        {
-            name: "★ Falchion Knife | Tiger Tooth",
-            color: "#ffb703",
-            rarities: [{ short: "FN", price: 219.96, chance: 7.585 }]
-        }
-    ]
-},
 david: {
     name: "MIKEDEV",
     price: 390.00,
@@ -7489,6 +7175,437 @@ david: {
             rarities: [
                 { short: "FN", price: 173.24, chance: 5.035 }
             ]
+        }
+    ]
+},
+sport: {
+    name: "SPORT",
+    price: 1700.00,
+    img: "https://key-drop.com/uploads/skins/high_premium_6.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "★ Sport Gloves | Vice",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 11449.39, chance: 0.625 }
+            ]
+        },
+        {
+            name: "M4A4 | Howl",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 10378.08, chance: 0.552 }
+            ]
+        },
+        {
+            name: "AWP | Dragon Lore",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 9927.82, chance: 0.518 }
+            ]
+        },
+        {
+            name: "AK-47 | Wild Lotus",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "BS", price: 5950.66, chance: 0.233 }
+            ]
+        },
+        {
+            name: "★ Sport Gloves | Hedge Maze",
+            color: "#ffb703",
+            rarities: [
+                { short: "WW", price: 5735.11, chance: 0.274 }
+            ]
+        },
+        {
+            name: "★ Sport Gloves | Slingshot",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 5293.75, chance: 0.246 }
+            ]
+        },
+        {
+            name: "★ Talon Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 4305.29, chance: 1.653 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Gamma Doppler - Phase 2",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 3803.61, chance: 1.906 }
+            ]
+        },
+        {
+            name: "M4A1-S | Hot Rod",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FN", price: 3166.80, chance: 1.948 }
+            ]
+        },
+        {
+            name: "★ Stiletto Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 3041.14, chance: 13.783 }
+            ]
+        },
+        {
+            name: "M4A1-S | Imminent Danger",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 2427.29, chance: 0.498 }
+            ]
+        },
+        {
+            name: "★ Flip Knife | Gamma Doppler - Emerald",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 2149.11, chance: 0.445 }
+            ]
+        },
+        {
+            name: "★ M9 Bayonet | Doppler - Phase 2",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 2047.09, chance: 0.464 }
+            ]
+        },
+        {
+            name: "★ Karambit | Doppler - Phase 3",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 1976.64, chance: 12.194 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Autotronic",
+            color: "#ffb703",
+            rarities: [
+                { short: "MW", price: 1586.25, chance: 13.404 }
+            ]
+        },
+        {
+            name: "★ M9 Bayonet | Black Laminate",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 1092.36, chance: 0.877 }
+            ]
+        },
+        {
+            name: "★ Shadow Daggers | Doppler - Black Pearl",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 828.57, chance: 0.887 }
+            ]
+        },
+        {
+            name: "AWP | BOOM",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FN", price: 816.51, chance: 1.022 }
+            ]
+        },
+        {
+            name: "★ Bowie Knife | Doppler - Sapphire",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 805.97, chance: 0.797 }
+            ]
+        },
+        {
+            name: "★ Gut Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 733.18, chance: 0.817 }
+            ]
+        },
+        {
+            name: "★ Talon Knife | Tiger Tooth",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 717.20, chance: 0.913 }
+            ]
+        },
+        {
+            name: "★ Driver Gloves | Imperial Plaid",
+            color: "#ffb703",
+            rarities: [
+                { short: "MW", price: 560.30, chance: 1.301 }
+            ]
+        },
+        {
+            name: "★ Moto Gloves | Blood Pressure",
+            color: "#ffb703",
+            rarities: [
+                { short: "MW", price: 497.93, chance: 5.32 }
+            ]
+        },
+        {
+            name: "★ Flip Knife | Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 473.13, chance: 6.264 }
+            ]
+        },
+        {
+            name: "★ Kukri Knife | Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 285.52, chance: 7.21 }
+            ]
+        },
+        {
+            name: "★ Ursus Knife | Slaughter",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 278.07, chance: 6.16 }
+            ]
+        },
+        {
+            name: "★ Huntsman Knife | Marble Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 278.04, chance: 6.465 }
+            ]
+        },
+        {
+            name: "★ Survival Knife | Fade",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 235.00, chance: 6.25 }
+            ]
+        },
+        {
+            name: "★ Moto Gloves | Transport",
+            color: "#ffb703",
+            rarities: [
+                { short: "MW", price: 144.30, chance: 6.858 }
+            ]
+        },
+        {
+            name: "StatTrak™ AK-47 | Inheritance",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FT", price: 143.31, chance: 0.116 }
+            ]
+        }
+    ]
+},
+pandora: {
+    name: "PANDORA",
+    price: 5000.00,
+    img: "https://key-drop.com/uploads/skins/high_premium_5.png",
+    tag: "NEW",
+    items: [
+        {
+            name: "Sticker | Titan | Katowice 2014",
+            color: "#8847ff",
+            rarities: [
+                { short: "FN", price: 117507.00, chance: 0.435 }
+            ]
+        },
+        {
+            name: "★ Sport Gloves | Pandora's Box",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 33904.41, chance: 0.219 },
+                { short: "MW", price: 8668.34, chance: 0.373 },
+                { short: "FT", price: 5931.96, chance: 0.117 },
+                { short: "WW", price: 5494.79, chance: 0.116 },
+                { short: "BS", price: 3708.72, chance: 2.315 }
+            ]
+        },
+        {
+            name: "AK-47 | Wild Lotus",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 23127.56, chance: 0.07 },
+                { short: "MW", price: 16109.92, chance: 0.375 },
+                { short: "FT", price: 11166.60, chance: 0.376 },
+                { short: "WW", price: 8457.41, chance: 0.116 },
+                { short: "BS", price: 5950.66, chance: 4.928 }
+            ]
+        },
+        {
+            name: "AWP | Dragon Lore",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 18022.36, chance: 0.273 },
+                { short: "MW", price: 13351.04, chance: 0.375 },
+                { short: "FT", price: 9927.82, chance: 3.55 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 16393.48, chance: 0.274 }]
+        },
+        {
+            name: "★ M9 Bayonet | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 13263.11, chance: 0.376 }]
+        },
+        {
+            name: "★ Butterfly Knife | Gamma Doppler - Emerald",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 13194.28, chance: 0.38 }]
+        },
+        {
+            name: "★ Karambit | Doppler - Black Pearl",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 12805.24, chance: 0.375 }]
+        },
+        {
+            name: "★ Karambit | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 12089.65, chance: 0.373 }]
+        },
+        {
+            name: "★ M9 Bayonet | Gamma Doppler - Emerald",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 11804.85, chance: 0.376 }]
+        },
+        {
+            name: "★ Sport Gloves | Vice",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 11449.39, chance: 0.377 },
+                { short: "MW", price: 2261.88, chance: 0.348 },
+                { short: "FT", price: 747.95, chance: 7.532 },
+                { short: "WW", price: 617.89, chance: 7.464 },
+                { short: "BS", price: 430.32, chance: 7.463 }
+            ]
+        },
+        {
+            name: "M4A4 | Howl",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 10378.08, chance: 3.551 },
+                { short: "MW", price: 7773.53, chance: 0.118 },
+                { short: "FT", price: 6477.94, chance: 0.117 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Doppler - Sapphire",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 10158.65, chance: 3.55 }]
+        },
+        {
+            name: "★ M9 Bayonet | Doppler - Sapphire",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 7381.84, chance: 0.118 }]
+        },
+        {
+            name: "★ Karambit | Doppler - Sapphire",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 7246.25, chance: 0.118 }]
+        },
+        {
+            name: "★ Butterfly Knife | Doppler - Phase 2",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 6918.10, chance: 0.117 }]
+        },
+        {
+            name: "AK-47 | Gold Arabesque",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 5274.34, chance: 4.859 },
+                { short: "MW", price: 3751.08, chance: 2.353 },
+                { short: "WW", price: 2647.96, chance: 0.35 },
+                { short: "FT", price: 2598.65, chance: 0.353 },
+                { short: "BS", price: 2072.59, chance: 0.35 }
+            ]
+        },
+        {
+            name: "★ Sport Gloves | Superconductor",
+            color: "#ffb703",
+            rarities: [
+                { short: "MW", price: 5185.84, chance: 0.114 },
+                { short: "FT", price: 3619.20, chance: 4.761 },
+                { short: "WW", price: 2515.45, chance: 0.351 },
+                { short: "BS", price: 1555.69, chance: 0.348 }
+            ]
+        },
+        {
+            name: "MP9 | Wild Lily",
+            color: "#d32ce6",
+            rarities: [
+                { short: "FN", price: 4595.75, chance: 2.314 },
+                { short: "MW", price: 3989.20, chance: 2.315 },
+                { short: "FT", price: 3464.95, chance: 0.35 }
+            ]
+        },
+        {
+            name: "★ Driver Gloves | King Snake",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 4388.95, chance: 4.79 },
+                { short: "MW", price: 794.01, chance: 7.465 },
+                { short: "FT", price: 235.42, chance: 2.472 }
+            ]
+        },
+        {
+            name: "★ Talon Knife | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 4305.29, chance: 2.315 }]
+        },
+        {
+            name: "M4A1-S | Welcome to the Jungle",
+            color: "#eb4b4b",
+            rarities: [
+                { short: "FN", price: 3900.80, chance: 2.318 },
+                { short: "MW", price: 2184.76, chance: 0.364 },
+                { short: "FT", price: 1497.99, chance: 0.35 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Doppler - Phase 1",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 3471.55, chance: 2.306 }]
+        },
+        {
+            name: "★ Bayonet | Doppler - Ruby",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 3216.37, chance: 0.352 }]
+        },
+        {
+            name: "★ Butterfly Knife | Lore",
+            color: "#ffb703",
+            rarities: [
+                { short: "FN", price: 3199.90, chance: 2.315 },
+                { short: "MW", price: 1483.33, chance: 0.351 },
+                { short: "FT", price: 964.37, chance: 7.368 }
+            ]
+        },
+        {
+            name: "★ Butterfly Knife | Gamma Doppler - Phase 1",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 2962.65, chance: 0.351 }]
+        },
+        {
+            name: "★ Karambit | Fade",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 2912.89, chance: 0.351 }]
+        },
+        {
+            name: "★ Talon Knife | Doppler - Sapphire",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 2897.79, chance: 0.35 }]
+        },
+        {
+            name: "★ Bayonet | Gamma Doppler - Emerald",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 2735.95, chance: 0.35 }]
+        },
+        {
+            name: "★ Flip Knife | Doppler - Black Pearl",
+            color: "#ffb703",
+            rarities: [{ short: "FN", price: 2665.49, chance: 0.349 }]
         }
     ]
 }
