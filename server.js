@@ -4,11 +4,17 @@ const session = require('express-session');
 const http = require('http');
 const { Server } = require('socket.io');
 const bcrypt = require('bcryptjs');
-
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
+let beatDropState = {
+    status: 'waiting', // waiting, playing, result
+    timer: 10,
+    stopPoint: 0, // 0 to 100% of song length
+    bets: []
+};
 
 
 mongoose.connect('mongodb+srv://admin:rapazin@cluster0.2nsczvm.mongodb.net/?appName=Cluster0');
@@ -52,8 +58,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -163,6 +169,80 @@ async function executeDailyReset() {
     io.emit('leaderboardReset');
     console.log("♻️ Sistema de apostas zerado para o novo dia.");
 }
+function startBeatDropLoop() {
+    beatDropState.status = 'waiting';
+    beatDropState.timer = 10;
+    beatDropState.bets = [];
+
+    const waitInterval = setInterval(() => {
+        beatDropState.timer -= 0.1;
+        io.emit('beatDropTick', beatDropState);
+
+        if (beatDropState.timer <= 0) {
+            clearInterval(waitInterval);
+            runBeatDropGame();
+        }
+    }, 100);
+}
+function runBeatDropGame() {
+    beatDropState.status = 'playing';
+    // The "House" determines a stop point between 5% and 95% of the song
+    beatDropState.stopPoint = Math.random() * 90 + 5; 
+    
+    io.emit('beatDropTick', beatDropState);
+
+    // Song duration simulation (e.g., 10 seconds for the animation)
+    setTimeout(() => {
+        beatDropState.status = 'result';
+        
+        // Calculate winnings for each bet
+        beatDropState.bets.forEach(async (bet) => {
+            const distance = Math.abs(bet.targetTime - beatDropState.stopPoint);
+            let multiplier = 0;
+
+            // Multiplier logic: closer = higher
+            if (distance < 2) multiplier = 10;      // Perfect hit
+            else if (distance < 5) multiplier = 3;  // Very close
+            else if (distance < 10) multiplier = 1.5; // Close
+            else if (distance < 15) multiplier = 1.1; // Barely
+            else multiplier = 0;                    // Fail
+
+            if (multiplier > 0) {
+                const totalValue = bet.initialValue * multiplier;
+                const wonSkinTemplate = getClosestSkin(totalValue);
+                
+                const user = await User.findById(bet.userId);
+                if (user && wonSkinTemplate) {
+                    const newSkin = {
+                        ...wonSkinTemplate,
+                        id: Math.random().toString(36).substr(2, 9),
+                        wear: generateRandomWear(wonSkinTemplate.conditionShort),
+                        seed: generateRandomSeed(),
+                        equippedTeam: 0
+                    };
+                    user.inventory.push(newSkin);
+                    await user.save();
+                }
+                bet.won = true;
+                bet.multiplier = multiplier;
+                bet.wonSkin = wonSkinTemplate;
+            } else {
+                bet.won = false;
+            }
+        });
+
+        io.emit('beatDropTick', beatDropState);
+        setTimeout(startBeatDropLoop, 5000); // Reset after 5s
+    }, 8000); // 8 seconds of "song" playing
+}
+app.get('/api/beatdrop/random-song', (req, res) => {
+    const musicFolder = path.join(__dirname, 'public', 'music');
+    fs.readdir(musicFolder, (err, files) => {
+        if (err || files.length === 0) return res.status(500).json({ error: "No music found" });
+        const randomSong = files[Math.floor(Math.random() * files.length)];
+        res.json({ song: `/music/${randomSong}` });
+    });
+});
 
 async function checkPendingReset() {
     const state = await SystemState.findOne() || await SystemState.create({ lastResetDate: new Date(0) });
@@ -8786,7 +8866,14 @@ const rollOffset = (Math.random() * 164) - 82;
     }
     return rolls;
 }
-
+function getBeatMultiplier(current, target) {
+    const dist = Math.abs(current - target);
+    const radius = 10;
+    if (dist >= radius) return 1.00;
+    // Fórmula: 1x + (19x de range conforme a proximidade)
+    let mult = 1 + (14 * (1 - dist / radius));
+    return parseFloat(mult.toFixed(2));
+}
 io.on('connection', (socket) => {
     socket.emit('updateBattles', activeBattles);
     
@@ -8801,6 +8888,29 @@ io.on('connection', (socket) => {
     };
 
     io.emit('chatMessage', payload);
+});
+    socket.on('beatDropBet', async (data) => {
+    const user = await User.findById(data.userId);
+    if (!user || beatDropState.status !== 'waiting') return;
+
+    const itemsToBet = user.inventory.filter(i => data.itemIds.includes(i.id));
+    if (itemsToBet.length === 0) return;
+
+    const totalValue = itemsToBet.reduce((sum, i) => sum + i.value, 0);
+    user.inventory = user.inventory.filter(i => !data.itemIds.includes(i.id));
+    await user.save();
+
+    beatDropState.bets.push({
+        userId: user._id.toString(),
+        username: user.username,
+        avatar: user.avatar,
+        initialValue: totalValue,
+        targetTime: data.targetTime, // 0-100
+        cashedOut: false
+    });
+
+    socket.emit('inventoryUpdate', user.inventory);
+    io.emit('beatDropTick', beatDropState);
 });
 socket.on('skinCrashBet', async (data) => {
     const user = await User.findById(data.userId);
@@ -8863,6 +8973,77 @@ socket.on('skinCrashBet', async (data) => {
             io.emit('skinCrashTick', skinCrashState);
         }
     });
+   socket.on('startBeatDrop', async (data) => {
+    const user = await User.findById(data.userId);
+    if (!user) return;
+
+    const itemsToBet = user.inventory.filter(i => data.itemIds.includes(i.id));
+    if (itemsToBet.length === 0) return;
+
+    const totalValue = itemsToBet.reduce((sum, i) => sum + i.value, 0);
+    user.inventory = user.inventory.filter(i => !data.itemIds.includes(i.id));
+    await user.save();
+    
+    socket.emit('inventoryUpdate', user.inventory);
+
+    // 1. Sorteia o ponto de paragem (ex: 45.52%)
+    const stopPoint = Math.random() * 100; // Sorteia qualquer ponto entre o início e o fim
+    
+    // 2. Calcula o multiplicador que SERÁ entregue
+    const finalMultiplier = getBeatMultiplier(stopPoint, data.targetTime);
+
+    // 3. Envia tudo para o cliente
+    socket.emit('beatDropAction', {
+        stopPoint: stopPoint,
+        targetTime: data.targetTime,
+        finalMultiplier: finalMultiplier, // Sincronização total
+        totalValue: totalValue
+    });
+});
+
+
+socket.on('claimBeatDrop', async (data) => {
+    const { userId, initialValue, multiplier } = data;
+    
+    // Filtro de segurança: se o mult for muito baixo, nem processa
+    if (multiplier <= 1.05) return socket.emit('beatDropResult', { win: false });
+
+    const targetWinValue = initialValue * multiplier;
+    const template = getClosestSkin(targetWinValue);
+    
+    if (template) {
+        const user = await User.findById(userId);
+        
+        // CRIAR A NOVA SKIN PARA O INVENTÁRIO
+        const newSkin = {
+            name: template.name,
+            img: template.img,
+            color: template.color,
+            conditionShort: template.conditionShort,
+            // AQUI ESTÁ A CORREÇÃO:
+            // Usamos template.value (preço real) e NÃO o valor multiplicado
+            value: template.value, 
+            weaponId: template.weaponId,
+            paintKit: template.paintKit,
+            wear: generateRandomWear(template.conditionShort),
+            seed: generateRandomSeed(),
+            id: Math.random().toString(36).substr(2, 9),
+            equippedTeam: 0
+        };
+
+        user.inventory.push(newSkin);
+        await user.save();
+        
+        socket.emit('inventoryUpdate', user.inventory);
+        socket.emit('beatDropResult', { 
+            win: true, 
+            skin: newSkin, 
+            multiplier: multiplier 
+        });
+    } else {
+        socket.emit('beatDropResult', { win: false });
+    }
+});
     socket.on('createBattle', async (data) => {
     const user = await User.findById(data.userId);
     if (!user) return;
@@ -9287,6 +9468,7 @@ app.get('/api/plugin/skins/:steamId', async (req, res) => {
         res.status(500).json({ error: "Internal Error" });
     }
 });
+startBeatDropLoop();
 mongoose.connection.once('open', () => {
     checkPendingReset();
 });

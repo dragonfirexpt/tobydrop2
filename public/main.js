@@ -2,7 +2,8 @@ const socket = io();
 let currentUser = null;
 let activeCaseId = 'gold';
 const NODE_WIDTH = 170;
-
+let bdSortMode = 'newest';
+let bdPage = 0;
 const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
 winSound.volume = 0.25; // Set volume to 50%
 const spinSound = new Audio('/assets/spinner.mp3');
@@ -17,6 +18,14 @@ const tickSoundsPool = Array.from({ length: 10 }, () => {
     audio.volume = 0.5; // Volume um pouco mais baixo para a "metralhadora" não ser estridente
     return audio;
 });
+let bdLastSkinId = null;
+let bdLastUpdateTime = 0;
+let allSkinsForPreview = [];
+let selectedBeatDropSkins = [];
+let targetDropTime = 50;
+let bdAudio = new Audio();
+let bdAnimationActive = false;
+let currentBetValue = 0;
 upgradeLossSound.volume = 0.3;
 upgradeWinSound.volume = 0.3;
 upgradeStartSound.volume = 0.3;
@@ -36,7 +45,13 @@ function playTick() {
     sound.play().catch(e => {});
     tickCounter++;
 }
-
+function selectBDOption(val, text) {
+    document.getElementById('selected-bd-inv').innerText = text;
+    document.getElementById('bd-inv-options').classList.remove('show');
+    bdSortMode = val;
+    bdPage = 0;
+    renderBeatDropInventory();
+}
 let currentCrashState = null;
 let selectedCasesForBattle = [];
 let upgraderState = {
@@ -69,6 +84,34 @@ const WEAPON_TEAMS = {
     60: 'ct',  // M4A1-S
     61: 'ct',  // USP-S
 };
+function updateBDCentralSkin(potentialValue) {
+    const now = Date.now();
+    // Só atualiza se passar 1000ms (1 segundo)
+    if (now - bdLastUpdateTime < 1000) return;
+
+    const skin = getClosestSkinLocal(potentialValue);
+    if (!skin || skin.name === bdLastSkinId) return;
+
+    const container = document.getElementById('bd-preview-container');
+    const img = document.getElementById('bd-preview-img');
+    const name = document.getElementById('bd-preview-name');
+    const price = document.getElementById('bd-preview-price');
+
+    // 1. Inicia animação de saída
+    container.classList.add('skin-changing');
+
+    setTimeout(() => {
+        // 2. Troca os dados
+        img.src = skin.img;
+        name.innerText = skin.name;
+        price.innerText = `$${formatCurrency(skin.price)}`;
+        bdLastSkinId = skin.name;
+        bdLastUpdateTime = now;
+
+        // 3. Finaliza animação (Fade In)
+        container.classList.remove('skin-changing');
+    }, 250); // Metade do tempo da transição CSS
+}
 
 function getWeaponTeamType(weaponId) {
     const id = parseInt(weaponId); // Força ser um número inteiro
@@ -119,6 +162,286 @@ function renderTargets() {
     renderPagination('target-pagination', filtered.length, upgraderPageTargets, (p) => {
         upgraderPageTargets = p;
         renderTargets();
+    });
+}
+function initBeatDrop() {
+    resetBDUI();
+    renderBeatDropInventory();
+    generateWaveform();
+    
+    const wrapper = document.getElementById('bd-wrapper');
+    const targetEl = document.getElementById('bd-target');
+    const profitZone = document.getElementById('bd-profit-zone');
+
+    if (wrapper) {
+        wrapper.onclick = (e) => {
+            if (bdAnimationActive) return;
+            
+            const rect = wrapper.getBoundingClientRect();
+            targetDropTime = ((e.clientX - rect.left) / rect.width) * 100;
+            
+            // Ambos usam o mesmo valor de 'left'
+            if (targetEl) targetEl.style.left = targetDropTime + '%';
+            if (profitZone) {
+                profitZone.style.display = 'block';
+                profitZone.style.left = targetDropTime + '%';
+            }
+
+            updateBDPreviewMultiplier(targetDropTime, targetDropTime);
+        };
+    }
+}
+
+async function startBeatDropGame() {
+    if (selectedBeatDropSkins.length === 0) return;
+    if (bdAnimationActive) return;
+
+    const res = await fetch('/api/beatdrop/random-song');
+    const songData = await res.json();
+    
+    bdAudio.src = songData.song;
+    bdAudio.volume = 0.2; // VOLUME BAIXO
+    bdAudio.load();
+
+    socket.emit('startBeatDrop', {
+        userId: currentUser._id,
+        itemIds: selectedBeatDropSkins,
+        targetTime: targetDropTime
+    });
+}
+
+async function loadSkinsForPreview() {
+    const res = await fetch('/api/all-skins');
+    allSkinsForPreview = await res.json();
+}
+loadSkinsForPreview();
+
+function getClosestSkinLocal(value) {
+    if (allSkinsForPreview.length === 0) return null;
+    return allSkinsForPreview.reduce((prev, curr) => {
+        return (Math.abs(curr.price - value) < Math.abs(prev.price - value) ? curr : prev);
+    });
+}
+socket.on('beatDropAction', (data) => {
+    bdAnimationActive = true;
+    bdLastUpdateTime = 0;
+    bdLastSkinId = null; // Garante que não há memória da skin anterior
+
+    const playhead = document.getElementById('bd-playhead');
+    const container = document.getElementById('bd-preview-container');
+    const btn = document.getElementById('bd-start-btn');
+    
+    if (btn) btn.disabled = true;
+    
+    // Reset da barra branca
+    if (playhead) {
+        playhead.style.display = 'block';
+        playhead.style.left = '0%';
+    }
+
+    // IMPORTANTE: O container da skin (bd-preview-container) continua com OPACIDADE 0 aqui
+    
+    bdAudio.volume = 0.2;
+    bdAudio.currentTime = 0;
+    bdAudio.play().then(() => {
+        requestAnimationFrame(updateFrame);
+    });
+
+    const updateFrame = () => {
+    if (!bdAnimationActive) return;
+
+    const playhead = document.getElementById('bd-playhead');
+    const playheadMult = document.getElementById('bd-playhead-mult');
+    const placeholder = document.getElementById('bd-preview-placeholder');
+    const skinInfo = document.getElementById('bd-preview-container');
+
+    // 1. Segurança e Limite de 60 segundos
+    if (!playhead || !bdAudio.duration) { 
+        requestAnimationFrame(updateFrame); 
+        return; 
+    }
+
+    // Definimos que o "fim da linha" é a duração da música OU 60 segundos (o que for menor)
+    const gameDuration = Math.min(bdAudio.duration, 60);
+
+    // 2. Calcula a posição baseada no limite de 1 minuto
+    let currentPos = (bdAudio.currentTime / gameDuration) * 100;
+    
+    // Garante que a barra não ultrapassa os 100% visualmente
+    if (currentPos > 100) currentPos = 100;
+    
+    if (playhead) playhead.style.left = currentPos + '%';
+
+    // 3. Multiplicador Suave
+    let liveMult = calcBDMultiplier(currentPos, data.targetTime);
+
+    if (playheadMult) {
+        playheadMult.innerText = liveMult.toFixed(2) + 'x';
+        playheadMult.style.background = liveMult > 1.1 ? 'var(--accent)' : '#fff';
+    }
+    
+
+    // 4. Alternância entre Radar e Skin
+    if (liveMult > 1.1) {
+        if (placeholder) placeholder.style.display = "none";
+        if (skinInfo) { skinInfo.style.display = "block"; skinInfo.style.opacity = "1"; }
+        updateBDCentralSkin(data.totalValue * liveMult);
+    } else {
+        if (skinInfo) skinInfo.style.display = "none";
+        if (placeholder) { placeholder.style.display = "block"; placeholder.style.opacity = "0.5"; }
+    }
+
+    // 5. Lógica de Derrota Antecipada (Passou do Alvo)
+    if (currentPos > data.targetTime + 10) {
+        bdAnimationActive = false;
+        bdAudio.pause();
+        showBDResultModal(false);
+        return;
+    }
+
+    // 6. Paragem do Servidor OU Limite de 60s atingido
+    if (currentPos >= data.stopPoint || bdAudio.currentTime >= gameDuration) {
+    bdAnimationActive = false;
+    bdAudio.pause();
+    
+    // Sincroniza o multiplicador visual com o valor final real
+    if (playheadMult) playheadMult.innerText = data.finalMultiplier.toFixed(2) + 'x';
+
+    socket.emit('claimBeatDrop', {
+        userId: currentUser._id,
+        initialValue: data.totalValue,
+        multiplier: data.finalMultiplier
+    });
+} else {
+    requestAnimationFrame(updateFrame);
+}
+};
+});
+function showBDResultModal(win, skin = null, mult = 0) {
+    const modal = document.getElementById('bd-result-modal');
+    const card = document.getElementById('bd-result-card');
+    const itemBox = document.getElementById('bd-result-item-box'); // Container da Imagem
+    const infoBox = document.querySelector('#bd-result-card .result-info'); // Container do Nome/Preço
+    const titleEl = document.getElementById('bd-result-title');
+    const multBadge = document.getElementById('bd-result-mult-badge');
+
+    // Limpa o estado do jogo no fundo
+    resetBDUI();
+
+    if (!modal || !card) return;
+
+    if (win && skin) {
+        // --- ESTADO DE VITÓRIA ---
+        card.className = "result-card result-win";
+        titleEl.innerText = "SUCCESS!";
+        multBadge.innerText = `${mult}x`;
+        multBadge.style.display = "inline-block";
+
+        // MOSTRA a skin e os detalhes
+        if (itemBox) itemBox.style.display = "block";
+        if (infoBox) infoBox.style.display = "block";
+
+        document.getElementById('bd-result-img').src = skin.img;
+        document.getElementById('bd-result-name').innerText = skin.name;
+        document.getElementById('bd-result-price').innerText = `$${formatCurrency(skin.value)}`;
+        document.getElementById('bd-result-badge').innerText = skin.conditionShort;
+
+        if (upgradeWinSound) upgradeWinSound.play().catch(e => {});
+    } else {
+        // --- ESTADO DE DERROTA (LIMPO) ---
+        card.className = "result-card result-loss";
+        titleEl.innerText = "MISSED!";
+        multBadge.innerText = `0.00x`;
+        
+        // ESCONDE TUDO o que tem a ver com skins
+        if (itemBox) itemBox.style.display = "none";
+        if (infoBox) {
+            infoBox.style.display = "block"; // Mantemos o bloco mas mudamos o texto
+            document.getElementById('bd-result-name').innerText = "UNLUCKY! TRY AGAIN.";
+            document.getElementById('bd-result-price').innerText = ""; // Preço vazio
+        }
+
+        if (upgradeLossSound) upgradeLossSound.play().catch(e => {});
+    }
+
+    modal.style.display = 'flex';
+}
+socket.on('beatDropResult', (data) => {
+    if (data.win) showBDResultModal(true, data.skin, data.multiplier);
+    else showBDResultModal(false);
+});
+function updateBDPreviewMultiplier(current, target) {
+    const multEl = document.getElementById('bd-live-multiplier');
+    if (!multEl) return;
+    
+    let dist = Math.abs(current - target);
+    let previewMult = 0;
+    if (dist < 1.5) previewMult = 15;
+    else if (dist < 4) previewMult = 5;
+    else if (dist < 8) previewMult = 2;
+    else if (dist < 15) previewMult = 1.2;
+    
+    multEl.innerText = previewMult > 0 ? previewMult.toFixed(2) + 'x' : '0.00x';
+}
+function resetBDUI() {
+    bdAnimationActive = false;
+    bdLastSkinId = null;
+    bdLastUpdateTime = 0;
+
+    const btn = document.getElementById('bd-start-btn');
+    const placeholder = document.getElementById('bd-preview-placeholder');
+    const skinContainer = document.getElementById('bd-preview-container');
+    const playhead = document.getElementById('bd-playhead');
+    const playheadMult = document.getElementById('bd-playhead-mult');
+
+    // 1. Reativa o botão
+    if (btn) {
+        btn.disabled = false;
+        btn.querySelector('span').innerText = "START DROP";
+    }
+    
+    // 2. MOSTRA o Placeholder (Radar) e ESCONDE a Skin
+    if (placeholder) {
+        placeholder.style.display = "block";
+        placeholder.style.opacity = "0.5";
+    }
+    if (skinContainer) {
+        skinContainer.style.display = "none";
+        skinContainer.style.opacity = "0";
+    }
+
+    // 3. Reseta a barra branca e o multiplicador
+    if (playhead) playhead.style.display = "none";
+    if (playheadMult) {
+        playheadMult.innerText = "1.00x";
+        playheadMult.style.background = "#fff";
+    }
+
+    // 4. Limpa as seleções
+    selectedBeatDropSkins = [];
+    const countEl = document.getElementById('bd-count');
+    if (countEl) countEl.innerText = "0/5";
+    
+    renderBeatDropInventory();
+}
+function generateWaveform() {
+    const canvas = document.getElementById('waveform-canvas');
+    canvas.innerHTML = '';
+    for(let i=0; i<80; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'wave-bar';
+        bar.style.height = (Math.random() * 70 + 10) + '%';
+        bar.style.opacity = Math.random() * 0.5 + 0.2;
+        canvas.appendChild(bar);
+    }
+}
+
+function placeBeatDropBet() {
+    if (selectedBeatDropSkins.length === 0) return alert("Select skins!");
+    socket.emit('beatDropBet', {
+        userId: currentUser._id,
+        itemIds: selectedBeatDropSkins,
+        targetTime: targetDropTime
     });
 }
 function selectCrashOption(val, text) {
@@ -358,16 +681,19 @@ let filters = {
 
 function toggleDropdown(id) {
     const options = document.getElementById(id);
-    const isShowing = options.classList.contains('show');
+    const selected = options.previousElementSibling; // Pega a div dropdown-selected
 
-    // Fechar todos antes de abrir um novo
-    document.querySelectorAll('.dropdown-options').forEach(el => el.classList.remove('show'));
-    document.querySelectorAll('.dropdown-selected').forEach(el => el.classList.remove('active'));
+    // Fecha outros dropdowns abertos
+    document.querySelectorAll('.dropdown-options').forEach(el => {
+        if (el.id !== id) el.classList.remove('show');
+    });
+    document.querySelectorAll('.dropdown-selected').forEach(el => {
+        if (el !== selected) el.classList.remove('active');
+    });
 
-    if (!isShowing) {
-        options.classList.add('show');
-        options.previousElementSibling.classList.add('active');
-    }
+    // Toggle no atual
+    options.classList.toggle('show');
+    selected.classList.toggle('active');
 }
 
 function selectOption(type, val, text) {
@@ -515,6 +841,65 @@ function filterByMult(m) {
     ).sort((a,b) => a.price - b.price);
 
     renderTargets(filtered);
+}
+let currentBeatDropState = null;
+
+
+function renderBeatDropInventory() {
+    const grid = document.getElementById('bd-inv-grid');
+    if (!grid || !currentUser) return;
+
+    let items = [...currentUser.inventory];
+
+    // Ordenação igual ao Upgrade
+    if (bdSortMode === 'high') items.sort((a, b) => b.value - a.value);
+    else if (bdSortMode === 'low') items.sort((a, b) => a.value - b.value);
+    else items.reverse();
+
+    const start = bdPage * 9;
+    const pageItems = items.slice(start, start + 9);
+
+    grid.innerHTML = pageItems.map(item => {
+        const isSelected = selectedBeatDropSkins.includes(item.id);
+        return `
+            <div class="up-card ${isSelected ? 'selected' : ''}" onclick="toggleBeatDropSkin('${item.id}')">
+                <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
+                <img src="${item.img}">
+                <b>${item.name}</b>
+                <span>$${formatCurrency(item.value)}</span>
+            </div>`;
+    }).join('');
+
+    renderBDPagination(items.length);
+}
+
+function renderBDPagination(total) {
+    const container = document.getElementById('bd-pagination');
+    const totalPages = Math.ceil(total / 9);
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 0; i < totalPages; i++) {
+        html += `<button class="${i === bdPage ? 'active' : ''}" onclick="bdPage=${i}; renderBeatDropInventory();">${i + 1}</button>`;
+    }
+    container.innerHTML = html;
+}
+function calcBDMultiplier(current, target) {
+    const dist = Math.abs(current - target);
+    const radius = 10;
+    if (dist >= radius) return 1.00;
+    return 1 + (14 * (1 - dist / radius)); // 1x a 20x
+}
+function toggleBeatDropSkin(id) {
+    if (bdAnimationActive) return;
+    const idx = selectedBeatDropSkins.indexOf(id);
+    if (idx > -1) {
+        selectedBeatDropSkins.splice(idx, 1);
+    } else {
+        if (selectedBeatDropSkins.length < 5) selectedBeatDropSkins.push(id);
+    }
+    
+    renderBeatDropInventory();
+    document.getElementById('bd-count').innerText = `${selectedBeatDropSkins.length}/5`;
 }
 function showUpgradeResult(win, item) {
     const modal = document.getElementById('upgrade-modal');

@@ -8,7 +8,6 @@
     <link rel="icon" type="image/png" href="assets/logo.png"> 
 </head>
 <body>
-
 <section id="profile-tab" class="tab-view" style="display:none">
     <div class="profile-header-box">
         <div class="profile-info-main">
@@ -66,6 +65,7 @@
         <button onclick="switchTab('battles-tab', this)" class="nav-link">BATTLES</button>
         <!--<button onclick="switchTab('skin-crash-tab', this)" class="nav-link">CRASH</button>-->
         <button onclick="switchTab('upgrade-tab', this); initUpgrader()" class="nav-link">UPGRADER</button>
+        <button onclick="switchTab('beat-drop-tab', this); initBeatDrop()" class="nav-link">SONGY</button>
     </div>
 
     <!-- The Separator Line -->
@@ -99,6 +99,109 @@
 
         <div class="app-body">
             <main class="main-content">
+<section id="beat-drop-tab" class="tab-view" style="display:none">
+    <div class="upgrade-container" style="grid-template-columns: 320px 1fr; height: 680px; max-height: 82vh; gap: 30px;">
+        
+        <!-- LADO ESQUERDO: INVENTÁRIO (Clone literal) -->
+        <div class="upgrade-side">
+            <div class="side-header">
+                YOUR INVENTORY 
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="custom-dropdown" id="bd-inv-dropdown">
+    <div class="dropdown-selected" onclick="toggleDropdown('bd-inv-options')" style="height: 28px; padding: 0 10px; font-size: 10px; min-width: 110px; display: flex; align-items: center; justify-content: space-between;">
+        <span id="selected-bd-inv">Newest</span>
+        <!-- A SETA QUE FALTAVA -->
+        <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" style="margin-left: 5px;">
+            <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+        </svg>
+    </div>
+    <div class="dropdown-options" id="bd-inv-options">
+        <div onclick="selectBDOption('newest', 'Newest')">Newest</div>
+        <div onclick="selectBDOption('high', 'Price: High')">Price: High</div>
+        <div onclick="selectBDOption('low', 'Price: Low')">Price: Low</div>
+    </div>
+</div>
+                    <span id="bd-count" style="color: var(--accent); font-size: 11px; font-weight: 800;">0/5</span>
+                </div>
+            </div>
+            <div id="bd-inv-grid" class="upgrade-grid" style="grid-template-rows: repeat(3, 1fr);"></div>
+            <div class="pagination" id="bd-pagination"></div>
+        </div>
+
+        <!-- CENTRO: JOGO -->
+        <div class="upgrade-center" style="padding: 0; position: relative; justify-content: center;">
+            
+            <!-- CONTAINER DA SKIN COM TRANSIÇÃO -->
+            <div id="bd-preview-wrapper" style="margin-bottom: 40px; height: 220px; display: flex; align-items: center; justify-content: center; width: 100%;">
+        
+        <!-- ESTADO 1: WAITING (Placeholder) -->
+        <div id="bd-preview-placeholder" style="text-align: center; opacity: 0.5;">
+            <div class="radar-animation" style="margin-bottom: 15px;">
+                <svg viewBox="0 0 24 24" width="50" height="50" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a10 10 0 1 0 10 10"></path>
+                    <circle cx="12" cy="12" r="2" fill="#222"></circle>
+                </svg>
+            </div>
+            <div style="font-size: 10px; font-weight: 800; color: #333; letter-spacing: 3px; text-transform: uppercase;">Waiting for Multiplier</div>
+        </div>
+
+        <!-- ESTADO 2: SKIN INFO (Escondido por padrão) -->
+        <div id="bd-preview-container" style="display: none; text-align: center; transition: all 0.3s ease;">
+            <img id="bd-preview-img" src="" style="height: 150px; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 242, 255, 0.4)); margin-bottom: 10px;">
+            <div id="bd-preview-name" style="font-size: 14px; font-weight: 800; color: #fff; text-transform: uppercase;">...</div>
+            <div id="bd-preview-price" style="font-size: 24px; font-weight: 900; color: var(--accent); margin-top: 5px;">$0.00</div>
+        </div>
+
+    </div>
+
+            <!-- WAVEFORM -->
+          <div id="bd-wrapper" style="width: 100%; max-width: 800px; height: 140px; position: relative; overflow: visible; cursor: crosshair;">
+                
+                <!-- CAMADA DE FUNDO (Esta sim corta a zona de profit nos cantos) -->
+                <div id="bd-background-layer" style="position: absolute; inset: 0; overflow: hidden; border-radius: 15px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); z-index: 1;">
+                    <div class="waveform-bg" id="waveform-canvas"></div>
+                    <div id="bd-profit-zone"></div>
+                </div>
+                
+                <!-- ELEMENTOS DE JOGO (Fora do overflow hidden para poderem sair para fora) -->
+                <div id="bd-playhead" class="playhead" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #fff; display: none; box-shadow: 0 0 20px #fff; z-index: 100; pointer-events: none;">
+                    <!-- O MULTIPLICADOR AGORA É UM ELEMENTO ABSOLUTO DENTRO DA BARRA -->
+                    <div id="bd-playhead-mult" style="position: absolute; top: 110%; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-size: 12px; white-space: nowrap; box-shadow: 0 5px 20px rgba(0,0,0,0.8); line-height: 1; z-index: 101;">1.00x</div>
+                </div>
+
+                <div id="bd-target" class="target-marker" style="z-index: 50;"></div>
+            </div>
+
+            <button id="bd-start-btn" class="btn-upgrade-main" onclick="startBeatDropGame()" style="margin-top: 50px; width: 280px;">
+                <span>START DROP</span>
+            </button>
+        </div>
+    </div>
+</section>
+<!-- MODAL DE RESULTADO BEAT DROP -->
+<div id="bd-result-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+    <div class="result-card" id="bd-result-card">
+        <div class="result-glow"></div>
+        <div class="result-header" id="bd-result-title">WINNER</div>
+        
+        <div class="result-body">
+            <div id="bd-result-mult-badge" style="background: var(--accent); color: #000; padding: 5px 15px; border-radius: 50px; font-weight: 900; display: inline-block; margin-bottom: 20px; font-size: 20px;">15.00x</div>
+            <div class="result-item-box" id="bd-result-item-box">
+                <img id="bd-result-img" src="" alt="Skin">
+                <div class="badge" id="bd-result-badge">FN</div>
+            </div>
+            <div class="result-info">
+                <h2 id="bd-result-name">Skin Name</h2>
+                <p id="bd-result-price">$0.00</p>
+            </div>
+        </div>
+
+        <div class="result-footer">
+            <button onclick="closeModalWithAnim('bd-result-modal')" class="btn-upgrade-main" style="padding: 15px 40px; font-size: 14px;">CONTINUE</button>
+        </div>
+    </div>
+</div>
                 <section id="upgrade-tab" class="tab-view" style="display:none">
     <div class="upgrade-container">
         <!-- Left: Inventory -->

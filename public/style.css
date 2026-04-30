@@ -5898,3 +5898,272 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
     filter: none;
     border-color: var(--accent);
 }
+.waveform-wrapper {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    cursor: crosshair;
+    overflow: hidden;
+}
+
+.waveform-bg {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+    padding: 0 10px;
+}
+
+.wave-bar {
+    width: 4px;
+    background: rgba(0, 242, 255, 0.2);
+    border-radius: 2px;
+    transition: height 0.3s;
+}
+
+.playhead {
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 100%;
+    background: #fff;
+    box-shadow: 0 0 10px #fff;
+    z-index: 5;
+    display: none;
+}
+
+.target-marker {
+    position: absolute;
+    top: 0; left: 50%;
+    width: 4px; height: 100%;
+    background: #ffb703;
+    box-shadow: 0 0 15px #ffb703;
+    z-index: 4;
+}
+
+.playing .wave-bar {
+    animation: wavePulse 0.5s infinite alternate;
+}
+
+@keyframes wavePulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(2); background: var(--accent); }
+}
+.waveform-bg {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 5px;
+    background: linear-gradient(to right, rgba(0,242,255,0.05), transparent);
+}
+
+.wave-bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 10px;
+}
+
+.playhead {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 15px #fff;
+    z-index: 10;
+    display: none;
+}
+
+.target-marker {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: #ffb703;
+    box-shadow: 0 0 10px #ffb703;
+    z-index: 5;
+    opacity: 0.8;
+}
+.playhead {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 15px #fff, 0 0 30px var(--accent);
+    z-index: 10;
+    display: none;
+    pointer-events: none;
+    /* Remova transitions de CSS para que o requestAnimationFrame tenha controle total */
+    transition: none; 
+}
+
+.target-marker {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #ffb703;
+    box-shadow: 0 0 10px #ffb703;
+    z-index: 5;
+}
+/* Estilo para o modal de perda no Beat Drop */
+.result-loss #bd-result-mult-badge {
+    background: #ff4444 !important;
+}
+
+#bd-result-item-box {
+    transition: all 0.5s ease;
+}
+
+.result-loss #bd-result-item-box {
+    filter: grayscale(1) brightness(0.5);
+}
+
+/* Garante que o playhead brilhe intensamente */
+.playhead {
+    pointer-events: none;
+    background: #fff;
+    box-shadow: 0 0 20px #fff, 0 0 40px var(--accent);
+}
+
+/* Waveform Pulse Animation */
+.waveform-bg .wave-bar {
+    transition: height 0.1s ease;
+}
+#bd-live-reward img {
+    /* Animação suave para a skin não ficar estática */
+    animation: floatingSkin 3s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes floatingSkin {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Esconde a barra branca quando não está em jogo */
+.playhead {
+    transition: none !important;
+}
+
+/* Efeito de brilho na linha amarela (Target) */
+.target-marker {
+    box-shadow: 0 0 15px rgba(255, 183, 3, 0.6);
+}
+
+/* Estilo da Skin Central com Transição */
+#bd-preview-container {
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Classe aplicada via JS quando a skin muda */
+.skin-changing {
+    opacity: 0 !important;
+    transform: scale(0.8) translateY(10px);
+}
+
+#bd-preview-img {
+    filter: drop-shadow(0 0 30px rgba(0, 242, 255, 0.2));
+    will-change: transform, opacity;
+}
+/* Linha amarela (Alvo) */
+.target-marker {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    box-shadow: 0 0 15px rgba(255, 183, 3, 0.6);
+    z-index: 15;
+    /* Transição suave para o clique */
+    transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Quando o jogo começa, removemos a transição para a barra branca não bugar */
+.bd-playing .target-marker, 
+.bd-playing #bd-profit-zone {
+    transition: none !important;
+}
+/* Zona de Profit */
+#bd-profit-zone {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: var(--accent);
+    opacity: 0.1;
+    pointer-events: none;
+    display: none;
+    width: 20%; /* 15% para cada lado */
+    margin-left: -10%; /* Centraliza no alvo */
+    border-left: 1px solid rgba(0, 242, 255, 0.2);
+    border-right: 1px solid rgba(0, 242, 255, 0.2);
+    /* ANIMAÇÃO CLEAN (Sem mola) */
+    transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Alvo Amarelo */
+.target-marker {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    box-shadow: 0 0 15px rgba(var(--accent), 0.6);
+    /* ANIMAÇÃO CLEAN (Sem mola) */
+    transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Barra Branca (Playhead) */
+.playhead {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 20px #fff;
+    display: none;
+}
+
+/* Multiplicador em baixo da barra */
+#bd-playhead-mult {
+    position: absolute;
+    top: 105%; /* Logo abaixo da waveform */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 900;
+    font-size: 11px;
+    white-space: nowrap;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 20;
+}
+
+/* Trava animação enquanto o jogo corre */
+.bd-playing .target-marker, 
+.bd-playing #bd-profit-zone {
+    transition: none !important;
+}
+@keyframes radarRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.radar-animation svg {
+    animation: radarRotate 4s linear infinite;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+
+#bd-preview-placeholder {
+    transition: opacity 0.3s ease;
+}
