@@ -58,8 +58,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'http://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -391,21 +391,16 @@ async function loadSkinDatabase() {
                     // Tentamos primeiro o weapon_id direto da API
                     let finalWeaponId = 0;
                     if (match.weapon && match.weapon.weapon_id) {
-                        finalWeaponId = parseInt(match.weapon.weapon_id);
-                    } 
-                    // Se for faca e não tiver ID, tentamos mapear pelo objeto weapon.id (ex: "weapon_knife_karambit")
-                    else if (match.id && match.id.includes('knife')) {
-                        // Fazemos o match reverso usando o teu KNIFE_NAMES do server.js
-                        const internalId = Object.keys(KNIFE_NAMES).find(id => 
-                            match.weapon && match.weapon.id === KNIFE_NAMES[id]
-                        );
-                        finalWeaponId = internalId ? parseInt(internalId) : 500; // 500 é Bayonet (padrão)
-                    }
-                    item.weaponId = finalWeaponId;
-
-                    // --- CORREÇÃO DO PAINT KIT ---
-                    // O campo correto na API ByMykel é paint_index
-                    item.paintKit = parseInt(match.paint_index) || 0;
+    finalWeaponId = Number(match.weapon.weapon_id); // Force Number
+} 
+else if (match.id && match.id.includes('knife')) {
+    const internalId = Object.keys(KNIFE_NAMES).find(id => 
+        match.weapon && match.weapon.id === KNIFE_NAMES[id]
+    );
+    finalWeaponId = internalId ? Number(internalId) : 500; // Force Number
+}
+item.weaponId = finalWeaponId;
+item.paintKit = Number(match.paint_index) || 0; // Force Number
 
                     found++;
                 } else {
@@ -9233,12 +9228,16 @@ function refreshSkinPool() {
                 name: item.name,
                 img: item.img,
                 color: item.color,
-                // Pega o preço da primeira raridade como base
+                // These two lines were missing and are CRITICAL:
+                weaponId: item.weaponId || 0,
+                paintKit: item.paintKit || 0,
+                // Use the first rarity as base price
                 value: item.rarities[0].price,
                 conditionShort: item.rarities[0].short
             });
         });
     });
+    console.log(`✅ Skin Pool Refreshed: ${globalSkinPool.length} skins ready for Minigames.`);
 }
 // Chama a função após carregar a skinDatabase
 setTimeout(refreshSkinPool, 5000);
