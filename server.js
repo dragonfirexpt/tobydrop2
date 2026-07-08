@@ -359,6 +359,20 @@ async function loadSkinDatabase() {
                 .trim();
         };
 
+        // --- OTIMIZAÇÃO: Criar um Mapa de busca primeiro ---
+        console.log("⚡ Criando mapa de busca...");
+        const apiLookup = new Map();
+        apiData.forEach(s => {
+            const normName = normalize(s.name);
+            const phase = normalize(s.phase || "");
+            // Guardamos várias chaves para garantir que encontramos (com e sem fase)
+            apiLookup.set(normName, s);
+            if (phase) apiLookup.set(normName + phase, s);
+        });
+
+        // Limpar a memória do array original que não precisamos mais
+        // apiData = null; 
+
         console.log("🎨 A vincular imagens e IDs técnicos...");
         let found = 0;
         let missed = 0;
@@ -366,52 +380,35 @@ async function loadSkinDatabase() {
         for (let caseKey in caseData) {
             caseData[caseKey].items.forEach(item => {
                 if (item.img && item.img.startsWith('http')) return; 
+                
                 const searchKey = normalize(item.name);
-                const isGamma = searchKey.includes('gamma');
-
-                const match = apiData.find(s => {
-                    const apiN = normalize(s.name);
-                    const apiP = normalize(s.phase || "");
-                    const apiHasGamma = apiN.includes('gamma');
-                    if (isGamma !== apiHasGamma) return false;
-                    const combined = apiN.includes(apiP) ? apiN : apiN + apiP;
-                    const specialPhases = ['sapphire', 'ruby', 'blackpearl', 'emerald', 'phase1', 'phase2', 'phase3', 'phase4'];
-                    const phaseToFind = specialPhases.find(p => searchKey.includes(p));
-                    if (phaseToFind) {
-                        const weaponType = normalize(item.name.split('|')[0]);
-                        return combined.includes(weaponType) && combined.includes(phaseToFind);
-                    }
-                    return combined === searchKey || combined.includes(searchKey);
-                });
+                // Busca instantânea no Mapa (O(1) em vez de O(N))
+                const match = apiLookup.get(searchKey);
 
                 if (match) {
                     item.img = match.image;
-
-                    // --- CORREÇÃO DO WEAPON ID ---
-                    // Tentamos primeiro o weapon_id direto da API
                     let finalWeaponId = 0;
                     if (match.weapon && match.weapon.weapon_id) {
-    finalWeaponId = Number(match.weapon.weapon_id); // Force Number
-} 
-else if (match.id && match.id.includes('knife')) {
-    const internalId = Object.keys(KNIFE_NAMES).find(id => 
-        match.weapon && match.weapon.id === KNIFE_NAMES[id]
-    );
-    finalWeaponId = internalId ? Number(internalId) : 500; // Force Number
-}
-item.weaponId = finalWeaponId;
-item.paintKit = Number(match.paint_index) || 0; // Force Number
-
+                        finalWeaponId = Number(match.weapon.weapon_id);
+                    } else if (match.id && match.id.includes('knife')) {
+                        const internalId = Object.keys(KNIFE_NAMES).find(id => 
+                            match.weapon && match.weapon.id === KNIFE_NAMES[id]
+                        );
+                        finalWeaponId = internalId ? Number(internalId) : 500;
+                    }
+                    item.weaponId = finalWeaponId;
+                    item.paintKit = Number(match.paint_index) || 0;
                     found++;
                 } else {
                     item.img = "https://via.placeholder.com/512x384?text=Not+Found";
-                    item.weaponId = 0;
-                    item.paintKit = 0;
                     missed++;
                 }
             });
         }
-        console.log(`✅ SUCESSO: ${found} skins configuradas com IDs e Imagens | ${missed} falhas.`);
+        console.log(`✅ SUCESSO: ${found} skins configuradas | ${missed} falhas.`);
+        
+        // Limpar o mapa da memória após o uso
+        apiLookup.clear();
         refreshSkinPool(); 
     } catch (error) {
         console.error("❌ Erro fatal:", error.message);
@@ -9239,8 +9236,6 @@ function refreshSkinPool() {
     });
     console.log(`✅ Skin Pool Refreshed: ${globalSkinPool.length} skins ready for Minigames.`);
 }
-// Chama a função após carregar a skinDatabase
-setTimeout(refreshSkinPool, 5000);
 let crashState = {
     multiplier: 1.00,
     status: 'waiting', // waiting, running, crashed
