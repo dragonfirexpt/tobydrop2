@@ -345,8 +345,10 @@ const rollCondition = () => {
 };
 async function loadSkinDatabase() {
     try {
-        console.log("📥 Iniciando filtragem de memória...");
-
+        console.log("file_download Aceder à API de skins...");
+        const response = await axios.get('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json', { timeout: 15000 });
+        const apiData = Array.isArray(response.data) ? response.data : Object.values(response.data);
+        
         const normalize = (str) => {
             if (!str) return "";
             return str.toLowerCase()
@@ -357,69 +359,45 @@ async function loadSkinDatabase() {
                 .trim();
         };
 
-        // 1. Mapear APENAS os nomes das skins que você realmente usa no site
-        const targetSkins = new Set();
-        for (let caseKey in caseData) {
-            caseData[caseKey].items.forEach(item => {
-                targetSkins.add(normalize(item.name));
-            });
-        }
-        console.log(`🎯 Alvo: Procurando imagens para ${targetSkins.size} skins únicas.`);
-
-        // 2. Baixar a API
-        const response = await axios.get('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json', { timeout: 20000 });
-        let apiData = Array.isArray(response.data) ? response.data : Object.values(response.data);
-        
-        // 3. Criar um mapa temporário apenas com os matches
-        const filteredMap = new Map();
-        
+        // --- OTIMIZAÇÃO: Criar um Mapa de busca primeiro ---
+        console.log("⚡ Criando mapa de busca...");
+        const apiLookup = new Map();
         apiData.forEach(s => {
             const normName = normalize(s.name);
-            const phase = s.phase ? normalize(s.phase) : "";
-            
-            // Se a skin da API estiver na nossa lista de alvos, guardamos os dados dela
-            if (targetSkins.has(normName) || (s.phase && targetSkins.has(normName + phase))) {
-                const key = s.phase ? normName + phase : normName;
-                filteredMap.set(key, {
-                    image: s.image,
-                    paint_index: s.paint_index,
-                    weapon_id: s.weapon ? s.weapon.weapon_id : null,
-                    weapon_internal_id: s.weapon ? s.weapon.id : null,
-                    id: s.id
-                });
-            }
+            const phase = normalize(s.phase || "");
+            // Guardamos várias chaves para garantir que encontramos (com e sem fase)
+            apiLookup.set(normName, s);
+            if (phase) apiLookup.set(normName + phase, s);
         });
 
-        // --- PASSO CRUCIAL: Limpar a API bruta da memória imediatamente ---
-        apiData = null; 
-        response.data = null; 
-        console.log("♻️ Memória da API limpa. Aplicando dados filtrados...");
+        // Limpar a memória do array original que não precisamos mais
+        // apiData = null; 
 
-        // 4. Vincular os dados às suas caixas usando o mapa leve
+        console.log("🎨 A vincular imagens e IDs técnicos...");
         let found = 0;
         let missed = 0;
 
         for (let caseKey in caseData) {
             caseData[caseKey].items.forEach(item => {
                 if (item.img && item.img.startsWith('http')) return; 
-
+                
                 const searchKey = normalize(item.name);
-                const match = filteredMap.get(searchKey);
+                // Busca instantânea no Mapa (O(1) em vez de O(N))
+                const match = apiLookup.get(searchKey);
 
                 if (match) {
                     item.img = match.image;
-                    item.paintKit = Number(match.paint_index) || 0;
-                    
                     let finalWeaponId = 0;
-                    if (match.weapon_id) {
-                        finalWeaponId = Number(match.weapon_id);
+                    if (match.weapon && match.weapon.weapon_id) {
+                        finalWeaponId = Number(match.weapon.weapon_id);
                     } else if (match.id && match.id.includes('knife')) {
                         const internalId = Object.keys(KNIFE_NAMES).find(id => 
-                            match.weapon_internal_id === KNIFE_NAMES[id]
+                            match.weapon && match.weapon.id === KNIFE_NAMES[id]
                         );
                         finalWeaponId = internalId ? Number(internalId) : 500;
                     }
                     item.weaponId = finalWeaponId;
+                    item.paintKit = Number(match.paint_index) || 0;
                     found++;
                 } else {
                     item.img = "https://via.placeholder.com/512x384?text=Not+Found";
@@ -427,13 +405,11 @@ async function loadSkinDatabase() {
                 }
             });
         }
-
-        console.log(`✅ SUCESSO: ${found} vinculadas | ${missed} falhas.`);
+        console.log(`✅ SUCESSO: ${found} skins configuradas | ${missed} falhas.`);
         
-        // Limpar o mapa filtrado também
-        filteredMap.clear();
+        // Limpar o mapa da memória após o uso
+        apiLookup.clear();
         refreshSkinPool(); 
-
     } catch (error) {
         console.error("❌ Erro fatal:", error.message);
     }
