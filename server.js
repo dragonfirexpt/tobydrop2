@@ -32,11 +32,11 @@ const SteamStrategy = require('passport-steam').Strategy;
 const mysql = require('mysql2');
 
 const sqlConnection = mysql.createPool({
-    host: 'mysql-2e9dbd1e-nottyastobusiness-6048.k.aivencloud.com',
-    user: 'avnadmin',
-    password: 'AVNS_kPJXVEI34RWcxvS3bnl',
-    database: 'defaultdb',
-    port: 23869,
+    host: 'jz5z6v.h.filess.io',
+    user: 'defaultdb_greatlyeye',
+    password: '3fbe4519527456436d9fd12e0818e1e043b79f57',
+    database: 'defaultdb_greatlyeye',
+    port: 61001,
     ssl: {
         rejectUnauthorized: false
     },
