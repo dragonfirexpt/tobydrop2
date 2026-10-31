@@ -6,6 +6,9 @@ const { Server } = require('socket.io');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const { chain } = require('stream-chain');
+const { parser } = require('stream-json');
+const { streamObject } = require('stream-json/streamers/StreamObject');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -345,41 +348,52 @@ const rollCondition = () => {
 };
 async function loadSkinDatabase() {
     try {
-        console.log("📥 Iniciando filtragem de memória...");
+        console.log("📥 A ler a base de dados local...");
 
         const normalize = (str) => {
             if (!str) return "";
             return str.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 .replace(/★/g, "")
                 .replace(/knife/g, "")
                 .replace(/[^a-z0-9]/g, "")
                 .trim();
         };
 
-        // 1. Mapear APENAS os nomes das skins que você realmente usa no site
+        // 1. Criar lista das skins utilizadas
         const targetSkins = new Set();
+
         for (let caseKey in caseData) {
             caseData[caseKey].items.forEach(item => {
                 targetSkins.add(normalize(item.name));
             });
         }
-        console.log(`🎯 Alvo: Procurando imagens para ${targetSkins.size} skins únicas.`);
 
-        // 2. Baixar a API
-        const response = await axios.get('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json', { timeout: 20000 });
-        let apiData = Array.isArray(response.data) ? response.data : Object.values(response.data);
-        
-        // 3. Criar um mapa temporário apenas com os matches
+        console.log(`🎯 A procurar ${targetSkins.size} skins únicas.`);
+
+        // 2. Ler o JSON local em streaming
+        const filePath = path.join(__dirname, "data", "all.json");
+
+        const pipeline = chain([
+            fs.createReadStream(filePath),
+            parser(),
+            streamObject()
+        ]);
+
         const filteredMap = new Map();
-        
-        apiData.forEach(s => {
+
+        // 3. Guardar apenas os dados necessários
+        for await (const entry of pipeline) {
+            const s = entry.value;
+
             const normName = normalize(s.name);
             const phase = s.phase ? normalize(s.phase) : "";
-            
-            // Se a skin da API estiver na nossa lista de alvos, guardamos os dados dela
-            if (targetSkins.has(normName) || (s.phase && targetSkins.has(normName + phase))) {
+
+            if (targetSkins.has(normName) ||
+                (s.phase && targetSkins.has(normName + phase))) {
+
                 const key = s.phase ? normName + phase : normName;
+
                 filteredMap.set(key, {
                     image: s.image,
                     paint_index: s.paint_index,
@@ -388,20 +402,17 @@ async function loadSkinDatabase() {
                     id: s.id
                 });
             }
-        });
+        }
 
-        // --- PASSO CRUCIAL: Limpar a API bruta da memória imediatamente ---
-        apiData = null; 
-        response.data = null; 
-        console.log("♻️ Memória da API limpa. Aplicando dados filtrados...");
+        console.log("♻️ JSON processado. A aplicar imagens...");
 
-        // 4. Vincular os dados às suas caixas usando o mapa leve
+        // 4. Associar imagens às skins
         let found = 0;
         let missed = 0;
 
         for (let caseKey in caseData) {
             caseData[caseKey].items.forEach(item => {
-                if (item.img && item.img.startsWith('http')) return; 
+                if (item.img && item.img.startsWith("http")) return;
 
                 const searchKey = normalize(item.name);
                 const match = filteredMap.get(searchKey);
@@ -409,16 +420,19 @@ async function loadSkinDatabase() {
                 if (match) {
                     item.img = match.image;
                     item.paintKit = Number(match.paint_index) || 0;
-                    
+
                     let finalWeaponId = 0;
+
                     if (match.weapon_id) {
                         finalWeaponId = Number(match.weapon_id);
-                    } else if (match.id && match.id.includes('knife')) {
-                        const internalId = Object.keys(KNIFE_NAMES).find(id => 
+                    } else if (match.id && match.id.includes("knife")) {
+                        const internalId = Object.keys(KNIFE_NAMES).find(id =>
                             match.weapon_internal_id === KNIFE_NAMES[id]
                         );
+
                         finalWeaponId = internalId ? Number(internalId) : 500;
                     }
+
                     item.weaponId = finalWeaponId;
                     found++;
                 } else {
@@ -428,14 +442,13 @@ async function loadSkinDatabase() {
             });
         }
 
-        console.log(`✅ SUCESSO: ${found} vinculadas | ${missed} falhas.`);
-        
-        // Limpar o mapa filtrado também
+        console.log(`✅ ${found} skins encontradas | ${missed} não encontradas.`);
+
         filteredMap.clear();
-        refreshSkinPool(); 
+        refreshSkinPool();
 
     } catch (error) {
-        console.error("❌ Erro fatal:", error.message);
+        console.error("❌ Erro ao ler a base de dados:", error);
     }
 }
 function getBotData(botId) {
