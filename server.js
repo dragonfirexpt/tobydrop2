@@ -64,8 +64,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'http://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'http://tobydrop2.onrender.com/',
+    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return',
+    realm: 'https://tobydrop2.onrender.com/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -7968,6 +7968,266 @@ app.post('/api/login', async (req, res) => {
     } else res.status(401).json({ error: "Invalid login" });
 });
 
+// ===================== CATCH (pares / memória) =====================
+const CATCH_MULTS = [1, 1.15, 1.35, 1.65, 2.05, 2.6, 3.4, 4.5, 6, 8, 11, 15, 20]; // índice = nº de pares feitos (0 a 12)
+const CATCH_PAIRS = 12;
+const CATCH_MIN_CASHOUT_PAIRS = 1; // pares mínimos para poder fazer cash out
+const CATCH_MAX_MISSES = 8;        // pares errados permitidos antes de perder
+const CATCH_BASE_TIME = 60000;     // ms
+const CATCH_TIME_PER_PAIR = 3000;  // ms ganhos por cada par certo
+const CATCH_MIN_FLIP_GAP = 200;    // ms mínimos entre viragens (anti-bot)
+const activeCatchGames = new Map(); // userId -> jogo
+
+// Pasta com as fotos personalizadas do Catch: public/catch/
+const CATCH_FOLDER = path.join(__dirname, 'public', 'catch');
+const CATCH_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']);
+
+function listCatchPhotos() {
+    try {
+        return fs.readdirSync(CATCH_FOLDER)
+            .filter(f => CATCH_EXTS.has(path.extname(f).toLowerCase()))
+            .map(f => ({
+                img: '/catch/' + encodeURIComponent(f),
+                name: path.basename(f, path.extname(f)).replace(/[_-]+/g, ' ')
+            }));
+    } catch (e) {
+        return [];
+    }
+}
+
+function buildCatchBoard() {
+    // Escolhe 12 fotos aleatórias da pasta (precisa de pelo menos 12 ficheiros)
+    const photos = listCatchPhotos().sort(() => Math.random() - 0.5);
+    if (photos.length < CATCH_PAIRS) return null;
+    const uniq = photos.slice(0, CATCH_PAIRS);
+
+    // 24 cartas espalhadas num "mapa" 6x4, com posição aleatória dentro de cada célula
+    const cols = 6, rows = 4;
+    const cells = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ r, c });
+    cells.sort(() => Math.random() - 0.5);
+
+    const tiles = [];
+    let n = 0;
+    uniq.forEach((photo, symbol) => {
+        for (let k = 0; k < 2; k++) {
+            const cell = cells[n];
+            tiles.push({
+                id: n,
+                symbol,
+                img: photo.img,
+                name: photo.name,
+                x: ((cell.c + 0.3 + Math.random() * 0.4) / cols) * 100,
+                y: ((cell.r + 0.3 + Math.random() * 0.4) / rows) * 100,
+                rot: Math.round((Math.random() * 24 - 12) * 10) / 10
+            });
+            n++;
+        }
+    });
+    return tiles;
+}
+
+// O cliente só recebe posição e rotação. A foto de cada carta só é enviada quando ela é virada.
+const catchHiddenTiles = g => g.tiles.map(t => ({ id: t.id, x: t.x, y: t.y, rot: t.rot }));
+const catchReveal = t => ({ id: t.id, img: t.img, name: t.name });
+
+function catchPublic(g) {
+    const pairs = g.matched.size / 2;
+    return {
+        pairs,
+        multiplier: CATCH_MULTS[pairs],
+        misses: g.misses,
+        maxMisses: CATCH_MAX_MISSES,
+        deadline: g.deadline,
+        now: Date.now(),
+        betValue: g.betValue,
+        minPairs: CATCH_MIN_CASHOUT_PAIRS
+    };
+}
+
+async function catchPayout(user, g, multiplier) {
+    const template = getClosestSkin(g.betValue * multiplier);
+    if (!template) return null;
+    const newSkin = {
+        name: template.name,
+        img: template.img,
+        color: template.color,
+        conditionShort: template.conditionShort,
+        value: template.value,
+        weaponId: template.weaponId,
+        paintKit: template.paintKit,
+        wear: generateRandomWear(template.conditionShort),
+        seed: generateRandomSeed(),
+        id: Math.random().toString(36).substr(2, 9),
+        equippedTeam: 0
+    };
+    user.inventory.push(newSkin);
+    user.markModified('inventory');
+    await user.save();
+    return newSkin;
+}
+
+app.post('/api/catch/start', async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) return res.status(401).json({ error: 'Não autorizado' });
+
+        const existing = activeCatchGames.get(String(user._id));
+        if (existing && Date.now() > existing.deadline + 1000) activeCatchGames.delete(String(user._id));
+        if (activeCatchGames.has(String(user._id))) return res.status(400).json({ error: 'Já tens um jogo a decorrer.' });
+
+        const ids = Array.isArray(req.body.itemIds) ? req.body.itemIds.slice(0, 5) : [];
+        const items = user.inventory.filter(i => ids.includes(i.id));
+        if (items.length === 0) return res.status(400).json({ error: 'Seleciona pelo menos 1 skin.' });
+        if (items.some(i => i.equippedTeam > 0)) return res.status(400).json({ error: 'Remove as skins equipadas do loadout antes de apostar.' });
+
+        const tiles = buildCatchBoard();
+        if (!tiles) return res.status(400).json({ error: 'A pasta public/catch precisa de pelo menos 12 fotos.' });
+
+        const betValue = items.reduce((s, i) => s + i.value, 0);
+        const betIds = items.map(i => i.id);
+        user.inventory = user.inventory.filter(i => !betIds.includes(i.id));
+        user.markModified('inventory');
+        await user.save();
+
+        const g = {
+            tiles,
+            betValue,
+            matched: new Set(),
+            open: null,
+            misses: 0,
+            lastFlipAt: 0,
+            deadline: Date.now() + CATCH_BASE_TIME
+        };
+        activeCatchGames.set(String(user._id), g);
+
+        res.json({
+            success: true,
+            tiles: catchHiddenTiles(g),
+            inventory: user.inventory,
+            state: catchPublic(g)
+        });
+    } catch (e) {
+        console.error('Catch start error:', e);
+        res.status(500).json({ error: 'Erro ao iniciar o Catch' });
+    }
+});
+
+// Retomar jogo (recarregar a página) ou confirmar fim por tempo
+app.get('/api/catch/state', async (req, res) => {
+    try {
+        if (!req.session.userId) return res.json({ active: false });
+        const key = String(req.session.userId);
+        const g = activeCatchGames.get(key);
+        if (!g) return res.json({ active: false });
+        if (Date.now() > g.deadline + 1000) {
+            activeCatchGames.delete(key);
+            return res.json({ active: false, over: true, reason: 'time' });
+        }
+        res.json({
+            active: true,
+            tiles: catchHiddenTiles(g),
+            matched: [...g.matched].map(id => catchReveal(g.tiles[id])),
+            opened: g.open !== null ? catchReveal(g.tiles[g.open]) : null,
+            state: catchPublic(g)
+        });
+    } catch (e) {
+        res.json({ active: false });
+    }
+});
+
+// Virar uma carta. 1ª carta: fica aberta. 2ª carta: o servidor decide se é par.
+app.post('/api/catch/flip', async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) return res.status(401).json({ error: 'Não autorizado' });
+        const key = String(user._id);
+        const g = activeCatchGames.get(key);
+        if (!g) return res.status(400).json({ error: 'Sem jogo ativo.' });
+
+        const now = Date.now();
+        if (now > g.deadline + 1000) {
+            activeCatchGames.delete(key);
+            return res.json({ success: true, over: true, reason: 'time', win: false });
+        }
+
+        const id = Number(req.body.id);
+        const tile = g.tiles[id];
+        if (!tile || g.matched.has(id) || g.open === id) {
+            return res.status(400).json({ error: 'Carta inválida.' });
+        }
+        if (now - g.lastFlipAt < CATCH_MIN_FLIP_GAP) {
+            return res.status(429).json({ error: 'Calma, demasiado rápido.' });
+        }
+        g.lastFlipAt = now;
+
+        // 1ª carta do par
+        if (g.open === null) {
+            g.open = id;
+            return res.json({ success: true, opened: catchReveal(tile), state: catchPublic(g) });
+        }
+
+        // 2ª carta do par
+        const first = g.tiles[g.open];
+        g.open = null;
+        const ids = [first.id, tile.id];
+        const second = catchReveal(tile);
+
+        if (first.symbol === tile.symbol) {
+            g.matched.add(first.id);
+            g.matched.add(tile.id);
+            g.deadline += CATCH_TIME_PER_PAIR;
+
+            const pairs = g.matched.size / 2;
+            const multiplier = CATCH_MULTS[pairs];
+
+            // Mapa limpo = cash out automático
+            if (pairs >= CATCH_PAIRS) {
+                activeCatchGames.delete(key);
+                const skin = await catchPayout(user, g, multiplier);
+                return res.json({ success: true, correct: true, ids, second, over: true, reason: 'cleared', win: !!skin, skin, multiplier, inventory: user.inventory });
+            }
+            return res.json({ success: true, correct: true, ids, second, state: catchPublic(g) });
+        }
+
+        g.misses++;
+        if (g.misses >= CATCH_MAX_MISSES) {
+            activeCatchGames.delete(key);
+            return res.json({ success: true, correct: false, ids, second, over: true, reason: 'misses', win: false });
+        }
+        res.json({ success: true, correct: false, ids, second, state: catchPublic(g) });
+    } catch (e) {
+        console.error('Catch flip error:', e);
+        res.status(500).json({ error: 'Erro no Catch' });
+    }
+});
+
+app.post('/api/catch/cashout', async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) return res.status(401).json({ error: 'Não autorizado' });
+        const key = String(user._id);
+        const g = activeCatchGames.get(key);
+        if (!g) return res.status(400).json({ error: 'Sem jogo ativo.' });
+
+        if (Date.now() > g.deadline + 1000) {
+            activeCatchGames.delete(key);
+            return res.json({ success: true, over: true, reason: 'time', win: false });
+        }
+        const pairs = g.matched.size / 2;
+        if (pairs < CATCH_MIN_CASHOUT_PAIRS) return res.status(400).json({ error: `Faz pelo menos ${CATCH_MIN_CASHOUT_PAIRS} ${CATCH_MIN_CASHOUT_PAIRS === 1 ? 'par' : 'pares'} antes de sair.` });
+
+        activeCatchGames.delete(key);
+        const multiplier = CATCH_MULTS[pairs];
+        const skin = await catchPayout(user, g, multiplier);
+        res.json({ success: true, over: true, reason: 'cashout', win: !!skin, skin, multiplier, inventory: user.inventory });
+    } catch (e) {
+        console.error('Catch cashout error:', e);
+        res.status(500).json({ error: 'Erro no cash out' });
+    }
+});
+// ===================== FIM CATCH =====================
+
 app.get('/api/me', async (req, res) => {
     if (!req.session.userId) return res.json({ loggedIn: false });
     const user = await User.findById(req.session.userId);
@@ -8789,5 +9049,3 @@ mongoose.connection.once('open', () => {
 server.listen(3000, "0.0.0.0", () => {
   console.log("🚀 TOBYDROP Running");
 });
-
-
