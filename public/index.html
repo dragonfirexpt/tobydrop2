@@ -66,6 +66,7 @@
         <!--<button onclick="switchTab('skin-crash-tab', this)" class="nav-link">CRASH</button>-->
         <button onclick="switchTab('upgrade-tab', this); initUpgrader()" class="nav-link">UPGRADER</button>
         <button onclick="switchTab('beat-drop-tab', this); initBeatDrop()" class="nav-link">SONGY</button>
+        <button onclick="switchTab('catch-tab', this); initCatch()" class="nav-link">CATCH</button>
     </div>
 
     <!-- The Separator Line -->
@@ -179,6 +180,27 @@
         </div>
     </div>
 </section>
+<!-- MODAL DE RESULTADO CATCH -->
+<div id="catch-result-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+    <div class="result-card" id="catch-result-card">
+        <div class="result-glow"></div>
+        <div class="result-header" id="catch-result-title">SUCCESS</div>
+        <div class="result-body">
+            <div id="catch-result-mult-badge" style="background: var(--accent); color: #000; padding: 5px 15px; border-radius: 50px; font-weight: 900; display: inline-block; margin-bottom: 20px; font-size: 20px;">1.00x</div>
+            <div class="result-item-box" id="catch-result-item-box">
+                <img id="catch-result-img" src="" alt="Skin">
+                <div class="badge" id="catch-result-badge">FN</div>
+            </div>
+            <div class="result-info" id="catch-result-info">
+                <h2 id="catch-result-name">Skin Name</h2>
+                <p id="catch-result-price">$0.00</p>
+            </div>
+        </div>
+        <div class="result-footer">
+            <button onclick="closeModalWithAnim('catch-result-modal')" class="btn-upgrade-main" style="padding: 15px 40px; font-size: 14px;">CONTINUE</button>
+        </div>
+    </div>
+</div>
 <!-- MODAL DE RESULTADO BEAT DROP -->
 <div id="bd-result-modal" class="modal-overlay" style="display: none; z-index: 9999;">
     <div class="result-card" id="bd-result-card">
@@ -202,7 +224,89 @@
         </div>
     </div>
 </div>
-                <section id="upgrade-tab" class="tab-view" style="display:none">
+                <section id="catch-tab" class="tab-view" style="display:none">
+    <div class="upgrade-container" style="grid-template-columns: 320px 1fr; height: 720px; max-height: 84vh; gap: 30px;">
+
+        <!-- ESQUERDA: INVENTÁRIO -->
+        <div class="upgrade-side">
+            <div class="side-header">
+                YOUR INVENTORY
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="custom-dropdown" id="catch-inv-dropdown">
+                        <div class="dropdown-selected" onclick="toggleDropdown('catch-inv-options')" style="height: 28px; padding: 0 10px; font-size: 10px; min-width: 110px; display: flex; align-items: center; justify-content: space-between;">
+                            <span id="selected-catch-inv">Newest</span>
+                            <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" style="margin-left: 5px;"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                        </div>
+                        <div class="dropdown-options" id="catch-inv-options">
+                            <div onclick="selectCatchOption('newest', 'Newest')">Newest</div>
+                            <div onclick="selectCatchOption('high', 'Price: High')">Price: High</div>
+                            <div onclick="selectCatchOption('low', 'Price: Low')">Price: Low</div>
+                        </div>
+                    </div>
+                    <span id="catch-count" style="color: var(--accent); font-size: 11px; font-weight: 800;">0/5</span>
+                </div>
+            </div>
+            <div id="catch-inv-grid" class="upgrade-grid" style="grid-template-rows: repeat(3, 1fr);"></div>
+            <div class="pagination" id="catch-pagination"></div>
+        </div>
+
+        <!-- CENTRO: MAPA -->
+        <div class="upgrade-center catch-center">
+            <div class="catch-hud">
+                <div class="catch-hud-box">
+                    <small>MULTIPLIER</small>
+                    <b id="catch-mult">1.00x</b>
+                </div>
+                <div class="catch-hud-box">
+                    <small>PAIRS</small>
+                    <b><span id="catch-pairs">0</span>/12</b>
+                </div>
+                <div class="catch-hud-box">
+                    <small>MISSES</small>
+                    <b id="catch-misses">0/8</b>
+                </div>
+                <div class="catch-hud-box">
+                    <small>TIME</small>
+                    <b id="catch-time">--</b>
+                </div>
+            </div>
+
+            <div class="catch-timebar"><div id="catch-timebar-fill"></div></div>
+
+            <div class="catch-map-wrap">
+            <div id="catch-flash" class="catch-flash"></div>
+            <div id="catch-map" class="catch-map">
+                <div id="catch-map-idle" class="catch-map-idle">
+                    <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#2a2f3d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h8M3 17h8"/></svg>
+                    <span>Select your skins and start</span>
+                    <small>All cards are face down. Flip two to find identical skins. Each pair raises your multiplier. Too many misses or no time left = you lose everything.</small>
+                </div>
+            </div>
+            </div>
+
+            <div class="catch-preview">
+                <div id="catch-preview-empty">Potential reward</div>
+                <div id="catch-preview-box" style="display:none;">
+                    <img id="catch-preview-img" src="">
+                    <div>
+                        <b id="catch-preview-name">...</b>
+                        <span id="catch-preview-price">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="catch-actions">
+                <button id="catch-start-btn" class="btn-upgrade-main" onclick="startCatchGame()" style="width: 260px;">
+                    <span>START CATCH</span>
+                </button>
+                <button id="catch-cash-btn" class="btn-upgrade-main catch-cash" onclick="cashOutCatch()" style="width: 260px; display:none;">
+                    <span><small>CASH OUT</small></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+<section id="upgrade-tab" class="tab-view" style="display:none">
     <div class="upgrade-container">
         <!-- Left: Inventory -->
         <div class="upgrade-side">
@@ -754,8 +858,16 @@
             <!-- VERSÃO MAIS RECENTE -->
              <div class="changelog-item">
                 <div class="ch-header">
-                    <span class="ch-date">31 OCT, 2026</span>
+                    <span class="ch-date">1 NOV, 2026</span>
                     <span class="ch-tag">NEW</span>
+                </div>
+                <ul class="ch-list">
+                    <li>Novo modo de jogo <b>CATCH</b>: vira as cartas, encontra pares de skins iguais (as fotos vêm de uma pasta de fotos personalizadas), multiplica a tua aposta até <b>20x</b> e faz cash out quando quiseres.</li>
+                </ul>
+            </div>
+             <div class="changelog-item">
+                <div class="ch-header">
+                    <span class="ch-date">31 OCT, 2026</span>
                 </div>
                 <ul class="ch-list">
                     <li><b>Site de Volta</b>.</li>

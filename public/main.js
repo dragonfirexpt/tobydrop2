@@ -2640,3 +2640,423 @@ socket.on('updateOnlineCount', (count) => {
     const el = document.getElementById('users-online');
     if (el) el.innerText = count;
 });
+// ===================== CATCH (pares / memória) =====================
+let catchSortMode = 'newest';
+let catchPage = 0;
+let selectedCatchSkins = [];
+let catchGame = null; // { tiles, matched:Set, openId, locked, offset, deadline, state }
+let catchTimerInterval = null;
+let catchFlashTimeout = null;
+
+function catchIdleHTML() {
+    return `
+        <div id="catch-map-idle" class="catch-map-idle">
+            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#2a2f3d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h8M3 17h8"/></svg>
+            <span>Select your skins and start</span>
+            <small>All cards are face down. Flip two to find identical skins. Each pair raises your multiplier. Too many misses or no time left = you lose everything.</small>
+        </div>`;
+}
+
+// ---------- inventário ----------
+function selectCatchOption(val, text) {
+    document.getElementById('selected-catch-inv').innerText = text;
+    document.getElementById('catch-inv-options').classList.remove('show');
+    catchSortMode = val;
+    catchPage = 0;
+    renderCatchInventory();
+}
+
+function renderCatchInventory() {
+    const grid = document.getElementById('catch-inv-grid');
+    if (!grid || !currentUser) return;
+
+    let items = [...currentUser.inventory];
+    if (catchSortMode === 'high') items.sort((a, b) => b.value - a.value);
+    else if (catchSortMode === 'low') items.sort((a, b) => a.value - b.value);
+    else items.reverse();
+
+    const start = catchPage * 9;
+    const pageItems = items.slice(start, start + 9);
+    const busy = !!catchGame;
+
+    grid.innerHTML = pageItems.map(item => {
+        const isSelected = selectedCatchSkins.includes(item.id);
+        const equipped = item.equippedTeam > 0;
+        const dim = equipped || busy ? 'opacity:0.35; pointer-events:none;' : '';
+        return `
+            <div class="up-card ${isSelected ? 'selected' : ''}" style="${dim}" title="${equipped ? 'Equipped in CS2 loadout' : ''}" onclick="toggleCatchSkin('${item.id}')">
+                <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
+                <img src="${item.img}">
+                <b>${item.name}</b>
+                <span>$${formatCurrency(item.value)}</span>
+            </div>`;
+    }).join('');
+
+    const container = document.getElementById('catch-pagination');
+    const totalPages = Math.ceil(items.length / 9);
+    if (totalPages <= 1) { container.innerHTML = ''; }
+    else {
+        let html = '';
+        for (let i = 0; i < totalPages; i++) {
+            html += `<button class="${i === catchPage ? 'active' : ''}" onclick="catchPage=${i}; renderCatchInventory();">${i + 1}</button>`;
+        }
+        container.innerHTML = html;
+    }
+    updateCatchBetUI();
+}
+
+function toggleCatchSkin(id) {
+    if (catchGame) return;
+    const idx = selectedCatchSkins.indexOf(id);
+    if (idx > -1) selectedCatchSkins.splice(idx, 1);
+    else if (selectedCatchSkins.length < 5) selectedCatchSkins.push(id);
+    renderCatchInventory();
+}
+
+function catchBetValue() {
+    if (!currentUser) return 0;
+    return currentUser.inventory
+        .filter(i => selectedCatchSkins.includes(i.id))
+        .reduce((sum, i) => sum + i.value, 0);
+}
+
+function updateCatchBetUI() {
+    const countEl = document.getElementById('catch-count');
+    if (countEl) countEl.innerText = `${selectedCatchSkins.length}/5`;
+    if (!catchGame) updateCatchPreview(catchBetValue());
+}
+
+function updateCatchPreview(value) {
+    const empty = document.getElementById('catch-preview-empty');
+    const box = document.getElementById('catch-preview-box');
+    if (!empty || !box) return;
+    const skin = value > 0 ? getClosestSkinLocal(value) : null;
+    if (!skin) {
+        empty.style.display = 'block';
+        box.style.display = 'none';
+        return;
+    }
+    empty.style.display = 'none';
+    box.style.display = 'flex';
+    document.getElementById('catch-preview-img').src = skin.img;
+    document.getElementById('catch-preview-name').innerText = skin.name;
+    document.getElementById('catch-preview-price').innerText = `$${formatCurrency(skin.price)}`;
+}
+
+function catchFlash(text, color) {
+    const el = document.getElementById('catch-flash');
+    if (!el) return;
+    el.innerText = text;
+    el.style.color = color || '#fff';
+    el.classList.add('show');
+    clearTimeout(catchFlashTimeout);
+    catchFlashTimeout = setTimeout(() => el.classList.remove('show'), 1400);
+}
+
+// ---------- ciclo do jogo ----------
+async function initCatch() {
+    renderCatchInventory();
+    if (catchGame) return; // jogo já a decorrer, não mexer no mapa
+    try {
+        const res = await fetch('/api/catch/state');
+        const data = await res.json();
+        if (data.active) {
+            beginCatch(data.tiles, data.state, data.matched, data.opened);
+        } else if (data.over) {
+            showCatchResult(false, null, 0, 'time');
+            loadInventory();
+        }
+    } catch (e) { /* sem jogo ativo */ }
+}
+
+async function startCatchGame() {
+    if (catchGame) return;
+    if (selectedCatchSkins.length === 0) return catchFlash('Select at least 1 skin', '#ffb703');
+
+    const btn = document.getElementById('catch-start-btn');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/catch/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemIds: selectedCatchSkins })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            btn.disabled = false;
+            return catchFlash(data.error || 'Could not start', '#eb4b4b');
+        }
+        currentUser.inventory = data.inventory;
+        selectedCatchSkins = [];
+        beginCatch(data.tiles, data.state, [], null);
+    } catch (e) {
+        btn.disabled = false;
+        catchFlash('Connection error', '#eb4b4b');
+    }
+}
+
+function beginCatch(tiles, state, matched, opened) {
+    catchGame = {
+        tiles,
+        matched: new Set((matched || []).map(m => m.id)),
+        openId: opened ? opened.id : null,
+        locked: false,
+        offset: state.now - Date.now(),
+        deadline: state.deadline,
+        state
+    };
+
+    document.getElementById('catch-start-btn').style.display = 'none';
+    document.getElementById('catch-cash-btn').style.display = 'block';
+
+    renderCatchMap();
+    // cartas que já estavam reveladas (jogo retomado)
+    (matched || []).forEach(m => revealCatchTile(m.id, m.img, m.name, false));
+    if (opened) revealCatchTile(opened.id, opened.img, opened.name, false);
+
+    applyCatchState(state);
+    renderCatchInventory();
+
+    clearInterval(catchTimerInterval);
+    catchTimerInterval = setInterval(catchTick, 100);
+}
+
+function renderCatchMap() {
+    const map = document.getElementById('catch-map');
+    map.innerHTML = catchGame.tiles.map(t => `
+        <div class="catch-tile ${catchGame.matched.has(t.id) ? 'matched' : ''}" id="catch-tile-${t.id}"
+             style="left:${t.x}%; top:${t.y}%; --rot:${t.rot}deg;" onclick="clickCatchTile(${t.id})">
+            <div class="catch-card">
+                <div class="catch-face catch-back"><span>?</span></div>
+                <div class="catch-face catch-front"><img src="" draggable="false" alt=""></div>
+            </div>
+        </div>`).join('');
+}
+
+function revealCatchTile(id, img, name, animate = true) {
+    const tile = document.getElementById(`catch-tile-${id}`);
+    if (!tile) return;
+    const image = tile.querySelector('.catch-front img');
+    image.src = img;
+    image.alt = name || '';
+    tile.title = name || '';
+    tile.classList.add('flipped');
+}
+
+function hideCatchTile(id) {
+    const tile = document.getElementById(`catch-tile-${id}`);
+    if (!tile) return;
+    tile.classList.remove('flipped');
+    // só apaga a foto depois de a carta voltar a ficar de costas
+    setTimeout(() => {
+        if (!tile.classList.contains('flipped')) {
+            tile.querySelector('.catch-front img').src = '';
+            tile.title = '';
+        }
+    }, 450);
+}
+
+function applyCatchState(state) {
+    catchGame.state = state;
+    catchGame.deadline = state.deadline;
+    catchGame.offset = state.now - Date.now();
+
+    const multEl = document.getElementById('catch-mult');
+    multEl.innerText = state.multiplier.toFixed(2) + 'x';
+    multEl.classList.remove('bump'); void multEl.offsetWidth; multEl.classList.add('bump');
+
+    document.getElementById('catch-pairs').innerText = state.pairs;
+
+    const missEl = document.getElementById('catch-misses');
+    missEl.innerText = `${state.misses}/${state.maxMisses}`;
+    missEl.style.color = state.misses >= state.maxMisses - 2 ? '#eb4b4b' : '#fff';
+
+    const potential = state.betValue * state.multiplier;
+    const cashBtn = document.getElementById('catch-cash-btn');
+    const minPairs = state.minPairs || 1;
+    cashBtn.disabled = state.pairs < minPairs;
+    cashBtn.querySelector('span').innerHTML = state.pairs < minPairs
+        ? `<small>CASH OUT LOCKED</small><b>MATCH ${minPairs} ${minPairs === 1 ? 'PAIR' : 'PAIRS'}</b>`
+        : `<small>CASH OUT</small><b>$${formatCurrency(potential)}</b>`;
+
+    updateCatchPreview(potential);
+}
+
+function catchTick() {
+    if (!catchGame) return;
+    const remaining = catchGame.deadline - (Date.now() + catchGame.offset);
+    const timeEl = document.getElementById('catch-time');
+    const fill = document.getElementById('catch-timebar-fill');
+
+    if (remaining <= 0) {
+        timeEl.innerText = '0.0s';
+        fill.style.width = '0%';
+        clearInterval(catchTimerInterval);
+        catchTimeout();
+        return;
+    }
+    timeEl.innerText = (remaining / 1000).toFixed(1) + 's';
+    timeEl.style.color = remaining < 10000 ? '#eb4b4b' : '#fff';
+    fill.style.width = Math.min(100, (remaining / 60000) * 100) + '%';
+}
+
+async function catchTimeout() {
+    if (!catchGame) return;
+    catchGame.locked = true;
+    try {
+        // O servidor dá 1s de tolerância; confirma o fim do jogo
+        for (let i = 0; i < 4; i++) {
+            const res = await fetch('/api/catch/state');
+            const data = await res.json();
+            if (!data.active) return finishCatch({ win: false, reason: 'time' });
+            if (data.state && data.state.deadline > Date.now() + catchGame.offset) {
+                // relógio dessincronizado: o servidor ainda tem tempo, retoma
+                applyCatchState(data.state);
+                catchGame.locked = false;
+                catchTimerInterval = setInterval(catchTick, 100);
+                return;
+            }
+            await new Promise(r => setTimeout(r, 400));
+        }
+    } catch (e) { /* ignora */ }
+    finishCatch({ win: false, reason: 'time' });
+}
+
+const catchWait = ms => new Promise(r => setTimeout(r, ms));
+
+async function clickCatchTile(id) {
+    if (!catchGame || catchGame.locked || catchGame.matched.has(id) || catchGame.openId === id) return;
+    catchGame.locked = true;
+
+    try {
+        const res = await fetch('/api/catch/flip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            catchGame.locked = false;
+            return catchFlash(data.error || 'Invalid move', '#ffb703');
+        }
+        if (data.over && data.reason === 'time') return finishCatch(data);
+
+        // 1ª carta do par
+        if (data.opened) {
+            revealCatchTile(id, data.opened.img, data.opened.name);
+            catchGame.openId = id;
+            applyCatchState(data.state);
+            catchGame.locked = false;
+            return;
+        }
+
+        // 2ª carta do par
+        revealCatchTile(id, data.second.img, data.second.name);
+        const [firstId, secondId] = data.ids;
+        catchGame.openId = null;
+
+        if (data.correct) {
+            await catchWait(550);
+            data.ids.forEach(i => {
+                catchGame.matched.add(i);
+                document.getElementById(`catch-tile-${i}`).classList.add('matched');
+            });
+            if (typeof upgradeWinSound !== 'undefined') { upgradeWinSound.currentTime = 0; upgradeWinSound.play().catch(() => {}); }
+            if (data.over) return finishCatch(data);
+            applyCatchState(data.state);
+            catchFlash('+ PAIR!', '#00ff88');
+        } else {
+            [firstId, secondId].forEach(i => document.getElementById(`catch-tile-${i}`).classList.add('wrong'));
+            await catchWait(950);
+            [firstId, secondId].forEach(i => {
+                const t = document.getElementById(`catch-tile-${i}`);
+                if (t) t.classList.remove('wrong');
+                hideCatchTile(i);
+            });
+            if (typeof upgradeLossSound !== 'undefined') { upgradeLossSound.currentTime = 0; upgradeLossSound.play().catch(() => {}); }
+            if (data.over) return finishCatch(data);
+            applyCatchState(data.state);
+            catchFlash('NO MATCH', '#eb4b4b');
+        }
+        if (catchGame) catchGame.locked = false;
+    } catch (e) {
+        if (catchGame) catchGame.locked = false;
+        catchFlash('Connection error', '#eb4b4b');
+    }
+}
+
+async function cashOutCatch() {
+    if (!catchGame || catchGame.locked || catchGame.state.pairs < (catchGame.state.minPairs || 1)) return;
+    catchGame.locked = true;
+    try {
+        const res = await fetch('/api/catch/cashout', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+            catchGame.locked = false;
+            return catchFlash(data.error || 'Could not cash out', '#eb4b4b');
+        }
+        finishCatch(data);
+    } catch (e) {
+        catchGame.locked = false;
+        catchFlash('Connection error', '#eb4b4b');
+    }
+}
+
+function finishCatch(data) {
+    clearInterval(catchTimerInterval);
+    if (data.inventory && currentUser) currentUser.inventory = data.inventory;
+    catchGame = null;
+    selectedCatchSkins = [];
+
+    // repõe o ecrã
+    document.getElementById('catch-start-btn').style.display = 'block';
+    document.getElementById('catch-start-btn').disabled = false;
+    document.getElementById('catch-cash-btn').style.display = 'none';
+    document.getElementById('catch-mult').innerText = '1.00x';
+    document.getElementById('catch-pairs').innerText = '0';
+    const missEl = document.getElementById('catch-misses');
+    missEl.innerText = '0/8';
+    missEl.style.color = '#fff';
+    document.getElementById('catch-time').innerText = '--';
+    document.getElementById('catch-time').style.color = '#fff';
+    document.getElementById('catch-timebar-fill').style.width = '0%';
+    document.getElementById('catch-map').innerHTML = catchIdleHTML();
+
+    showCatchResult(!!data.win, data.skin || null, data.multiplier || 0, data.reason);
+    renderCatchInventory();
+    if (typeof loadInventory === 'function') loadInventory();
+}
+
+function showCatchResult(win, skin, mult, reason) {
+    const modal = document.getElementById('catch-result-modal');
+    const card = document.getElementById('catch-result-card');
+    if (!modal || !card) return;
+
+    const itemBox = document.getElementById('catch-result-item-box');
+    const titleEl = document.getElementById('catch-result-title');
+    const multBadge = document.getElementById('catch-result-mult-badge');
+
+    if (win && skin) {
+        card.className = 'result-card result-win';
+        titleEl.innerText = reason === 'cleared' ? 'MAP CLEARED!' : 'CASHED OUT!';
+        multBadge.innerText = `${Number(mult).toFixed(2)}x`;
+        multBadge.style.display = 'inline-block';
+        itemBox.style.display = 'block';
+        document.getElementById('catch-result-img').src = skin.img;
+        document.getElementById('catch-result-name').innerText = skin.name;
+        document.getElementById('catch-result-price').innerText = `$${formatCurrency(skin.value)}`;
+        document.getElementById('catch-result-badge').innerText = skin.conditionShort;
+        if (typeof upgradeWinSound !== 'undefined') upgradeWinSound.play().catch(() => {});
+    } else {
+        card.className = 'result-card result-loss';
+        titleEl.innerText = reason === 'misses' ? 'TOO MANY MISSES!' : "TIME'S UP!";
+        multBadge.innerText = '0.00x';
+        itemBox.style.display = 'none';
+        document.getElementById('catch-result-name').innerText = 'YOU LOST YOUR SKINS. TRY AGAIN.';
+        document.getElementById('catch-result-price').innerText = '';
+        if (typeof upgradeLossSound !== 'undefined') upgradeLossSound.play().catch(() => {});
+    }
+    modal.style.display = 'flex';
+}
+// ===================== FIM CATCH =====================
