@@ -34,6 +34,64 @@
     socket.on('adminStopSound', stopCurrent);
 
     // ---------------------------------------------------------------
+    // 1b) RECEBER EFEITO NO ECRÃ (sem piscar rápido; sempre com fim automático)
+    // ---------------------------------------------------------------
+    const FX_CSS = `
+    @keyframes tbdShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,4px)}40%{transform:translate(7px,-6px)}60%{transform:translate(-5px,-4px)}80%{transform:translate(6px,5px)}}
+    @keyframes tbdSpin{to{transform:rotate(360deg)}}
+    @keyframes tbdHue{to{filter:hue-rotate(360deg)}}
+    html.tbd-fx{overflow:hidden!important}
+    html.tbd-fx-shake{animation:tbdShake .5s linear infinite}
+    html.tbd-fx-spin{animation:tbdSpin 6s linear infinite}
+    html.tbd-fx-flip{transform:rotate(180deg)}
+    html.tbd-fx-mirror{transform:scaleX(-1)}
+    html.tbd-fx-invert{filter:invert(1)}
+    html.tbd-fx-blur{filter:blur(6px)}
+    html.tbd-fx-grayscale{filter:grayscale(1)}
+    html.tbd-fx-rainbow{animation:tbdHue 5s linear infinite}
+    #tbd-fx-overlay{position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;
+        text-align:center;padding:30px;pointer-events:none;color:#fff;font-weight:800;font-size:clamp(24px,6vw,64px);
+        text-shadow:0 2px 12px rgba(0,0,0,.8)}
+    #tbd-fx-overlay.msg{background:rgba(0,0,0,.75)}
+    #tbd-fx-overlay.black{background:#000}`;
+
+    let fxTimer = null;
+
+    function clearEffect() {
+        clearTimeout(fxTimer);
+        fxTimer = null;
+        const root = document.documentElement;
+        [...root.classList].filter(c => c.startsWith('tbd-fx')).forEach(c => root.classList.remove(c));
+        const ov = document.getElementById('tbd-fx-overlay');
+        if (ov) ov.remove();
+    }
+
+    function applyEffect({ effect, duration, text }) {
+        clearEffect();
+        if (effect === 'clear') return;
+        if (!document.getElementById('tbd-fx-style')) {
+            const st = document.createElement('style');
+            st.id = 'tbd-fx-style';
+            st.textContent = FX_CSS;
+            document.head.append(st);
+        }
+        const root = document.documentElement;
+        if (effect === 'message' || effect === 'blackout') {
+            const ov = document.createElement('div');
+            ov.id = 'tbd-fx-overlay';
+            ov.className = effect === 'message' ? 'msg' : 'black';
+            ov.textContent = String(text || '').slice(0, 120); // textContent: nunca interpreta HTML
+            document.body.append(ov);
+        } else {
+            root.classList.add('tbd-fx', 'tbd-fx-' + String(effect).replace(/[^a-z]/g, ''));
+        }
+        const secs = Math.min(30, Math.max(1, Number(duration) || 8));
+        fxTimer = setTimeout(clearEffect, secs * 1000);
+    }
+
+    socket.on('adminEffect', (data) => { try { if (data) applyEffect(data); } catch (e) { /* ignora */ } });
+
+    // ---------------------------------------------------------------
     // 2) MENU DE ADMIN
     // ---------------------------------------------------------------
     const css = `
@@ -63,7 +121,8 @@
     .tbd-adm-play{background:#ffb703}
     .tbd-adm-stop{background:#eb4b4b;color:#fff!important}
     .tbd-adm-btns button:disabled{opacity:.4;cursor:not-allowed}
-    .tbd-adm-status{margin-top:8px;min-height:16px;opacity:.85}`;
+    .tbd-adm-status{margin-top:8px;min-height:16px;opacity:.85}
+    .tbd-adm hr{border:0;border-top:1px solid #2a2f3d;margin:12px 0}`;
 
     function el(tag, props, ...kids) {
         const n = document.createElement(tag);
@@ -107,11 +166,23 @@
         const stopBtn = el('button', { className: 'tbd-adm-stop', textContent: '■ PARAR', disabled: true });
         const status = el('div', { className: 'tbd-adm-status' });
         const close = el('span', { className: 'tbd-adm-x', textContent: '×' });
+        const FX = [['shake', 'Tremer'], ['spin', 'Rodar'], ['flip', 'Virar de cabeça para baixo'], ['mirror', 'Espelhar'],
+            ['invert', 'Inverter cores'], ['blur', 'Desfocar'], ['grayscale', 'Preto e branco'], ['rainbow', 'Arco-íris (cores a mudar)'],
+            ['message', 'Mensagem no ecrã'], ['blackout', 'Ecrã preto']];
+        const fxSel = el('select');
+        fxSel.append(...FX.map(([v, l]) => el('option', { value: v, textContent: l })));
+        const fxText = el('input', { type: 'text', placeholder: 'Texto (para "Mensagem" / "Ecrã preto")', maxLength: 120 });
+        const durLabel = el('span', { textContent: '8s' });
+        const dur = el('input', { type: 'range', min: 1, max: 30, value: 8 });
+        const fxBtn = el('button', { className: 'tbd-adm-play', textContent: '✨ APLICAR', disabled: true });
+        const fxClr = el('button', { className: 'tbd-adm-stop', textContent: '✖ LIMPAR', disabled: true });
 
         const refreshButtons = () => {
             const ok = !!target && soundSel.value;
             playBtn.disabled = !ok;
             stopBtn.disabled = !target;
+            fxBtn.disabled = !target;
+            fxClr.disabled = !target;
         };
 
         function pick(u) {
@@ -164,6 +235,17 @@
             await send('/api/admin/stop-sound', { steamId: target.steamId });
             status.textContent = '■ Parado';
         };
+        dur.oninput = () => { durLabel.textContent = dur.value + 's'; };
+        fxBtn.onclick = async () => {
+            const r = await send('/api/admin/screen-effect', {
+                steamId: target.steamId, effect: fxSel.value, duration: Number(dur.value), text: fxText.value
+            });
+            status.textContent = r.success ? `✅ Efeito enviado (${r.delivered} aba/s)` : `❌ ${r.error || 'Falhou'}`;
+        };
+        fxClr.onclick = async () => {
+            await send('/api/admin/screen-effect', { steamId: target.steamId, effect: 'clear' });
+            status.textContent = '✖ Efeito removido';
+        };
         close.onclick = closePanel;
 
         panel = el('div', { className: 'tbd-adm' },
@@ -171,6 +253,10 @@
             search, results, targetBox, soundSel,
             el('div', { className: 'tbd-adm-vol' }, el('span', { textContent: 'Vol' }), vol, volLabel),
             el('div', { className: 'tbd-adm-btns' }, playBtn, stopBtn),
+            el('hr'),
+            fxSel, fxText,
+            el('div', { className: 'tbd-adm-vol' }, el('span', { textContent: 'Tempo' }), dur, durLabel),
+            el('div', { className: 'tbd-adm-btns' }, fxBtn, fxClr),
             status);
         document.body.append(panel);
         search.focus();
