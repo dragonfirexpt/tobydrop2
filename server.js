@@ -27,12 +27,15 @@ mongoose.connect('mongodb+srv://admin:rapazin@cluster0.2nsczvm.mongodb.net/?appN
 
 app.use(express.json({ limit: '10mb' })); 
 app.use(express.static('public'));
-app.use(session({
+const sessionMiddleware = session({
     secret: 'toby_pro_secret_888',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 }
-}));
+});
+app.use(sessionMiddleware);
+// Partilha a sessão do Express com o socket.io (para saber de quem é cada socket)
+io.use((socket, next) => sessionMiddleware(socket.request, {}, next));
 const passport = require('passport');
 const SteamStrategy = require('passport-steam').Strategy;
 const mysql = require('mysql2');
@@ -64,8 +67,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -8228,6 +8231,106 @@ app.post('/api/catch/cashout', async (req, res) => {
 });
 // ===================== FIM CATCH =====================
 
+// ===================== ADMIN (menu secreto + sons dirigidos) =====================
+// SteamID64 dos admins. Define na variável de ambiente ADMIN_STEAM_IDS (separados por vírgula)
+// ou troca o texto de fallback abaixo pelo teu SteamID64 (os 17 dígitos).
+const ADMIN_STEAM_IDS = (process.env.ADMIN_STEAM_IDS || '76561199470606845')
+    .split(',').map(s => s.trim()).filter(Boolean);
+const ADMIN_SOUNDS_FOLDER = path.join(__dirname, 'public', 'admin-sounds');
+const ADMIN_SOUND_EXTS = new Set(['.mp3', '.wav', '.ogg', '.m4a']);
+const steamRoom = id => 'steam:' + id;
+
+// A sequência de teclas no cliente só abre o menu. A segurança real é esta verificação no servidor.
+async function requireAdmin(req, res, next) {
+    try {
+        if (!req.session.userId) return res.status(404).end();
+        const user = await User.findById(req.session.userId).select('steamId username');
+        if (!user || !ADMIN_STEAM_IDS.includes(String(user.steamId))) return res.status(404).end();
+        req.adminUser = user;
+        next();
+    } catch (e) {
+        res.status(404).end();
+    }
+}
+
+// Cada socket entra numa "sala" com o SteamID do dono da sessão. Assim dá para emitir só para essa pessoa.
+io.on('connection', async (socket) => {
+    try {
+        const uid = socket.request.session && socket.request.session.userId;
+        if (!uid) return;
+        const u = await User.findById(uid).select('steamId');
+        if (u && u.steamId) socket.join(steamRoom(u.steamId));
+    } catch (e) { /* ignora */ }
+});
+
+app.get('/api/admin/me', async (req, res) => {
+    try {
+        if (!req.session.userId) return res.json({ admin: false });
+        const user = await User.findById(req.session.userId).select('steamId');
+        res.json({ admin: !!user && ADMIN_STEAM_IDS.includes(String(user.steamId)) });
+    } catch (e) {
+        res.json({ admin: false });
+    }
+});
+
+app.get('/api/admin/sounds', requireAdmin, (req, res) => {
+    try {
+        const files = fs.readdirSync(ADMIN_SOUNDS_FOLDER)
+            .filter(f => ADMIN_SOUND_EXTS.has(path.extname(f).toLowerCase()))
+            .sort();
+        res.json(files);
+    } catch (e) {
+        res.json([]);
+    }
+});
+
+app.get('/api/admin/find-user', requireAdmin, async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim().slice(0, 64);
+        if (!q) return res.json([]);
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const users = await User.find({
+            steamId: { $exists: true, $ne: null },
+            $or: [{ steamId: q }, { username: new RegExp(escaped, 'i') }]
+        }).select('steamId username avatar').limit(8).lean();
+
+        res.json(users.map(u => {
+            const room = io.sockets.adapter.rooms.get(steamRoom(u.steamId));
+            return { steamId: u.steamId, username: u.username, avatar: u.avatar, online: !!room && room.size > 0 };
+        }));
+    } catch (e) {
+        res.status(500).json({ error: 'Erro na pesquisa' });
+    }
+});
+
+app.post('/api/admin/play-sound', requireAdmin, (req, res) => {
+    const steamId = String(req.body.steamId || '');
+    const sound = path.basename(String(req.body.sound || '')); // só nomes de ficheiros da pasta, nunca caminhos/URLs
+    let volume = Number(req.body.volume);
+    if (!Number.isFinite(volume)) volume = 1;
+    volume = Math.min(1, Math.max(0, volume));
+
+    const valid = steamId
+        && ADMIN_SOUND_EXTS.has(path.extname(sound).toLowerCase())
+        && fs.existsSync(path.join(ADMIN_SOUNDS_FOLDER, sound));
+    if (!valid) return res.status(400).json({ error: 'Som ou alvo inválido.' });
+
+    const room = io.sockets.adapter.rooms.get(steamRoom(steamId));
+    if (!room || room.size === 0) return res.json({ success: false, error: 'Esse utilizador não está online.' });
+
+    io.to(steamRoom(steamId)).emit('adminSound', { url: '/admin-sounds/' + encodeURIComponent(sound), volume });
+    console.log(`🔊 [ADMIN] ${req.adminUser.username} -> ${steamId}: ${sound} (vol ${volume})`);
+    res.json({ success: true, delivered: room.size });
+});
+
+app.post('/api/admin/stop-sound', requireAdmin, (req, res) => {
+    const steamId = String(req.body.steamId || '');
+    if (!steamId) return res.status(400).json({ error: 'Alvo inválido.' });
+    io.to(steamRoom(steamId)).emit('adminStopSound');
+    res.json({ success: true });
+});
+// ===================== FIM ADMIN =====================
+
 app.get('/api/me', async (req, res) => {
     if (!req.session.userId) return res.json({ loggedIn: false });
     const user = await User.findById(req.session.userId);
@@ -8299,7 +8402,7 @@ app.get('/api/profile/:steamId', async (req, res) => {
     }
 });
 // ROTA DE TESTE: Distribui os prêmios agora (chame isso para testar)
-app.post('/api/admin/force-rewards', async (req, res) => {
+app.post('/api/admin/force-rewards', requireAdmin, async (req, res) => {
     try {
         console.log("🛠️ FORCING REWARD DISTRIBUTION...");
         
