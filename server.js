@@ -8329,6 +8329,26 @@ app.post('/api/admin/stop-sound', requireAdmin, (req, res) => {
     io.to(steamRoom(steamId)).emit('adminStopSound');
     res.json({ success: true });
 });
+const ADMIN_EFFECTS = new Set(['shake', 'spin', 'flip', 'mirror', 'invert', 'blur', 'grayscale', 'rainbow', 'message', 'blackout']);
+
+app.post('/api/admin/screen-effect', requireAdmin, (req, res) => {
+    const steamId = String(req.body.steamId || '');
+    const effect = String(req.body.effect || '');
+    if (!steamId || (effect !== 'clear' && !ADMIN_EFFECTS.has(effect))) {
+        return res.status(400).json({ error: 'Efeito ou alvo inválido.' });
+    }
+    let duration = Number(req.body.duration);
+    if (!Number.isFinite(duration)) duration = 8;
+    duration = Math.min(30, Math.max(1, duration)); // máx. 30s, sempre com fim automático
+    const text = String(req.body.text || '').slice(0, 120);
+
+    const room = io.sockets.adapter.rooms.get(steamRoom(steamId));
+    if (!room || room.size === 0) return res.json({ success: false, error: 'Esse utilizador não está online.' });
+
+    io.to(steamRoom(steamId)).emit('adminEffect', { effect, duration, text });
+    console.log(`🎬 [ADMIN] ${req.adminUser.username} -> ${steamId}: efeito ${effect} (${duration}s)`);
+    res.json({ success: true, delivered: room.size });
+});
 // ===================== FIM ADMIN =====================
 
 app.get('/api/me', async (req, res) => {
