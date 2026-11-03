@@ -67,8 +67,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -7974,8 +7974,8 @@ app.post('/api/login', async (req, res) => {
 // ===================== CATCH (pares / memória) =====================
 const CATCH_MULTS = [1, 1.15, 1.35, 1.65, 2.05, 2.6, 3.4, 4.5, 6, 8, 11, 15, 20]; // índice = nº de pares feitos (0 a 12)
 const CATCH_PAIRS = 12;
-const CATCH_MIN_CASHOUT_PAIRS = 1; // pares mínimos para poder fazer cash out
-const CATCH_MAX_MISSES = 8;        // pares errados permitidos antes de perder
+const CATCH_MIN_CASHOUT_PAIRS = 2; // pares mínimos para poder fazer cash out
+const CATCH_MAX_MISSES = 6;        // pares errados permitidos antes de perder
 const CATCH_BASE_TIME = 60000;     // ms
 const CATCH_TIME_PER_PAIR = 3000;  // ms ganhos por cada par certo
 const CATCH_MIN_FLIP_GAP = 200;    // ms mínimos entre viragens (anti-bot)
