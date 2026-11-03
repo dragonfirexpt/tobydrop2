@@ -3016,7 +3016,7 @@ function finishCatch(data) {
     document.getElementById('catch-mult').innerText = '1.00x';
     document.getElementById('catch-pairs').innerText = '0';
     const missEl = document.getElementById('catch-misses');
-    missEl.innerText = '0/8';
+    missEl.innerText = '0/6';
     missEl.style.color = '#fff';
     document.getElementById('catch-time').innerText = '--';
     document.getElementById('catch-time').style.color = '#fff';
