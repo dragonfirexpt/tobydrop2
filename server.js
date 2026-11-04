@@ -116,6 +116,49 @@ const KNIFE_NAMES = {
 app.use(passport.initialize());
 app.use(passport.session());
 
+// ===================== BANS TEMPORÁRIOS — verificação =====================
+// Cache em memória: userId -> { until (ms), reason, steamId }. A fonte de verdade é o campo `ban` do User
+// (MongoDB); a cache evita consultar a base de dados em cada pedido/evento.
+const banCache = new Map();
+
+function getActiveBan(userId) {
+    if (!userId) return null;
+    const b = banCache.get(String(userId));
+    return b && b.until > Date.now() ? b : null;
+}
+
+// serverNow permite ao cliente corrigir a diferença entre o relógio dele e o do servidor
+function banPayload(ban) {
+    return ban
+        ? { banned: true, until: ban.until, reason: ban.reason, serverNow: Date.now() }
+        : { banned: false };
+}
+
+// HTTP: um banido não pode fazer nenhuma ação (POST/PUT/PATCH/DELETE); só consultar e sair da conta
+app.use((req, res, next) => {
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+    if (req.path === '/api/logout') return next();
+    if (req.path.startsWith('/api/admin/')) return next();   // admin banido não joga, mas pode sempre usar o painel (e desbanir-se)
+    const ban = getActiveBan(req.session && req.session.userId);
+    if (!ban) return next();
+    res.status(403).json({ error: 'You are banned.', banned: true, until: ban.until, reason: ban.reason });
+});
+
+// Socket: avisa o banido ao ligar (também em cada reconexão) e descarta todos os eventos dele (apostas, chat, etc.)
+io.on('connection', (socket) => {
+    const uid = socket.request.session && socket.request.session.userId;
+    const ban = getActiveBan(uid);
+    if (ban) socket.emit('banStatus', banPayload(ban));
+
+    socket.use((packet, next) => {
+        if (!getActiveBan(uid)) return next();
+        const ack = packet[packet.length - 1];
+        if (typeof ack === 'function') ack({ success: false, banned: true, error: 'You are banned.' });
+        // sem next(): o evento é descartado
+    });
+});
+// ===================== FIM BANS (verificação) =====================
+
 app.get('/auth/steam', passport.authenticate('steam'));
 
 app.get('/auth/steam/return',
@@ -125,7 +168,7 @@ app.get('/auth/steam/return',
     res.redirect('/');
   }
 );
-const User = mongoose.model('User', new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
     username: { type: String }, // REMOVA o unique: true aqui
     steamId: { type: String, unique: true }, // Este SIM deve ser único
     password: { type: String }, // Remova o required: true
@@ -133,6 +176,12 @@ const User = mongoose.model('User', new mongoose.Schema({
     balance: { type: Number, default: 50 },
     dailyWager: { type: Number, default: 0 }, // Total apostado na semana
     rewardCases: [{ type: String }],
+    // Ban temporário: enquanto `until` estiver no futuro, o jogador fica bloqueado
+    ban: {
+        until: { type: Date },
+        reason: { type: String },
+        at: { type: Date }
+    },
     // Procure o campo inventory dentro do User model e adicione o wear:
 inventory: [{
     id: String,
@@ -148,7 +197,54 @@ inventory: [{
     equippedTeam: { type: Number, default: 0 },
     isLocked: { type: Boolean, default: false } // <--- ADICIONA ESTA LINHA
 }]
+});
+
+// ===================== HISTÓRICO DE SALDO (gráfico nas Settings) =====================
+// Cada vez que o saldo de um utilizador muda (qualquer jogo, venda, etc.) guardamos um ponto.
+// Mudanças muito seguidas (ex: aposta + payout no crash) são juntadas no mesmo ponto.
+const BalanceHistory = mongoose.model('BalanceHistory', new mongoose.Schema({
+    steamId: { type: String, index: true },
+    balance: Number,
+    at: { type: Date, default: Date.now }
 }));
+const lastBalanceSnap = new Map(); // steamId -> { id, at }
+
+async function recordBalance(steamId, balance) {
+    try {
+        const now = Date.now();
+        const last = lastBalanceSnap.get(steamId);
+        if (last && now - last.at < 8000) {
+            await BalanceHistory.updateOne({ _id: last.id }, { balance, at: new Date(now) });
+        } else {
+            const doc = await BalanceHistory.create({ steamId, balance, at: new Date(now) });
+            lastBalanceSnap.set(steamId, { id: doc._id, at: now });
+        }
+    } catch (e) {
+        console.log('Erro ao guardar histórico de saldo:', e.message);
+    }
+}
+
+// Monta a lista de pontos (mais antigo -> mais recente) para o gráfico; o último ponto é sempre o saldo atual
+async function buildBalanceHistory(user, rawLimit) {
+    const limit = Math.min(20000, Math.max(10, parseInt(rawLimit) || 5000));
+    const docs = await BalanceHistory.find({ steamId: user.steamId }).sort({ at: -1 }).limit(limit).lean();
+    const points = docs.reverse().map(p => ({ t: new Date(p.at).getTime(), b: p.balance }));
+    if (!points.length || points[points.length - 1].b !== user.balance) {
+        points.push({ t: Date.now(), b: user.balance });
+    }
+    return points;
+}
+
+UserSchema.pre('save', function () {
+    this.$locals.balanceChanged = this.isNew || this.isModified('balance');
+});
+UserSchema.post('save', function (doc) {
+    if (doc.$locals && doc.$locals.balanceChanged && doc.steamId) {
+        recordBalance(doc.steamId, doc.balance);
+    }
+});
+
+const User = mongoose.model('User', UserSchema);
 const SystemState = mongoose.model('SystemState', new mongoose.Schema({
     lastResetDate: { type: Date, default: new Date(0) }
 }));
@@ -8303,6 +8399,39 @@ app.get('/api/admin/find-user', requireAdmin, async (req, res) => {
     }
 });
 
+// Admin: histórico de saldo de qualquer jogador (para o gráfico no perfil)
+app.get('/api/admin/balance-history/:steamId', requireAdmin, async (req, res) => {
+    try {
+        const steamId = String(req.params.steamId || '').slice(0, 64);
+        const user = await User.findOne({ steamId }).select('steamId username avatar balance').lean();
+        if (!user) return res.status(404).json({ error: 'Utilizador não encontrado' });
+
+        const points = await buildBalanceHistory(user, req.query.limit);
+        res.json({ success: true, points, current: user.balance, username: user.username });
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao carregar histórico' });
+    }
+});
+
+// Admin: lista de jogadores (com pesquisa) para escolher de quem ver o gráfico de saldo
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim().slice(0, 64);
+        const filter = { steamId: { $exists: true, $ne: null } };
+        if (q) {
+            const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.$or = [{ steamId: q }, { username: new RegExp(escaped, 'i') }];
+        }
+        const users = await User.find(filter).select('steamId username avatar balance').sort({ balance: -1 }).limit(100).lean();
+        res.json(users.map(u => {
+            const room = io.sockets.adapter.rooms.get(steamRoom(u.steamId));
+            return { steamId: u.steamId, username: u.username, avatar: u.avatar, balance: u.balance, online: !!room && room.size > 0, banned: !!getActiveBan(u._id) };
+        }));
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao listar jogadores' });
+    }
+});
+
 app.post('/api/admin/play-sound', requireAdmin, (req, res) => {
     const steamId = String(req.body.steamId || '');
     const sound = path.basename(String(req.body.sound || '')); // só nomes de ficheiros da pasta, nunca caminhos/URLs
@@ -8349,12 +8478,125 @@ app.post('/api/admin/screen-effect', requireAdmin, (req, res) => {
     console.log(`🎬 [ADMIN] ${req.adminUser.username} -> ${steamId}: efeito ${effect} (${duration}s)`);
     res.json({ success: true, delivered: room.size });
 });
+
+// ===================== BANS TEMPORÁRIOS (admin) =====================
+const BAN_MAX_SECONDS = 60 * 60 * 24 * 365; // máximo: 1 ano
+
+function emitBanStatus(steamId, ban) {
+    io.to(steamRoom(steamId)).emit('banStatus', banPayload(ban));
+}
+
+// Ao arrancar, carrega para a cache os bans que ainda estão ativos na base de dados
+async function loadActiveBans() {
+    try {
+        const users = await User.find({ 'ban.until': { $gt: new Date() } }).select('steamId ban').lean();
+        users.forEach(u => banCache.set(String(u._id), {
+            until: new Date(u.ban.until).getTime(),
+            reason: u.ban.reason || '',
+            steamId: u.steamId
+        }));
+        console.log(`⛔ ${users.length} ban(s) ativo(s) carregado(s)`);
+    } catch (e) {
+        console.log('Erro ao carregar bans:', e.message);
+    }
+}
+if (mongoose.connection.readyState === 1) loadActiveBans();
+else mongoose.connection.once('open', loadActiveBans);
+
+// De 5 em 5 segundos: bans expirados saem da cache e da base de dados, e o cliente é avisado
+setInterval(async () => {
+    const now = Date.now();
+    for (const [userId, ban] of banCache) {
+        if (ban.until > now) continue;
+        banCache.delete(userId);
+        emitBanStatus(ban.steamId, null);
+        try { await User.updateOne({ _id: userId }, { $unset: { ban: 1 } }); } catch (e) { /* sem problema: no próximo arranque já não conta */ }
+    }
+}, 5000);
+
+app.post('/api/admin/ban', requireAdmin, async (req, res) => {
+    try {
+        const steamId = String(req.body.steamId || '');
+        const seconds = Math.floor(Number(req.body.seconds));
+        const reason = String(req.body.reason || '').trim().slice(0, 200) || 'No reason provided';
+        if (!steamId || !Number.isFinite(seconds) || seconds < 1 || seconds > BAN_MAX_SECONDS) {
+            return res.status(400).json({ error: 'Invalid player or duration.' });
+        }
+        const user = await User.findOne({ steamId }).select('_id steamId username');
+        if (!user) return res.status(404).json({ error: 'Player not found.' });
+
+        const until = Date.now() + seconds * 1000;
+        await User.updateOne({ _id: user._id }, { $set: { ban: { until: new Date(until), reason, at: new Date() } } });
+
+        const ban = { until, reason, steamId: user.steamId };
+        banCache.set(String(user._id), ban);
+        emitBanStatus(user.steamId, ban);   // o ecrã de ban aparece logo, sem refresh
+
+        console.log(`⛔ [ADMIN] ${req.adminUser.username} baniu ${user.username} (${steamId}) por ${seconds}s: ${reason}`);
+        res.json({ success: true, until });
+    } catch (e) {
+        res.status(500).json({ error: 'Error applying ban.' });
+    }
+});
+
+app.post('/api/admin/unban', requireAdmin, async (req, res) => {
+    try {
+        const steamId = String(req.body.steamId || '');
+        const user = await User.findOne({ steamId }).select('_id steamId username');
+        if (!user) return res.status(404).json({ error: 'Player not found.' });
+
+        await User.updateOne({ _id: user._id }, { $unset: { ban: 1 } });
+        banCache.delete(String(user._id));
+        emitBanStatus(user.steamId, null);
+
+        console.log(`✅ [ADMIN] ${req.adminUser.username} desbaniu ${user.username} (${steamId})`);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Error removing ban.' });
+    }
+});
+
+app.get('/api/admin/bans', requireAdmin, async (req, res) => {
+    try {
+        const now = Date.now();
+        const active = [...banCache.entries()].filter(([, b]) => b.until > now);
+        const users = await User.find({ _id: { $in: active.map(([id]) => id) } }).select('username avatar').lean();
+        const byId = new Map(users.map(u => [String(u._id), u]));
+        res.json(active
+            .map(([id, b]) => ({
+                steamId: b.steamId,
+                username: byId.get(id) ? byId.get(id).username : b.steamId,
+                avatar: byId.get(id) ? byId.get(id).avatar : '',
+                reason: b.reason,
+                until: b.until
+            }))
+            .sort((a, b) => a.until - b.until));
+    } catch (e) {
+        res.status(500).json({ error: 'Error listing bans.' });
+    }
+});
+// ===================== FIM BANS (admin) =====================
+
 // ===================== FIM ADMIN =====================
 
 app.get('/api/me', async (req, res) => {
     if (!req.session.userId) return res.json({ loggedIn: false });
     const user = await User.findById(req.session.userId);
     res.json({ loggedIn: !!user, user });
+});
+
+// Histórico de saldo do próprio utilizador (para o gráfico das Settings)
+app.get('/api/balance-history', async (req, res) => {
+    try {
+        if (!req.session.userId) return res.status(401).json({ error: 'Não autorizado' });
+        const user = await User.findById(req.session.userId, 'steamId balance');
+        if (!user) return res.status(401).json({ error: 'Não autorizado' });
+
+        const points = await buildBalanceHistory(user, req.query.limit);
+        res.json({ success: true, points, current: user.balance });
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao carregar histórico' });
+    }
 });
 
 app.get('/api/cases', (req, res) => {
