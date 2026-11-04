@@ -660,6 +660,69 @@
             <button class="btn-secondary" onclick="openChangelog()" style="width: 100%">VIEW WEBSITE CHANGELOG</button>
         </div>
     </div>
+
+    <div class="settings-card balance-history-card">
+        <div class="bh-header">
+            <div>
+                <h2>BALANCE HISTORY</h2>
+                <div class="bh-sub" id="bh-sub">—</div>
+            </div>
+            <div class="bh-change" id="bh-change">—</div>
+        </div>
+        <div class="bh-chart-wrap" id="bh-chart-wrap">
+            <canvas id="balance-chart"></canvas>
+            <div class="bh-tooltip" id="bh-tooltip"></div>
+            <div class="bh-empty" id="bh-empty">Play a few games and your balance history will show up here.</div>
+        </div>
+    </div>
+
+    <!-- Só para admins: escolher um jogador e ver o gráfico de saldo dele -->
+    <div id="admin-balance-card" class="settings-card balance-history-card" style="display:none">
+        <div class="bh-header">
+            <div>
+                <h2>ADMIN · PLAYER BALANCE</h2>
+                <div class="bh-sub" id="abh-sub">Select a player</div>
+            </div>
+            <div class="bh-change" id="abh-change">—</div>
+        </div>
+        <input id="abh-search" class="abh-search" type="text" placeholder="Search player name or Steam ID..." autocomplete="off">
+        <div class="abh-list" id="abh-list"></div>
+        <div class="abh-selected" id="abh-selected">Click a player to see their balance history.</div>
+        <div class="bh-chart-wrap">
+            <canvas id="abh-canvas"></canvas>
+            <div class="bh-tooltip" id="abh-tooltip"></div>
+            <div class="bh-empty" id="abh-empty">No balance history recorded for this player yet.</div>
+        </div>
+    </div>
+
+    <!-- Só para admins: banir temporariamente um jogador, com motivo -->
+    <div id="admin-ban-card" class="settings-card balance-history-card" style="display:none">
+        <div class="bh-header">
+            <div>
+                <h2>ADMIN · BAN PLAYER</h2>
+                <div class="bh-sub">Temporary ban with a reason the player will see</div>
+            </div>
+        </div>
+        <input id="aban-search" class="abh-search" type="text" placeholder="Search player name or Steam ID..." autocomplete="off">
+        <div class="abh-list" id="aban-list"></div>
+        <div class="aban-form" id="aban-form" style="display:none">
+            <div class="abh-selected" id="aban-selected"></div>
+            <div class="aban-row">
+                <input id="aban-amount" class="abh-search" type="number" min="1" value="1">
+                <select id="aban-unit" class="abh-search">
+                    <option value="1">seconds</option>
+                    <option value="60">minutes</option>
+                    <option value="3600" selected>hours</option>
+                    <option value="86400">days</option>
+                </select>
+            </div>
+            <input id="aban-reason" class="abh-search" type="text" maxlength="200" placeholder="Reason (shown to the player)..." autocomplete="off">
+            <button id="aban-btn" class="aban-btn" type="button">BAN PLAYER</button>
+            <div class="aban-msg" id="aban-msg"></div>
+        </div>
+        <div class="aban-title">ACTIVE BANS</div>
+        <div class="abh-list" id="aban-active"></div>
+    </div>
 </section>
             </main>
 
@@ -683,6 +746,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="main.js"></script>
     <script src="admin.js"></script>
+    <script src="ban.js"></script>
     <div id="battle-modal" class="modal-overlay">
         <div class="modal-box">
             <h3>CREATE BATTLE</h3>

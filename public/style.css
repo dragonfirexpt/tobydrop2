@@ -6303,3 +6303,68 @@ body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-se
 .catch-cash:disabled::after { display: none; }
 .catch-cash:disabled span b { color: #9aa0ac; font-size: 15px; }
 /* ===================== FIM CATCH ===================== */
+
+/* ===== BALANCE HISTORY (Settings) ===== */
+.balance-history-card { max-width: 720px; margin: 20px auto 0; text-align: left; padding: 28px; }
+.balance-history-card h2 { margin: 0; font-size: 16px; letter-spacing: 1px; }
+.bh-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+.bh-sub { color: #888; font-size: 12px; margin-top: 6px; }
+.bh-change { font-size: 18px; font-weight: 700; text-align: right; color: #888; white-space: nowrap; }
+.bh-change small { display: block; font-size: 12px; font-weight: 500; opacity: .8; }
+.bh-change.up { color: #00ff88; }
+.bh-change.down { color: #ff4444; }
+.bh-chart-wrap { position: relative; height: 240px; }
+.bh-chart-wrap canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+.bh-tooltip { position: absolute; pointer-events: none; display: none; background: #14171f; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; line-height: 1.4; white-space: nowrap; z-index: 2; }
+.bh-tooltip b { font-size: 13px; }
+.bh-tooltip .up { color: #00ff88; }
+.bh-tooltip .down { color: #ff4444; }
+.bh-empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; color: #555; font-size: 13px; padding: 0 20px; }
+
+/* ===== ADMIN: escolher jogador (Settings) ===== */
+.abh-search { width: 100%; box-sizing: border-box; background: #14171f; border: 1px solid var(--border); color: #fff; padding: 10px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; outline: none; margin-bottom: 10px; }
+.abh-search:focus { border-color: var(--accent); }
+.abh-list { max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; background: #0b0d12; margin-bottom: 12px; }
+.abh-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.abh-row:last-child { border-bottom: none; }
+.abh-row:hover { background: rgba(255,255,255,0.04); }
+.abh-row.active { background: rgba(0,242,255,0.08); box-shadow: inset 3px 0 0 var(--accent); }
+.abh-row img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.abh-name { flex: 1; font-size: 13px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.abh-dot { width: 7px; height: 7px; border-radius: 50%; background: #00ff88; flex-shrink: 0; }
+.abh-bal { font-size: 12px; color: #888; flex-shrink: 0; }
+.abh-none { padding: 14px; text-align: center; color: #555; font-size: 12px; }
+.abh-selected { font-size: 12px; color: #888; margin-bottom: 8px; }
+.abh-selected b { color: var(--accent); }
+
+/* ===== BAN: ecrã do jogador banido ===== */
+body.is-banned { overflow: hidden; }
+#ban-overlay { position: fixed; inset: 0; z-index: 2147483000; display: none; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; background: radial-gradient(circle at center, rgba(70,0,10,0.94) 0%, rgba(0,0,0,0.98) 70%); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+#ban-overlay.show { display: flex; }
+.ban-box { width: 100%; max-width: 460px; text-align: center; background: var(--card); border: 1px solid rgba(255,68,68,0.35); border-radius: 22px; padding: 38px 34px; box-shadow: 0 0 70px rgba(255,68,68,0.18); }
+.ban-icon { color: #ff4444; margin-bottom: 10px; }
+.ban-title { margin: 0 0 6px; color: #ff4444; font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+.ban-sub { color: #888; font-size: 13px; margin-bottom: 26px; }
+.ban-label { color: #666; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; }
+.ban-reason { background: #08090b; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; color: #fff; font-size: 14px; line-height: 1.45; text-align: left; word-break: break-word; margin-bottom: 26px; }
+.ban-timer { font-size: 42px; font-weight: 800; letter-spacing: 2px; color: #fff; font-variant-numeric: tabular-nums; }
+
+/* ===== ADMIN: banir jogador (Settings) ===== */
+.abh-banned { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #ff4444; border: 1px solid rgba(255,68,68,0.5); border-radius: 6px; padding: 2px 6px; flex-shrink: 0; }
+.aban-form { margin-bottom: 18px; }
+.aban-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.aban-row .abh-search { margin-bottom: 0; width: auto; flex: 1; min-width: 0; }
+.aban-btn { width: 100%; background: #ff4444; border: none; color: #fff; font-family: inherit; font-weight: 800; letter-spacing: 1px; padding: 12px; border-radius: 10px; cursor: pointer; }
+.aban-btn:hover { filter: brightness(1.1); }
+.aban-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.aban-msg { font-size: 12px; margin-top: 10px; min-height: 14px; }
+.aban-msg.ok { color: #00ff88; }
+.aban-msg.err { color: #ff4444; }
+.aban-title { color: #888; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin: 4px 0 8px; }
+.aban-item { cursor: default; }
+.aban-item:hover { background: none; }
+.aban-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.aban-why { font-size: 11px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aban-left { font-size: 12px; color: #ff9c9c; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.aban-unban { background: transparent; border: 1px solid var(--border); color: #fff; font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer; flex-shrink: 0; }
+.aban-unban:hover { border-color: var(--accent); color: var(--accent); }

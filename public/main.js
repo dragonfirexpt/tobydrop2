@@ -1321,6 +1321,7 @@ function switchTab(id, el) {
     // Outras inicializações
     if (id === 'upgrade-tab') initUpgrader();
     if (id === 'inventory-tab') loadInventory();
+    if (id === 'settings-tab') { loadBalanceHistory(); initAdminBalanceCard(); if (typeof initAdminBanCard === 'function') initAdminBanCard(); }
 }
 
 // Atualize também a função showHome para manter a consistência
@@ -2076,6 +2077,7 @@ async function handleEquip(itemId, team, action = 'equip') {
 }
 socket.on('balanceUpdate', (newBalance) => {
    updateBalanceUI(newBalance); 
+    refreshBalanceHistorySoon();
     // Remove loading from the "New Battle" button if it exists
     const createBtn = document.querySelector('.lobby-create .btn-primary');
     if(createBtn) createBtn.classList.remove('btn-loading');
@@ -3060,3 +3062,373 @@ function showCatchResult(win, skin, mult, reason) {
     modal.style.display = 'flex';
 }
 // ===================== FIM CATCH =====================
+
+// ===================== GRÁFICO DO HISTÓRICO DE SALDO =====================
+// Usado nas Settings (o teu saldo) e no painel de perfil (só admins veem o de outro jogador).
+const BH_UP = '#00ff88';
+const BH_DOWN = '#ff4444';
+const BH_MAX_POINTS = 300;
+
+function bhFormatTime(t) {
+    return new Date(t).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+// Lifetime: usa todos os pontos; se forem muitos, reduz para o gráfico ficar leve
+function bhDownsample(arr, max) {
+    if (arr.length <= max) return arr.slice();
+    const out = [arr[0]];
+    const step = (arr.length - 1) / (max - 1);
+    for (let i = 1; i < max - 1; i++) out.push(arr[Math.round(i * step)]);
+    out.push(arr[arr.length - 1]);
+    return out;
+}
+
+const bhCharts = [];
+
+function createBalanceChart(ids) {
+    const chart = { all: [], points: [], hover: -1, geom: null, bound: false };
+    const el = k => document.getElementById(ids[k]);
+
+    chart.setData = function (all) {
+        chart.all = all || [];
+        chart.points = bhDownsample(chart.all, BH_MAX_POINTS);
+        chart.hover = -1;
+        chart.bind();
+        chart.updateSummary();
+        chart.draw();
+    };
+
+    chart.updateSummary = function () {
+        const sub = el('sub'), chg = el('change');
+        if (!sub || !chg) return;
+        const all = chart.all;
+        if (all.length < 2) {
+            sub.innerText = all.length ? `Current: $${formatCurrency(all[0].b)}` : '—';
+            chg.className = 'bh-change';
+            chg.innerHTML = '—';
+            return;
+        }
+        const first = all[0].b;
+        const last = all[all.length - 1].b;
+        const diff = last - first;
+        const pct = first > 0 ? (diff / first) * 100 : 0;
+        const up = diff >= 0;
+        sub.innerText = `Lifetime · Current: $${formatCurrency(last)} · ${all.length} changes`;
+        chg.className = 'bh-change ' + (diff === 0 ? '' : (up ? 'up' : 'down'));
+        chg.innerHTML = `${up ? '▲ +' : '▼ -'}$${formatCurrency(Math.abs(diff))}<small>${up ? '+' : '-'}${Math.abs(pct).toFixed(1)}%</small>`;
+    };
+
+    chart.draw = function () {
+        const canvas = el('canvas');
+        const empty = el('empty');
+        if (!canvas) return;
+
+        const wrap = canvas.parentElement;
+        const W = wrap.clientWidth;
+        const H = wrap.clientHeight;
+        if (!W || !H) return; // escondido
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        const pts = chart.points;
+        if (pts.length < 2) {
+            if (empty) empty.style.display = 'flex';
+            chart.geom = null;
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+
+        const padL = 62, padR = 12, padT = 12, padB = 24;
+        const cw = W - padL - padR;
+        const ch = H - padT - padB;
+
+        let min = Math.min(...pts.map(p => p.b));
+        let max = Math.max(...pts.map(p => p.b));
+        if (min === max) { min -= 1; max += 1; }
+        const pad = (max - min) * 0.1;
+        min -= pad; max += pad;
+
+        const xAt = i => padL + (i / (pts.length - 1)) * cw;
+        const yAt = v => padT + (1 - (v - min) / (max - min)) * ch;
+
+        // Grelha + labels do eixo Y
+        ctx.font = '11px Outfit, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let g = 0; g <= 4; g++) {
+            const v = min + ((max - min) * g) / 4;
+            const y = yAt(v);
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padL, y);
+            ctx.lineTo(W - padR, y);
+            ctx.stroke();
+            ctx.fillStyle = '#666';
+            ctx.fillText('$' + formatCurrency(v), padL - 8, y);
+        }
+
+        // Eixo X: primeiro e último ponto
+        ctx.fillStyle = '#666';
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+        ctx.fillText(bhFormatTime(pts[0].t), padL, H - 6);
+        ctx.textAlign = 'right';
+        ctx.fillText(bhFormatTime(pts[pts.length - 1].t), W - padR, H - 6);
+
+        // Verde quando sobe, vermelho quando desce
+        const baseY = padT + ch;
+        for (let i = 1; i < pts.length; i++) {
+            const up = pts[i].b >= pts[i - 1].b;
+            const x0 = xAt(i - 1), y0 = yAt(pts[i - 1].b);
+            const x1 = xAt(i), y1 = yAt(pts[i].b);
+
+            const grad = ctx.createLinearGradient(0, Math.min(y0, y1), 0, baseY);
+            grad.addColorStop(0, up ? 'rgba(0,255,136,0.20)' : 'rgba(255,68,68,0.20)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(x0, baseY);
+            ctx.lineTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.lineTo(x1, baseY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = up ? BH_UP : BH_DOWN;
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+        }
+
+        // Ponto final
+        const lastUp = pts[pts.length - 1].b >= pts[pts.length - 2].b;
+        ctx.fillStyle = lastUp ? BH_UP : BH_DOWN;
+        ctx.beginPath();
+        ctx.arc(xAt(pts.length - 1), yAt(pts[pts.length - 1].b), 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hover
+        const hv = chart.hover;
+        if (hv >= 0 && hv < pts.length) {
+            const hx = xAt(hv), hy = yAt(pts[hv].b);
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(hx, padT);
+            ctx.lineTo(hx, baseY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const hUp = hv === 0 ? true : pts[hv].b >= pts[hv - 1].b;
+            ctx.fillStyle = '#0e1015';
+            ctx.strokeStyle = hUp ? BH_UP : BH_DOWN;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        chart.geom = { padL, padR, cw, W, xAt, yAt };
+    };
+
+    chart.handleMove = function (clientX) {
+        const g = chart.geom;
+        if (!g || chart.points.length < 2) return;
+        const canvas = el('canvas');
+        const tip = el('tip');
+        const x = clientX - canvas.getBoundingClientRect().left;
+
+        let idx = Math.round(((x - g.padL) / g.cw) * (chart.points.length - 1));
+        idx = Math.max(0, Math.min(chart.points.length - 1, idx));
+        chart.hover = idx;
+        chart.draw();
+
+        const p = chart.points[idx];
+        const prev = idx > 0 ? chart.points[idx - 1] : null;
+        let diffHtml = '';
+        if (prev) {
+            const d = p.b - prev.b;
+            diffHtml = `<div class="${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲ +' : '▼ -'}$${formatCurrency(Math.abs(d))}</div>`;
+        }
+        tip.innerHTML = `<b>$${formatCurrency(p.b)}</b>${diffHtml}<div style="color:#777">${bhFormatTime(p.t)}</div>`;
+        tip.style.display = 'block';
+
+        const px = g.xAt(idx);
+        const tw = tip.offsetWidth;
+        let left = px + 12;
+        if (left + tw > g.W - 4) left = px - tw - 12;
+        tip.style.left = Math.max(4, left) + 'px';
+        tip.style.top = '8px';
+    };
+
+    chart.handleLeave = function () {
+        chart.hover = -1;
+        const tip = el('tip');
+        if (tip) tip.style.display = 'none';
+        chart.draw();
+    };
+
+    // Liga os eventos só quando o canvas existe (o painel de perfil vem depois deste script no HTML)
+    chart.bind = function () {
+        if (chart.bound) return;
+        const canvas = el('canvas');
+        if (!canvas) return;
+        canvas.addEventListener('pointermove', e => chart.handleMove(e.clientX));
+        canvas.addEventListener('pointerdown', e => chart.handleMove(e.clientX));
+        canvas.addEventListener('pointerleave', chart.handleLeave);
+        chart.bound = true;
+    };
+
+    bhCharts.push(chart);
+    return chart;
+}
+
+window.addEventListener('resize', () => bhCharts.forEach(c => c.draw()));
+
+// ---------- Settings: o teu próprio saldo ----------
+const bhSettings = createBalanceChart({
+    canvas: 'balance-chart', tip: 'bh-tooltip', empty: 'bh-empty', sub: 'bh-sub', change: 'bh-change'
+});
+let bhRefreshTimer = null;
+
+async function loadBalanceHistory() {
+    try {
+        const res = await fetch('/api/balance-history?limit=20000');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.success) return;
+        bhSettings.setData(data.points);
+    } catch (e) {
+        console.log('Erro ao carregar histórico de saldo:', e);
+    }
+}
+
+// Chamado quando o saldo muda; só atualiza se a aba Settings estiver aberta
+function refreshBalanceHistorySoon() {
+    const tab = document.getElementById('settings-tab');
+    if (!tab || tab.style.display === 'none') return;
+    clearTimeout(bhRefreshTimer);
+    bhRefreshTimer = setTimeout(loadBalanceHistory, 1200);
+}
+
+// ---------- Settings (só admins): escolher um jogador e ver o gráfico dele ----------
+let bhAdminPromise = null;
+function bhIsAdmin() {
+    if (!bhAdminPromise) {
+        bhAdminPromise = fetch('/api/admin/me').then(r => r.json()).then(d => !!d.admin).catch(() => false);
+    }
+    return bhAdminPromise;
+}
+
+let bhAdminChart = null;
+let bhAdminSelected = null;   // { steamId, username, ... }
+let bhAdminToken = 0;
+let bhAdminSearchTimer = null;
+
+async function initAdminBalanceCard() {
+    const card = document.getElementById('admin-balance-card');
+    if (!card) return;
+    if (!(await bhIsAdmin())) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    if (!bhAdminChart) {
+        bhAdminChart = createBalanceChart({
+            canvas: 'abh-canvas', tip: 'abh-tooltip', empty: 'abh-empty', sub: 'abh-sub', change: 'abh-change'
+        });
+        const input = document.getElementById('abh-search');
+        input.addEventListener('input', () => {
+            clearTimeout(bhAdminSearchTimer);
+            bhAdminSearchTimer = setTimeout(() => loadAdminUserList(input.value), 250);
+        });
+    }
+    loadAdminUserList(document.getElementById('abh-search').value);
+    if (bhAdminSelected) selectAdminPlayer(bhAdminSelected); // atualiza o gráfico do jogador já escolhido
+}
+
+async function loadAdminUserList(q) {
+    const list = document.getElementById('abh-list');
+    if (!list) return;
+    try {
+        const res = await fetch('/api/admin/users?q=' + encodeURIComponent(q || ''));
+        if (!res.ok) return;
+        const users = await res.json();
+
+        list.innerHTML = '';
+        if (!users.length) {
+            const none = document.createElement('div');
+            none.className = 'abh-none';
+            none.textContent = 'No players found.';
+            list.appendChild(none);
+            return;
+        }
+        users.forEach(u => {
+            const row = document.createElement('div');
+            row.className = 'abh-row' + (bhAdminSelected && bhAdminSelected.steamId === u.steamId ? ' active' : '');
+            row.dataset.steamid = u.steamId;
+
+            const img = document.createElement('img');
+            img.src = u.avatar || '';
+            const name = document.createElement('span');
+            name.className = 'abh-name';
+            name.textContent = u.username || u.steamId;   // textContent: nomes vêm do Steam
+            row.appendChild(img);
+            row.appendChild(name);
+            if (u.banned) {
+                const tag = document.createElement('span');
+                tag.className = 'abh-banned';
+                tag.textContent = 'BANNED';
+                row.appendChild(tag);
+            }
+            if (u.online) {
+                const dot = document.createElement('span');
+                dot.className = 'abh-dot';
+                dot.title = 'Online';
+                row.appendChild(dot);
+            }
+            const bal = document.createElement('span');
+            bal.className = 'abh-bal';
+            bal.textContent = '$' + formatCurrency(u.balance || 0);
+            row.appendChild(bal);
+
+            row.onclick = () => selectAdminPlayer(u);
+            list.appendChild(row);
+        });
+    } catch (e) {
+        console.log('Erro ao listar jogadores:', e);
+    }
+}
+
+async function selectAdminPlayer(u) {
+    bhAdminSelected = u;
+    const token = ++bhAdminToken;
+
+    document.querySelectorAll('#abh-list .abh-row').forEach(r => {
+        r.classList.toggle('active', r.dataset.steamid === u.steamId);
+    });
+    const label = document.getElementById('abh-selected');
+    label.textContent = 'Viewing: ';
+    const b = document.createElement('b');
+    b.textContent = u.username || u.steamId;
+    label.appendChild(b);
+
+    try {
+        const res = await fetch('/api/admin/balance-history/' + encodeURIComponent(u.steamId) + '?limit=20000');
+        if (!res.ok || token !== bhAdminToken) return;
+        const data = await res.json();
+        if (!data.success || token !== bhAdminToken) return;
+        bhAdminChart.setData(data.points);
+    } catch (e) {
+        console.log('Erro ao carregar histórico do jogador:', e);
+    }
+}
