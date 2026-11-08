@@ -10,6 +10,12 @@ const spinSound = new Audio('/assets/spinner.mp3');
 const landSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
 const superLandSound = new Audio('/assets/super_spin_land.mp3');
 superLandSound.volume = 0.5;
+function playSuperLand() {
+    const fallback = () => { landSound.currentTime = 0; landSound.play().catch(() => {}); };
+    superLandSound.currentTime = 0;
+    const p = superLandSound.play();
+    if (p && p.catch) p.catch(fallback);
+}
 const upgradeStartSound = new Audio('/assets/upgrade.mp3');
 const upgradeWinSound = new Audio('/assets/upgrade_win.mp3');
 const upgradeLossSound = new Audio('/assets/upgrade_lose.mp3');
@@ -31,6 +37,17 @@ upgradeWinSound.volume = 0.3;
 upgradeStartSound.volume = 0.3;
 spinSound.volume = 0.5;
 landSound.volume = 0.3;
+
+// Som de vitória da batalha — coloca o teu ficheiro em /assets/battle_win.mp3 (ou muda o caminho aqui)
+const battleWinSound = new Audio('/assets/battle_win.mp3');
+battleWinSound.preload = 'auto';
+battleWinSound.volume = 0.4;
+function playBattleWinSound() {
+    try {
+        battleWinSound.currentTime = 0;
+        battleWinSound.play().catch(() => {});
+    } catch (e) {}
+}
 let tickCounter = 0;
 let lastTickIndex = -1; // Variável global (fora da função) para evitar repetições
 let crashPageInv = 0;
@@ -44,13 +61,6 @@ function playTick() {
     sound.currentTime = 0;
     sound.play().catch(e => {});
     tickCounter++;
-}
-function selectBDOption(val, text) {
-    document.getElementById('selected-bd-inv').innerText = text;
-    document.getElementById('bd-inv-options').classList.remove('show');
-    bdSortMode = val;
-    bdPage = 0;
-    renderBeatDropInventory();
 }
 let currentCrashState = null;
 let selectedCasesForBattle = [];
@@ -90,7 +100,8 @@ function updateBDCentralSkin(potentialValue) {
     if (now - bdLastUpdateTime < 1000) return;
 
     const skin = getClosestSkinLocal(potentialValue);
-    if (!skin || skin.name === bdLastSkinId) return;
+    const skinKey = skin ? skin.name + '|' + (skin.conditionShort || '') : null;
+    if (!skin || skinKey === bdLastSkinId) return;
 
     const container = document.getElementById('bd-preview-container');
     const img = document.getElementById('bd-preview-img');
@@ -103,9 +114,12 @@ function updateBDCentralSkin(potentialValue) {
     setTimeout(() => {
         // 2. Troca os dados
         img.src = skin.img;
-        name.innerText = skin.name;
+        const pp = bdParseSkin(skin.name);
+        name.innerHTML = `<small>${bdEsc(pp.finish ? pp.weapon : '\u00A0')}</small><span>${bdEsc(pp.finish || pp.weapon)}</span>`;
+        name.title = skin.name;
         price.innerText = `$${formatCurrency(skin.price)}`;
-        bdLastSkinId = skin.name;
+        container.style.setProperty('--rc', skin.color || '#4b69ff');
+        bdLastSkinId = skinKey;
         bdLastUpdateTime = now;
 
         // 3. Finaliza animação (Fade In)
@@ -165,9 +179,11 @@ function renderTargets() {
     });
 }
 function initBeatDrop() {
+    if (typeof bdPreviewFromCatalog !== 'undefined' && !bdPreviewFromCatalog) loadSkinsForPreview(); // catálogo ainda não estava pronto
     resetBDUI();
     renderBeatDropInventory();
     generateWaveform();
+    renderBDSlot();
     
     const wrapper = document.getElementById('bd-wrapper');
     const targetEl = document.getElementById('bd-target');
@@ -176,10 +192,13 @@ function initBeatDrop() {
     if (wrapper) {
         wrapper.onclick = (e) => {
             if (bdAnimationActive) return;
-            
-            const rect = wrapper.getBoundingClientRect();
-            targetDropTime = ((e.clientX - rect.left) / rect.width) * 100;
-            
+
+            // só aceita cliques dentro do retângulo da waveform
+            const layer = document.getElementById('bd-background-layer') || wrapper;
+            const rect = layer.getBoundingClientRect();
+            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+            targetDropTime = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+
             // Ambos usam o mesmo valor de 'left'
             if (targetEl) targetEl.style.left = targetDropTime + '%';
             if (profitZone) {
@@ -188,8 +207,44 @@ function initBeatDrop() {
             }
 
             updateBDPreviewMultiplier(targetDropTime, targetDropTime);
+            updateBDStats();
         };
     }
+    setupBDFit();
+}
+
+function setupBDFit() {
+    const tab = document.getElementById('beat-drop-tab');
+    const box = document.getElementById('sgy');
+    const main = document.querySelector('.main-content');
+    if (!tab || !box || !main || tab.dataset.fitReady) return;
+    tab.dataset.fitReady = '1';
+    const fit = () => {
+        const visible = tab.style.display !== 'none' && tab.offsetParent !== null;
+        if (!visible) { main.style.removeProperty('overflow-y'); return; }
+        main.style.setProperty('overflow-y', 'hidden', 'important');
+        if (window.innerWidth <= 1000) { box.style.removeProperty('height'); return; }
+        const cs = getComputedStyle(main);
+        const h = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        box.style.height = Math.max(420, h) + 'px';
+    };
+    new MutationObserver(() => requestAnimationFrame(fit)).observe(tab, { attributes: true, attributeFilter: ['style', 'class'] });
+    window.addEventListener('resize', fit);
+    fit();
+}
+
+function renderBDSlot() {
+    const el = document.getElementById('bd-in-box');
+    if (!el) return;
+    const inv = (currentUser && currentUser.inventory) || [];
+    const items = inv.filter((it) => selectedBeatDropSkins.includes(it.id));
+    const total = items.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
+    el.innerHTML = items.length
+        ? `<span class="ugx-slot-label">You put in</span>
+           <div class="ugx-stack">${items.map((i) => `<img src="${bdEsc(i.img || i.image)}" alt="">`).join('')}</div>
+           <div class="ugx-slot-main gold">$${formatCurrency(total)}</div>
+           <div class="ugx-slot-sub">${items.length} ${items.length === 1 ? 'skin' : 'skins'}</div>`
+        : `<span class="ugx-slot-label">You put in</span><div class="ugx-slot-hint">Pick up to 5 skins from your inventory</div>`;
 }
 
 async function startBeatDropGame() {
@@ -210,9 +265,24 @@ async function startBeatDropGame() {
     });
 }
 
+// Skins que aparecem no multiplicador do Songy: o catálogo COMPLETO (igual ao prémio do servidor).
+// Se o catálogo ainda não estiver pronto, usa as skins das caixas e tenta outra vez ao abrir o Songy.
+let bdPreviewFromCatalog = false;
 async function loadSkinsForPreview() {
-    const res = await fetch('/api/all-skins');
-    allSkinsForPreview = await res.json();
+    try {
+        const r = await fetch('/api/upgrader-skins');
+        if (r.ok) {
+            const raw = await r.json();
+            const list = (Array.isArray(raw) ? raw : [])
+                .filter(e => e && e.name && e.img && Number(e.price) > 0)
+                .map(e => ({ name: e.name, img: e.img, color: e.color, price: Number(e.price), conditionShort: e.displayCond || e.conditionShort || '' }));
+            if (list.length) { allSkinsForPreview = list; bdPreviewFromCatalog = true; return; }
+        }
+    } catch (e) { /* cai para as skins das caixas */ }
+    try {
+        const res = await fetch('/api/all-skins');
+        allSkinsForPreview = await res.json();
+    } catch (e) { /* mantém o que já havia */ }
 }
 loadSkinsForPreview();
 
@@ -285,10 +355,12 @@ socket.on('beatDropAction', (data) => {
     if (liveMult > 1.1) {
         if (placeholder) placeholder.style.display = "none";
         if (skinInfo) { skinInfo.style.display = "block"; skinInfo.style.opacity = "1"; }
+        bdToggleSlot(false);
         updateBDCentralSkin(data.totalValue * liveMult);
     } else {
         if (skinInfo) skinInfo.style.display = "none";
         if (placeholder) { placeholder.style.display = "block"; placeholder.style.opacity = "0.5"; }
+        bdToggleSlot(true);
     }
 
     // 5. Lógica de Derrota Antecipada (Passou do Alvo)
@@ -320,10 +392,11 @@ socket.on('beatDropAction', (data) => {
 function showBDResultModal(win, skin = null, mult = 0) {
     const modal = document.getElementById('bd-result-modal');
     const card = document.getElementById('bd-result-card');
-    const itemBox = document.getElementById('bd-result-item-box'); // Container da Imagem
-    const infoBox = document.querySelector('#bd-result-card .result-info'); // Container do Nome/Preço
+    const itemBox = document.getElementById('bd-result-item-box');
     const titleEl = document.getElementById('bd-result-title');
-    const multBadge = document.getElementById('bd-result-mult-badge');
+    const multEl = document.getElementById('bd-result-mult-badge');
+    const nameEl = document.getElementById('bd-result-name');
+    const priceEl = document.getElementById('bd-result-price');
 
     // Limpa o estado do jogo no fundo
     resetBDUI();
@@ -331,35 +404,30 @@ function showBDResultModal(win, skin = null, mult = 0) {
     if (!modal || !card) return;
 
     if (win && skin) {
-        // --- ESTADO DE VITÓRIA ---
-        card.className = "result-card result-win";
-        titleEl.innerText = "SUCCESS!";
-        multBadge.innerText = `${mult}x`;
-        multBadge.style.display = "inline-block";
+        // --- VITÓRIA ---
+        card.className = 'result-card result-win';
+        titleEl.innerText = 'Songy successful';
+        multEl.innerText = `${Number(mult).toFixed(2)}x`;
 
-        // MOSTRA a skin e os detalhes
-        if (itemBox) itemBox.style.display = "block";
-        if (infoBox) infoBox.style.display = "block";
-
+        if (itemBox) itemBox.style.display = '';
         document.getElementById('bd-result-img').src = skin.img;
-        document.getElementById('bd-result-name').innerText = skin.name;
-        document.getElementById('bd-result-price').innerText = `$${formatCurrency(skin.value)}`;
-        document.getElementById('bd-result-badge').innerText = skin.conditionShort;
+        nameEl.innerText = skin.name;
+        priceEl.innerText = `$${formatCurrency(skin.value)}`;
+        const cond = skin.conditionShort || '';
+        const badge = document.getElementById('bd-result-badge');
+        badge.innerText = cond;
+        badge.className = 'badge cond-' + cond;
 
         if (upgradeWinSound) upgradeWinSound.play().catch(e => {});
     } else {
-        // --- ESTADO DE DERROTA (LIMPO) ---
-        card.className = "result-card result-loss";
-        titleEl.innerText = "MISSED!";
-        multBadge.innerText = `0.00x`;
-        
-        // ESCONDE TUDO o que tem a ver com skins
-        if (itemBox) itemBox.style.display = "none";
-        if (infoBox) {
-            infoBox.style.display = "block"; // Mantemos o bloco mas mudamos o texto
-            document.getElementById('bd-result-name').innerText = "UNLUCKY! TRY AGAIN.";
-            document.getElementById('bd-result-price').innerText = ""; // Preço vazio
-        }
+        // --- DERROTA ---
+        card.className = 'result-card result-loss';
+        titleEl.innerText = 'Songy failed';
+        multEl.innerText = '0.00x';
+
+        if (itemBox) itemBox.style.display = 'none';
+        nameEl.innerText = 'Unlucky! Try again.';
+        priceEl.innerText = '';
 
         if (upgradeLossSound) upgradeLossSound.play().catch(e => {});
     }
@@ -382,6 +450,11 @@ function updateBDPreviewMultiplier(current, target) {
     else if (dist < 15) previewMult = 1.2;
     
     multEl.innerText = previewMult > 0 ? previewMult.toFixed(2) + 'x' : '0.00x';
+}
+// esconde o "You put in" enquanto as skins do multiplicador aparecem
+function bdToggleSlot(show) {
+    const w = document.querySelector('.sgy-slot-wrap');
+    if (w) w.classList.toggle('hide', !show);
 }
 function resetBDUI() {
     bdAnimationActive = false;
@@ -409,6 +482,7 @@ function resetBDUI() {
         skinContainer.style.display = "none";
         skinContainer.style.opacity = "0";
     }
+    bdToggleSlot(true);
 
     // 3. Reseta a barra branca e o multiplicador
     if (playhead) playhead.style.display = "none";
@@ -487,7 +561,15 @@ function getWeaponCategory(weaponId) {
 
     return "OTHER";
 }
+// Nome e valor de uma skin do inventário (para as notificações), lido antes de o inventário recarregar
+function skinToastInfo(itemId) {
+    const inv = (currentUser && currentUser.inventory) || [];
+    const it = inv.find(i => String(i.id) === String(itemId));
+    return it ? { name: String(it.name || 'Skin'), value: Number(it.value) || 0 } : null;
+}
+
 async function toggleItemLock(itemId) {
+    const info = skinToastInfo(itemId);
     const res = await fetch('/api/toggle-lock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -495,8 +577,16 @@ async function toggleItemLock(itemId) {
     });
     const data = await res.json();
     if (data.success) {
+        const name = info ? info.name : 'Your skin';
+        if (data.isLocked) {
+            showToast(name + ' is now protected from Sell all.', 'success', 'Skin locked');
+        } else {
+            showToast(name + ' can be sold with Sell all again.', 'info', 'Skin unlocked');
+        }
         closeSkinModal();
         loadInventory(); // Recarrega para mostrar o ícone de cadeado
+    } else {
+        showToast(data.error || 'Could not change the lock.', 'error');
     }
 }
 function openSkinModal(item) {
@@ -575,6 +665,7 @@ async function executeSkinAction(itemId, team, action = 'equip') {
 }
 async function executeSellFromModal(itemId) {
     // Usar a função de venda que já tens no main.js
+    const info = skinToastInfo(itemId);
     const res = await fetch('/api/sell-item', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -583,8 +674,11 @@ async function executeSellFromModal(itemId) {
     const data = await res.json();
     if(data.success) {
         updateBalanceUI(data.balance);
+        showToast(info ? info.name + '  ·  +$' + formatCurrency(info.value) : 'Your skin was sold.', 'success', 'Skin sold');
         closeSkinModal();
         loadInventory();
+    } else {
+        showToast(data.error || 'Could not sell this skin.', 'error');
     }
 }
 function closeSkinModal() {
@@ -633,7 +727,7 @@ const getTotalSelectedValue = () => {
 async function initUpgrader() {
     // 1. Carrega as skins do sistema apenas UMA vez
     if (upgraderState.allSkins.length === 0) {
-        const res = await fetch('/api/all-skins');
+        const res = await fetch('/api/upgrader-skins');
         let rawSkins = await res.json();
         upgraderState.allSkins = rawSkins.sort((a,b) => a.price - b.price);
     }
@@ -845,44 +939,244 @@ function filterByMult(m) {
 let currentBeatDropState = null;
 
 
+// ---------- Songy: inventário (mesmo visual do upgrader / inventário) ----------
+let bdSearch = '';
+let bdRenderLimit = 48;
+let bdBound = false;
+let bdSearchTimer = null;
+const BD_BATCH = 48;
+const bdEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const bdHasNum = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+
+function bdParseSkin(name) {
+    const n = String(name || '');
+    const st = /stattrak/i.test(n), sv = /souvenir/i.test(n);
+    const base = n.replace(/stattrak™?\s*/ig, '').replace(/souvenir\s*/ig, '').replace(/\s{2,}/g, ' ').trim();
+    const i = base.indexOf(' | ');
+    return { st, sv, base, weapon: i > 0 ? base.slice(0, i) : base, finish: i > 0 ? base.slice(i + 3) : '' };
+}
+
+// "ak  >50  <200  10-100" -> texto + limites de preço
+function bdParseQ(q) {
+    const out = { text: [], min: null, max: null };
+    String(q || '').toLowerCase().split(/\s+/).filter(Boolean).forEach((t) => {
+        let m;
+        if ((m = t.match(/^>=?\$?(\d+(?:\.\d+)?)$/))) out.min = +m[1];
+        else if ((m = t.match(/^<=?\$?(\d+(?:\.\d+)?)$/))) out.max = +m[1];
+        else if ((m = t.match(/^\$?(\d+(?:\.\d+)?)-\$?(\d+(?:\.\d+)?)$/))) { out.min = +m[1]; out.max = +m[2]; }
+        else out.text.push(t);
+    });
+    return out;
+}
+
+function bdCardHTML(it) {
+    const p = bdParseSkin(it.name);
+    const cond = it.conditionShort || '';
+    const tag = p.st ? '<span class="ugx-tag st">StatTrak™</span>' : p.sv ? '<span class="ugx-tag sv">Souvenir</span>' : '';
+    const parts = [];
+    if (bdHasNum(it.wear)) parts.push(`<span title="Float">${Number(it.wear).toFixed(5)}</span>`);
+    if (bdHasNum(it.seed)) parts.push(`<span class="seed" title="Pattern">#${Number(it.seed)}</span>`);
+    const picked = selectedBeatDropSkins.includes(it.id);
+    return `<div class="ugx-card sgy-card${picked ? ' sel' : ''}" data-id="${bdEsc(it.id)}" role="button" tabindex="0" aria-pressed="${picked}" aria-label="${bdEsc(p.base)}" style="--rc:${bdEsc(it.color || '#4b69ff')}" onclick="toggleBeatDropSkin(this.dataset.id)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleBeatDropSkin(this.dataset.id);}">
+        <div class="ugx-card-top"><span class="ugx-wear ${bdEsc(cond)}">${bdEsc(cond)}</span>${tag}</div>
+        <img src="${bdEsc(it.img)}" alt="" loading="lazy" decoding="async">
+        <div class="ugx-weapon">${bdEsc(p.finish ? p.weapon : '\u00A0')}</div>
+        <div class="ugx-finish" title="${bdEsc(p.base)}">${bdEsc(p.finish || p.weapon)}</div>
+        <div class="ugx-price">$${formatCurrency(Number(it.value) || 0)}</div>
+        <div class="ugx-meta">${parts.join('')}</div>
+    </div>`;
+}
+
+function bdVisibleItems() {
+    let items = [...((currentUser && currentUser.inventory) || [])].filter((it) => !it.isLocked).reverse(); // mais recentes primeiro, sem skins locked
+    const q = bdParseQ(bdSearch);
+    items = items.filter((it) => {
+        const v = Number(it.value) || 0;
+        if (q.min !== null && v < q.min) return false;
+        if (q.max !== null && v > q.max) return false;
+        if (q.text.length) {
+            const hay = (String(it.name || '') + ' ' + String(it.conditionShort || '')).toLowerCase();
+            if (!q.text.every((t) => hay.includes(t))) return false;
+        }
+        return true;
+    });
+    if (bdSortMode === 'high') items.sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+    else if (bdSortMode === 'low') items.sort((a, b) => (Number(a.value) || 0) - (Number(b.value) || 0));
+    else if (bdSortMode === 'float') items.sort((a, b) => (bdHasNum(a.wear) ? Number(a.wear) : Infinity) - (bdHasNum(b.wear) ? Number(b.wear) : Infinity));
+    return items;
+}
+
+// animação de "a atualizar" (igual ao upgrader)
+function bdRefreshAnim(grid) {
+    const now = performance.now();
+    if (grid._an && now - grid._an < 350) return;
+    grid._an = now;
+    grid.classList.remove('ugx-refresh');
+    void grid.offsetWidth;
+    grid.classList.add('ugx-refresh');
+    clearTimeout(grid._at);
+    grid._at = setTimeout(() => grid.classList.remove('ugx-refresh'), 950);
+}
+
+// dropdowns de vidro (iguais ao upgrader): o <select> fica escondido e em sincronia
+function bdEnhanceSelects(rootId = 'sgy') {
+    const root = document.getElementById(rootId);
+    if (!root) return;
+    const nv = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    const dds = [];
+    const closeAll = (except) => dds.forEach((d) => { if (d !== except) d.close(); });
+    root.querySelectorAll('select').forEach((sel) => {
+        if (sel.closest('.ugx-dd')) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'ugx-dd';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ugx-dd-btn';
+        btn.setAttribute('aria-haspopup', 'listbox');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', sel.getAttribute('aria-label') || 'Select');
+        const label = document.createElement('span');
+        label.className = 'ugx-dd-label';
+        btn.appendChild(label);
+        const menu = document.createElement('div');
+        menu.className = 'ugx-dd-menu';
+        menu.setAttribute('role', 'listbox');
+        sel.parentNode.insertBefore(wrap, sel);
+        wrap.append(sel, btn, menu);
+        sel.tabIndex = -1;
+        const opts = Array.from(sel.options).map((o) => {
+            const el = document.createElement('div');
+            el.className = 'ugx-dd-opt';
+            el.setAttribute('role', 'option');
+            el.dataset.v = o.value;
+            el.innerHTML = `<span>${bdEsc(o.textContent)}</span>`;
+            menu.appendChild(el);
+            return el;
+        });
+        let active = -1;
+        const paint = () => {
+            const cur = nv.get.call(sel);
+            const o = sel.options[sel.selectedIndex];
+            label.textContent = o ? o.textContent : '';
+            opts.forEach((el) => {
+                const on = el.dataset.v === cur;
+                el.classList.toggle('on', on);
+                el.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+        };
+        const setActive = (i) => {
+            active = (i + opts.length) % opts.length;
+            opts.forEach((el, k) => el.classList.toggle('kb', k === active));
+            if (opts[active].scrollIntoView) opts[active].scrollIntoView({ block: 'nearest' });
+        };
+        const dd = { close() { wrap.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } };
+        dds.push(dd);
+        const open = () => { closeAll(dd); wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); setActive(sel.selectedIndex); };
+        const pick = (v) => {
+            if (nv.get.call(sel) !== v) { nv.set.call(sel, v); paint(); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+            dd.close();
+            btn.focus();
+        };
+        Object.defineProperty(sel, 'value', {
+            configurable: true,
+            get() { return nv.get.call(this); },
+            set(v) { nv.set.call(this, v); paint(); }
+        });
+        btn.addEventListener('click', () => (wrap.classList.contains('open') ? dd.close() : open()));
+        menu.addEventListener('click', (e) => { const el = e.target.closest('.ugx-dd-opt'); if (el) pick(el.dataset.v); });
+        btn.addEventListener('keydown', (e) => {
+            const isOpen = wrap.classList.contains('open');
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) open(); else setActive(active + (e.key === 'ArrowDown' ? 1 : -1));
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (isOpen && active >= 0) pick(opts[active].dataset.v); else open();
+            } else if (e.key === 'Escape' || e.key === 'Tab') {
+                dd.close();
+            }
+        });
+        paint();
+    });
+    document.addEventListener('pointerdown', (e) => { if (!e.target.closest || !e.target.closest('.ugx-dd')) closeAll(); });
+}
+
+function bdMore(grid) {
+    const items = grid._bdItems || [];
+    const have = grid.querySelectorAll('.sgy-card').length;
+    if (have >= items.length) return;
+    grid.insertAdjacentHTML('beforeend', items.slice(have, have + BD_BATCH).map(bdCardHTML).join(''));
+    bdRenderLimit = Math.max(bdRenderLimit, have + BD_BATCH);
+}
+
+function bdBindInv(grid) {
+    if (bdBound) return;
+    bdBound = true;
+    bdEnhanceSelects();
+    grid.addEventListener('scroll', () => {
+        if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 300) bdMore(grid);
+    }, { passive: true });
+    const search = document.getElementById('bd-search');
+    const sort = document.getElementById('bd-sort');
+    if (search) search.addEventListener('input', () => {
+        clearTimeout(bdSearchTimer);
+        bdSearchTimer = setTimeout(() => {
+            bdSearch = search.value;
+            bdRenderLimit = BD_BATCH;
+            grid.scrollTop = 0;
+            renderBeatDropInventory();
+        }, 150);
+    });
+    if (sort) sort.addEventListener('change', () => {
+        bdSortMode = sort.value;
+        bdRenderLimit = BD_BATCH;
+        grid.scrollTop = 0;
+        renderBeatDropInventory();
+    });
+}
+
 function renderBeatDropInventory() {
     const grid = document.getElementById('bd-inv-grid');
     if (!grid || !currentUser) return;
+    bdBindInv(grid);
 
-    let items = [...currentUser.inventory];
-
-    // Ordenação igual ao Upgrade
-    if (bdSortMode === 'high') items.sort((a, b) => b.value - a.value);
-    else if (bdSortMode === 'low') items.sort((a, b) => a.value - b.value);
-    else items.reverse();
-
-    const start = bdPage * 9;
-    const pageItems = items.slice(start, start + 9);
-
-    grid.innerHTML = pageItems.map(item => {
-        const isSelected = selectedBeatDropSkins.includes(item.id);
-        return `
-            <div class="up-card ${isSelected ? 'selected' : ''}" onclick="toggleBeatDropSkin('${item.id}')">
-                <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
-                <img src="${item.img}">
-                <b>${item.name}</b>
-                <span>$${formatCurrency(item.value)}</span>
-            </div>`;
-    }).join('');
-
-    renderBDPagination(items.length);
-}
-
-function renderBDPagination(total) {
-    const container = document.getElementById('bd-pagination');
-    const totalPages = Math.ceil(total / 9);
-    if (totalPages <= 1) { container.innerHTML = ''; return; }
-    let html = '';
-    for (let i = 0; i < totalPages; i++) {
-        html += `<button class="${i === bdPage ? 'active' : ''}" onclick="bdPage=${i}; renderBeatDropInventory();">${i + 1}</button>`;
+    // tira da seleção skins que entretanto ficaram locked
+    selectedBeatDropSkins = selectedBeatDropSkins.filter((id) => !((currentUser.inventory || []).find((i) => i.id === id) || {}).isLocked);
+    const items = bdVisibleItems();
+    grid._bdItems = items;
+    const top = grid.scrollTop;
+    bdRefreshAnim(grid);
+    if (!items.length) {
+        const all = (currentUser.inventory) || [];
+        const total = all.length;
+        const free = all.filter((i) => !i.isLocked).length;
+        grid.innerHTML = total === 0
+            ? '<div class="ugx-empty"><b>Your inventory is empty</b>Open a case to get your first skin.</div>'
+            : free === 0
+                ? '<div class="ugx-empty"><b>All your skins are locked</b>Unlock some to use them here.</div>'
+                : '<div class="ugx-empty"><b>No skins found</b>Try another search.</div>';
+    } else {
+        grid.innerHTML = items.slice(0, bdRenderLimit).map(bdCardHTML).join('');
+        grid.scrollTop = top;
     }
-    container.innerHTML = html;
+    updateBDStats();
 }
+
+// Contador, valor da aposta, alvo e estado do botão
+function updateBDStats() {
+    renderBDSlot();
+    const inv = (currentUser && currentUser.inventory) || [];
+    const sel = inv.filter((it) => selectedBeatDropSkins.includes(it.id));
+    const total = sel.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    set('bd-count', `${selectedBeatDropSkins.length}/5`);
+    set('bd-sel-count', selectedBeatDropSkins.length + (selectedBeatDropSkins.length === 1 ? ' skin' : ' skins'));
+    set('bd-bet', '$' + formatCurrency(total));
+    set('bd-target-val', Math.round(targetDropTime) + '%');
+    const btn = document.getElementById('bd-start-btn');
+    if (btn) btn.disabled = bdAnimationActive || selectedBeatDropSkins.length === 0;
+}
+
 function calcBDMultiplier(current, target) {
     const dist = Math.abs(current - target);
     const radius = 10;
@@ -894,12 +1188,19 @@ function toggleBeatDropSkin(id) {
     const idx = selectedBeatDropSkins.indexOf(id);
     if (idx > -1) {
         selectedBeatDropSkins.splice(idx, 1);
+    } else if (selectedBeatDropSkins.length < 5) {
+        selectedBeatDropSkins.push(id);
     } else {
-        if (selectedBeatDropSkins.length < 5) selectedBeatDropSkins.push(id);
+        showToast('You can pick up to 5 skins per drop.', 'warn', 'Limit reached');
     }
-    
-    renderBeatDropInventory();
-    document.getElementById('bd-count').innerText = `${selectedBeatDropSkins.length}/5`;
+
+    const grid = document.getElementById('bd-inv-grid');
+    if (grid) grid.querySelectorAll('.sgy-card').forEach((c) => {
+        const on = selectedBeatDropSkins.includes(c.dataset.id);
+        c.classList.toggle('sel', on);
+        c.setAttribute('aria-pressed', on);
+    });
+    updateBDStats();
 }
 function showUpgradeResult(win, item) {
     const modal = document.getElementById('upgrade-modal');
@@ -1216,7 +1517,8 @@ socket.on('skinCrashTick', (state) => {
 socket.on('inventoryUpdate', (newInventory) => {
     if (currentUser) {
         currentUser.inventory = newInventory;
-        
+        if (typeof sldOnInventory === 'function') sldOnInventory(); // Slider: refresca a lista de skins
+
         // Limpa IDs selecionados que já não existem no inventário novo
         selectedCrashSkins = selectedCrashSkins.filter(id => 
             newInventory.some(item => item.id === id)
@@ -1252,14 +1554,50 @@ function renderAvailableCasesForBattle() {
     }
 
     container.innerHTML = entries.map(([id, data]) => `
-        <div class="modal-case-item" onclick="addCaseToBattle('${id}')">
-            <img src="${data.img}">
+        <div class="modal-case-item" data-id="${id}" data-name="${escapeHTML(String(data.name))}" onclick="addCaseToBattle('${id}')">
+            <i class="btl-qty"></i>
+            <img src="${data.img}" alt="">
             <div class="info">
-                <b>${data.name}</b>
+                <b>${escapeHTML(String(data.name))}</b>
                 <span>$${formatCurrency(data.price)}</span>
             </div>
         </div>
     `).join('');
+    updateBattleQty();
+    const s = document.getElementById('battle-case-search');
+    if (s && s.value) filterBattleCases(true);
+    battleRefreshAnim();
+}
+// animação de "a atualizar" da lista de caixas (igual ao upgrader)
+function battleRefreshAnim() {
+    const grid = document.getElementById('modal-available-cases');
+    if (!grid) return;
+    const now = performance.now();
+    if (grid._an && now - grid._an < 350) return;
+    grid._an = now;
+    let i = 0;
+    grid.querySelectorAll('.modal-case-item').forEach(c => {
+        if (c.style.display === 'none') return;
+        c.style.animationDelay = (Math.min(i++, 24) * 22) + 'ms';
+    });
+    grid.classList.remove('btl-refresh');
+    void grid.offsetWidth;
+    grid.classList.add('btl-refresh');
+    clearTimeout(grid._at);
+    grid._at = setTimeout(() => grid.classList.remove('btl-refresh'), 950);
+}
+// mostra ×N nas caixas já escolhidas e desativa o botão sem caixas
+function updateBattleQty() {
+    const counts = {};
+    selectedCasesForBattle.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    document.querySelectorAll('#modal-available-cases .modal-case-item').forEach(card => {
+        const n = counts[card.dataset.id] || 0;
+        const q = card.querySelector('.btl-qty');
+        if (q) q.textContent = n ? `×${n}` : '';
+        card.classList.toggle('picked', n > 0);
+    });
+    const btn = document.getElementById('confirm-battle-btn');
+    if (btn) btn.disabled = selectedCasesForBattle.length === 0;
 }
 function openBattleModal() {
     const modal = document.getElementById('battle-modal');
@@ -1298,6 +1636,10 @@ function closeUpgradeModal() {
 
 // Função de troca de abas (SwitchTab)
 // Já deve funcionar com o CSS novo, mas vamos garantir que ela limpe animações anteriores
+function openSettings() {
+    switchTab('settings-tab', null);
+}
+
 function switchTab(id, el) {
     // Esconder todas as views
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
@@ -1307,8 +1649,14 @@ function switchTab(id, el) {
     // Mostrar a view correta
     const target = document.getElementById(id);
     if(target) target.style.display = 'block';
+    if (id !== 'beat-drop-tab') {
+        const _main = document.querySelector('.main-content');
+        if (_main) _main.style.removeProperty('overflow-y'); // o Beat Drop força overflow hidden; não pode ficar noutras tabs
+    }
     // Marcar botão como ativo
     if(el) el.classList.add('active');
+    const _pfp = document.querySelector('.pfp-wrap');
+    if (_pfp) _pfp.classList.toggle('active', id === 'settings-tab');
 
     // CARREGAR INVENTÁRIO SE FOR A ABA DE CRASH
    if (id === 'skin-crash-tab') {
@@ -1324,8 +1672,26 @@ function switchTab(id, el) {
     if (id === 'settings-tab') { loadBalanceHistory(); initAdminBalanceCard(); if (typeof initAdminBanCard === 'function') initAdminBanCard(); }
 }
 
+// Ranking desativado: sem scroll na página.
+// Usa uma classe (.lb-lock) em vez de style inline, para não se misturar com o bloqueio de scroll do Upgrader / Songy.
+// Acompanha a visibilidade da aba, por isso funciona seja qual for a forma como se sai do ranking.
+(function () {
+    const tab = document.getElementById('leaderboard-tab');
+    const main = document.querySelector('.main-content');
+    if (!tab || !main) return;
+    const sync = () => {
+        const open = tab.style.display !== 'none';
+        main.classList.toggle('lb-lock', open);
+        if (open) main.scrollTop = 0;
+    };
+    new MutationObserver(sync).observe(tab, { attributes: true, attributeFilter: ['style'] });
+    sync();
+})();
+
 // Atualize também a função showHome para manter a consistência
 function showHome() {
+    const _pfp = document.querySelector('.pfp-wrap');
+    if (_pfp) _pfp.classList.remove('active');
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     
@@ -1342,16 +1708,116 @@ function closeBattleModal() {
 
 function addCaseToBattle(id) {
     if (selectedCasesForBattle.length >= 20) { // Alterado de 10 para 20
-        return alert("Max 20 cases per battle!");
+        const now = Date.now();
+        if (!addCaseToBattle._t || now - addCaseToBattle._t > 1200) {
+            addCaseToBattle._t = now; // evita notificações em cadeia ao clicar várias vezes
+            showToast('You can add up to 20 cases per battle. Remove one to add another.', 'warn', 'Case limit reached');
+        }
+        const pill = document.getElementById('btl-sel-count');
+        if (pill) {
+            pill.classList.remove('btl-shake');
+            void pill.offsetWidth;
+            pill.classList.add('btl-shake');
+        }
+        return;
     }
     selectedCasesForBattle.push(id);
     updateModalSelected();
 }
-function sellAllItems() {
-    if (!currentUser || currentUser.inventory.length === 0) {
-        return alert("Your inventory is already empty!");
+// Som da notificação: o mesmo ficheiro para todos os tipos, pré-carregado
+const toastSound = new Audio('/assets/notify.mp3');
+toastSound.preload = 'auto';
+toastSound.volume = 0.5;
+function playToastSound() {
+    try {
+        toastSound.currentTime = 0;
+        toastSound.play().catch(() => {});
+    } catch (e) { /* sem áudio: ignora */ }
+}
+
+// Notificação (toast) glass no topo do ecrã
+function showToast(message, type = 'info', title = '', duration = 4200, sound = true) {
+    let wrap = document.getElementById('toast-wrap');
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'toast-wrap';
+        wrap.setAttribute('aria-live', 'polite');
+        document.body.appendChild(wrap);
     }
-    document.getElementById('sell-all-modal').style.display = 'flex';
+    const icons = {
+        warn: '<path d="M12 8.5v4.5M12 16.6v.01"/><path d="M10.3 3.9L2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+        error: '<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>',
+        success: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+        info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>'
+    };
+    const titles = { warn: 'Heads up', error: 'Something went wrong', success: 'Done', info: 'Info' };
+    if (!icons[type]) type = 'info';
+
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.setAttribute('role', 'status');
+    toast.style.setProperty('--dur', duration + 'ms');
+    toast.innerHTML =
+        '<div class="toast-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[type] + '</svg></div>' +
+        '<div class="toast-body"><b></b><span></span></div>' +
+        '<button type="button" class="toast-x" aria-label="Dismiss"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>' +
+        '<i class="toast-bar"></i>';
+    toast.querySelector('b').textContent = title || titles[type];
+    toast.querySelector('span').textContent = message;
+    wrap.appendChild(toast);
+    if (sound) playToastSound();
+
+    let closed = false, timer;
+    const close = () => {
+        if (closed) return;
+        closed = true;
+        clearTimeout(timer);
+        toast.classList.add('out');
+        setTimeout(() => toast.remove(), 380);
+    };
+    toast.addEventListener('click', close);
+    timer = setTimeout(close, duration);
+    while (wrap.children.length > 3) wrap.firstChild.remove();
+}
+
+function sellAllItems() {
+    if (!currentUser || !currentUser.inventory || currentUser.inventory.length === 0) {
+        return showToast("There are no skins to sell yet.", "warn", "Inventory empty");
+    }
+    const sellable = currentUser.inventory.filter(it => !it.isLocked);
+    const locked = currentUser.inventory.length - sellable.length;
+    if (sellable.length === 0) {
+        return showToast("All your skins are locked. Unlock some to sell them.", "warn", "Nothing to sell");
+    }
+    const total = sellable.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
+
+    document.getElementById('sam-count').textContent = sellable.length;
+    document.getElementById('sam-total').textContent = '$' + formatCurrency(total);
+    const note = document.getElementById('sam-note');
+    if (locked > 0) {
+        note.textContent = locked + (locked === 1 ? ' locked skin stays' : ' locked skins stay') + ' in your inventory.';
+        note.hidden = false;
+    } else {
+        note.hidden = true;
+    }
+
+    const modal = document.getElementById('sell-all-modal');
+    if (!modal._sam) {
+        modal._sam = true;
+        // clicar fora e Escape fecham (igual ao modal da skin)
+        modal.addEventListener('mousedown', (e) => {
+            const btn = document.getElementById('confirm-sell-all-btn');
+            if (e.target === modal && !btn.disabled) closeSellAllModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            const btn = document.getElementById('confirm-sell-all-btn');
+            if (e.key === 'Escape' && modal.style.display !== 'none' && !modal.classList.contains('closing') && !btn.disabled) closeSellAllModal();
+        });
+    }
+    modal.classList.remove('closing');
+    modal.style.display = 'flex';
+    const cancel = modal.querySelector('.sam-btn');
+    if (cancel) cancel.focus({ preventScroll: true });
 }
 
 function closeSellAllModal() {
@@ -1359,7 +1825,20 @@ function closeSellAllModal() {
 }
 function openChangelog() {
     const modal = document.getElementById('changelog-modal');
+    if (!modal._clg) {
+        modal._clg = true;
+        // clicar fora e Escape fecham (igual aos outros modais)
+        modal.addEventListener('mousedown', (e) => { if (e.target === modal) closeChangelog(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display !== 'none' && !modal.classList.contains('closing')) closeChangelog();
+        });
+    }
+    modal.classList.remove('closing');
     modal.style.display = 'flex';
+    const sc = modal.querySelector('.changelog-scroll');
+    if (sc) sc.scrollTop = 0;
+    const x = modal.querySelector('.clg-close');
+    if (x) x.focus({ preventScroll: true });
 }
 
 function closeChangelog() {
@@ -1368,10 +1847,11 @@ function closeChangelog() {
 }
 async function confirmSellAll() {
     const btn = document.getElementById('confirm-sell-all-btn');
-    const mainBtn = document.getElementById('btn-sell-all');
+    const cancelBtn = document.querySelector('#sell-all-modal .sam-btn:not(.danger)');
     
-    btn.classList.add('btn-loading');
+    btn.classList.add('loading');
     btn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
 
     try {
         const res = await fetch('/api/sell-all-items', { method: 'POST' });
@@ -1392,36 +1872,57 @@ async function confirmSellAll() {
         console.error(e);
         alert("Server connection error");
     } finally {
-        btn.classList.remove('btn-loading');
+        btn.classList.remove('loading');
         btn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
     }
 }
 
 // Função para filtrar as caixas no modal
-function filterBattleCases() {
-    const term = document.getElementById('battle-case-search').value.toLowerCase();
-    const cards = document.querySelectorAll('.modal-case-item');
-    
+function filterBattleCases(noAnim) {
+    const term = document.getElementById('battle-case-search').value.toLowerCase().trim();
+    const grid = document.getElementById('modal-available-cases');
+    const cards = grid.querySelectorAll('.modal-case-item');
+    let visible = 0;
+
     cards.forEach(card => {
-        const name = card.getAttribute('data-name').toLowerCase();
-        card.style.display = name.includes(term) ? 'flex' : 'none';
+        const name = (card.getAttribute('data-name') || '').toLowerCase();
+        const show = name.includes(term);
+        card.style.display = show ? 'flex' : 'none';
+        if (show) visible++;
     });
+
+    const old = grid.querySelector('.btl-no-res');
+    if (old) old.remove();
+    if (!visible && cards.length) {
+        grid.insertAdjacentHTML('beforeend', '<div class="btl-empty-sm btl-no-res">No cases match your search.</div>');
+    }
+    if (noAnim !== true) battleRefreshAnim();
 }
 function updateModalSelected() {
     const container = document.getElementById('modal-selected-cases');
     let total = 0;
-    container.innerHTML = selectedCasesForBattle.map((id, index) => {
-        total += itemsData[id].price;
-        return `
+    container.innerHTML = selectedCasesForBattle.length === 0
+        ? '<div class="btl-empty-sm">No cases yet. Click a case to add it.</div>'
+        : selectedCasesForBattle.map((id, index) => {
+            total += itemsData[id].price;
+            return `
             <div class="selected-item">
-                <img src="${itemsData[id].img}" style="width: 20px; margin-right: 5px;">
-                ${itemsData[id].name} 
-                <span onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">×</span>
+                <img src="${itemsData[id].img}" alt="">
+                <b>${escapeHTML(itemsData[id].name)}</b>
+                <em>$${formatCurrency(itemsData[id].price)}</em>
+                <span role="button" aria-label="Remove" onclick="selectedCasesForBattle.splice(${index},1);updateModalSelected()">&times;</span>
             </div>`;
-    }).join('');
-    
-    // Atualiza o texto do preço total e a contagem (Ex: Battle Cases 5/20)
+        }).join('');
+
+    // Preço total das caixas escolhidas
     document.getElementById('total-battle-price').innerText = `$${formatCurrency(total)}`;
+    const cnt = document.getElementById('btl-sel-count');
+    if (cnt) {
+        cnt.innerText = `${selectedCasesForBattle.length}/20`;
+        cnt.classList.toggle('full', selectedCasesForBattle.length >= 20);
+    }
+    updateBattleQty();
 }
 function getSafeAvatar(url) {
     if (!url || url === "" || url === "undefined") {
@@ -1567,6 +2068,11 @@ function renderHomeCases() {
         }
     });
 
+    const _cnt = document.getElementById('cases-count');
+    if (_cnt) {
+        const n = gridHot.children.length + gridElite.children.length;
+        _cnt.textContent = n + (n === 1 ? ' case' : ' cases');
+    }
     document.getElementById('grid-new').parentElement.style.display = gridHot.innerHTML === '' ? 'none' : 'block';
     document.getElementById('grid-boxes').parentElement.style.display = gridElite.innerHTML === '' ? 'none' : 'block';
 }
@@ -1652,29 +2158,77 @@ function parseSkinName(fullName) {
     };
 }
 
+function getDropTier(color) {
+    const c = (color || '').toLowerCase();
+    if (c === '#ffb703') return 'gold';
+    if (c === '#eb4b4b') return 'red';
+    if (c === '#d32ce6') return 'pink';
+    if (c === '#8847ff') return 'purple';
+    return 'common';
+}
+
 function addWonItemToArena(playerNum, item) {
     const inv = document.getElementById(`p${playerNum}-inventory`);
+    if (!inv) return;
+
     const nameData = parseSkinName(item.name);
-    
+    const round = inv.children.length + 1; // 1 drop por ronda, por jogador
+    const value = Number(item.value) || 0;
+    const color = item.color || '#4b69ff';
+    const wearCode = String(item.conditionShort || '').replace(/[^A-Za-z]/g, '');
+
     const itemCard = document.createElement('div');
     itemCard.className = 'won-item-card anim-entry';
-    
+    itemCard.dataset.tier = item.isSuperSpin ? 'super' : getDropTier(color);
+    itemCard.dataset.value = value;
+    itemCard.dataset.round = round;
+    if (item.isSuperSpin) itemCard.classList.add('is-super');
+
     // Define a cor para o CSS usar no brilho e na borda
-    itemCard.style.setProperty('--rarity-color', item.color); 
+    itemCard.style.setProperty('--rarity-color', color);
 
     itemCard.innerHTML = `
         <div class="card-img-wrap">
-            <img src="${item.img || ''}">
+            <img src="${item.img || ''}" alt="" loading="lazy">
         </div>
         <div class="card-details">
-            <div class="weapon-type">${nameData.weapon}</div>
-            <div class="skin-name">${nameData.skin}</div>
-            <div class="skin-meta">${item.conditionShort}</div>
+            <div class="weapon-type">${escapeHTML(nameData.weapon)}</div>
+            <div class="skin-name">${escapeHTML(nameData.skin)}</div>
+            <div class="skin-meta">${wearCode ? `<span class="ugx-wear ${wearCode}">${escapeHTML(item.conditionShort)}</span>` : ''}${item.isSuperSpin ? '<span class="drop-super">Gold</span>' : ''}</div>
         </div>
-        <div class="card-value">$${formatCurrency(item.value)}</div>
+        <div class="card-value">$${formatCurrency(value)}</div>
     `;
-    
-    inv.prepend(itemCard); 
+    itemCard.querySelector('.skin-name').title = nameData.skin;
+
+    inv.prepend(itemCard);
+
+    const cnt = document.getElementById(`p${playerNum}-drop-count`);
+    if (cnt) {
+        cnt.innerText = inv.children.length;
+        cnt.classList.remove('bump');
+        void cnt.offsetWidth; // reinicia a animação
+        cnt.classList.add('bump');
+    }
+}
+
+// No fim da batalha, destaca o melhor drop de cada jogador
+function markBestDrops() {
+    [1, 2].forEach(n => {
+        const inv = document.getElementById(`p${n}-inventory`);
+        if (!inv || inv.children.length < 2) return;
+        let best = null;
+        inv.querySelectorAll('.won-item-card').forEach(card => {
+            const v = Number(card.dataset.value) || 0;
+            if (!best || v > best.v) best = { card, v };
+        });
+        if (!best) return;
+        best.card.classList.add('is-best');
+        const tag = document.createElement('span');
+        tag.className = 'drop-best';
+        tag.textContent = 'Best drop';
+        const meta = best.card.querySelector('.skin-meta');
+        if (meta) meta.appendChild(tag);
+    });
 }
 function animateBattleValue(elementId, start, end, duration) {
     const obj = document.getElementById(elementId);
@@ -1716,6 +2270,8 @@ function updateUI() {
 }
 
 function showHome() {
+    const _pfp = document.querySelector('.pfp-wrap');
+    if (_pfp) _pfp.classList.remove('active');
     document.querySelectorAll('.tab-view').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     document.getElementById('home-tab').style.display = 'block';
@@ -1786,17 +2342,22 @@ function selectCase(id) {
         let priceDisplay = formatCurrency(minP) + " - " + formatCurrency(maxP);
         if (minP === maxP) priceDisplay = formatCurrency(minP);
 
+        const pp = bdParseSkin(item.name);
+        const tag = pp.st ? 'StatTrak™ ' : pp.sv ? 'Souvenir ' : '';
         return `
-            <div class="preview-item" style="border-color: ${item.color}">
-                <img src="${item.img || ''}" style="width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px;">
-                <div class="preview-info">
-                    <b style="font-size: 12px; display: block; height: 30px; overflow: hidden;">${item.name}</b>
-                    <span style="display: block; margin-top: 5px; color: var(--accent); font-weight: 800;">$${priceDisplay}</span>
-                    <small style="color: #666; display: block; margin-top: 5px;">${totalChance.toFixed(3)}% Drop</small>
+            <div class="preview-item" style="--rc: ${bdEsc(item.color || '#4b69ff')}" title="${bdEsc(item.name)}">
+                <span class="pv-chance">${totalChance.toFixed(totalChance < 1 ? 3 : 2)}%</span>
+                <div class="pv-img"><img src="${bdEsc(item.img || '')}" alt="" loading="lazy" decoding="async"></div>
+                <div class="pv-name">
+                    <small>${bdEsc(tag + (pp.finish ? pp.weapon : '\u00A0'))}</small>
+                    <b>${bdEsc(pp.finish || pp.weapon)}</b>
                 </div>
+                <div class="pv-price">$${priceDisplay}</div>
             </div>
         `;
     }).join('');
+    const _pc = document.getElementById('preview-count');
+    if (_pc) _pc.textContent = sortedItems.length + (sortedItems.length === 1 ? ' skin' : ' skins');
 }
 
 
@@ -1896,9 +2457,8 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
     // Giro 1
     spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
     spinner.style.transform = `translateX(-${targetX}px)`;
-    trackCenterItem(spinnerId, isLocalPlayer); 
-    spinSound.currentTime = 0;
-    spinSound.play().catch(e => {});
+    trackCenterItem(spinnerId, isLocalPlayer); // isLocalPlayer = este é o spinner que se ouve
+    if (isLocalPlayer) { spinSound.currentTime = 0; spinSound.play().catch(e => {}); }
     await new Promise(r => setTimeout(r, 5000));
 
     // Snap
@@ -1909,11 +2469,9 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
 
     if (isSuperWin) {
         // Se for Super Spin, NÃO adicionamos o item ao inventário lateral ainda
-        superLandSound.currentTime = 0;
-        superLandSound.play().catch(e => {});
+        if (isLocalPlayer) playSuperLand();
     } else {
-        landSound.currentTime = 0;
-        landSound.play().catch(e => {});
+        if (isLocalPlayer) { landSound.currentTime = 0; landSound.play().catch(e => {}); }
         if(node) node.classList.add('reveal-final');
         
         // APENAS adiciona aqui se NÃO for super spin
@@ -1932,8 +2490,8 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
 
         // ESPERA 3 SEGUNDOS DE VÍDEO
         await new Promise(r => setTimeout(r, 3000));
-        spinSound.currentTime = 0;
-    spinSound.play().catch(e => {}); 
+        if (isLocalPlayer) { spinSound.currentTime = 0; spinSound.play().catch(e => {}); }
+        lastTickIndex = -1;
         // Monta track do segundo giro (skins caras)
         const topItems = itemsPool.filter(item => {
         const maxPriceInRarities = Math.max(...item.rarities.map(r => r.price));
@@ -1963,7 +2521,7 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
         spinner.style.transition = 'transform 5s cubic-bezier(0.05, 0, 0, 1)';
         spinner.style.transform = `translateX(-${superTargetX}px)`;
 
-        trackCenterItem(spinnerId, isLocalPlayer); // Religa o highlight
+        trackCenterItem(spinnerId, isLocalPlayer); // Religa o highlight (+ som só se for o spinner audível)
         await new Promise(r => setTimeout(r, 5000));
 
         spinner.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -1973,12 +2531,11 @@ async function executeArenaSpin(playerNum, spinnerId, winnerData, casePrice, ite
         if(finalNode) finalNode.classList.add('is-winner', 'reveal-final'); 
 
         if(isBattle) {
-            addWonItemToArena(playerNum, winnerData);
+            addWonItemToArena(playerNum, { ...winnerData, isSuperSpin: true });
             showBattleGain(playerNum, winnerData.value);
         }
 
-        landSound.currentTime = 0;
-        landSound.play();
+        if (isLocalPlayer) { landSound.currentTime = 0; landSound.play().catch(e => {}); }
         await new Promise(r => setTimeout(r, 800));
     }
 }
@@ -2128,41 +2685,58 @@ socket.on('updateBattles', (battles) => {
     const list = document.getElementById('battle-list');
     if (!list) return;
 
+    const countEl = document.getElementById('battle-count');
+    if (countEl) countEl.innerText = `${battles.length} open`;
+
+    if (!battles.length) {
+        list.innerHTML = '<div class="btl-empty"><b>No open battles</b>Create one and wait for an opponent.</div>';
+        return;
+    }
+
     list.innerHTML = battles.map(b => {
         const firstCaseId = b.caseIds[0];
         const firstCaseName = itemsData[firstCaseId] ? itemsData[firstCaseId].name : "Case";
         const totalCases = b.caseIds.length;
         const displayName = totalCases > 1 ? `${firstCaseName} +${totalCases - 1}` : firstCaseName;
 
-        const p1Ava = b.player1.avatar;
+        const p1Ava = getSafeAvatar(b.player1.avatar);
         const p2Ava = 'https://api.dicebear.com/9.x/bottts/svg?seed=waiting';
+
+        // miniaturas das primeiras caixas
+        const thumbs = b.caseIds.slice(0, 4).map(cid =>
+            itemsData[cid] ? `<img src="${itemsData[cid].img}" alt="">` : ''
+        ).join('');
+        const more = totalCases > 4 ? `<span class="btl-more">+${totalCases - 4}</span>` : '';
 
         // CORREÇÃO: Verificar se o currentUser existe antes de tentar ler o ._id
         let actionButton = "";
         if (!currentUser) {
-            actionButton = `<button class="btn-primary" disabled>LOGIN TO JOIN</button>`;
+            actionButton = `<button class="btl-btn" disabled>Login to join</button>`;
         } else if (b.player1.id === currentUser._id.toString()) {
-            actionButton = '<span class="badge-yours">YOUR BATTLE</span>';
+            actionButton = '<span class="badge-yours">Your battle</span>';
         } else {
-            actionButton = `<button class="btn-primary" onclick="joinBattle('${b.id}', ${b.price})">JOIN $${formatCurrency(b.price)}</button>`;
+            actionButton = `<button class="btl-btn" onclick="joinBattle('${b.id}', ${b.price})">Join $${formatCurrency(b.price)}</button>`;
         }
 
         return `
             <div class="battle-card">
                 <div class="users">
                     <div class="avatar-stack">
-                        <img src="${p1Ava}" class="p1-img">
+                        <img src="${p1Ava}" class="p1-img" alt="">
                         <div class="vs-circle">VS</div>
-                        <img src="${p2Ava}" class="p2-img grayscale">
+                        <img src="${p2Ava}" class="p2-img grayscale" alt="">
                     </div>
                     <div class="user-info">
-                        <b>${b.player1.username}</b>
-                        <small>WAITING FOR PLAYER</small>
+                        <b>${escapeHTML(String(b.player1.username))}</b>
+                        <small><i class="btl-dot"></i>Waiting for player</small>
                     </div>
                 </div>
                 <div class="battle-details">
-                    <small>${totalCases} CAIXA(S)</small><br>
-                    <b style="color: var(--accent)">${displayName.toUpperCase()}</b>
+                    <div class="btl-thumbs">${thumbs}${more}</div>
+                    <div class="btl-case-txt">
+                        <small>${totalCases} ${totalCases === 1 ? 'case' : 'cases'}</small>
+                        <b>${escapeHTML(displayName)}</b>
+                    </div>
                 </div>
                 <div class="battle-actions">
                     ${actionButton}
@@ -2247,6 +2821,7 @@ async function equipItem(id) {
 }
 
 async function sellItem(event, id) {
+    const info = skinToastInfo(id);
     // 1. Identificar o botão que foi clicado
     const btn = event.target;
     
@@ -2267,6 +2842,7 @@ async function sellItem(event, id) {
 
             // 4. Atualizar o saldo com animação
             updateBalanceUI(data.balance);
+            showToast(info ? info.name + '  ·  +$' + formatCurrency(info.value) : 'Your skin was sold.', 'success', 'Skin sold');
             
             // 5. Recarregar o inventário (o item desaparecerá)
             await loadInventory(); 
@@ -2291,6 +2867,17 @@ socket.on('startBattleSpin', async (data) => {
     document.getElementById('p1-inventory').innerHTML = '';
     document.getElementById('p2-inventory').innerHTML = '';
     document.getElementById('total-rounds').innerText = data.p1Rolls.length;
+
+    // Reset do estado visual da arena (vencedor/perdedor, drops, progresso)
+    ['lane-p1', 'lane-p2'].forEach(id => {
+        const l = document.getElementById(id);
+        if (l) l.classList.remove('is-winner-lane', 'is-loser-lane');
+    });
+    ['p1-drop-count', 'p2-drop-count'].forEach(id => { const e = document.getElementById(id); if (e) e.innerText = '0'; });
+    const statsBar = document.querySelector('#arena-tab .battle-stats-bar');
+    if (statsBar) statsBar.style.setProperty('--prog', '0%');
+    const msgEl = document.getElementById('battle-msg');
+    if (msgEl) msgEl.classList.remove('decided');
 
     // Calcula e exibe o preço total da batalha
     let totalBattlePrice = data.battle.caseIds.reduce((sum, cid) => sum + (itemsData[cid]?.price || 0), 0);
@@ -2321,23 +2908,35 @@ const amIPlayer1 = currentUser && currentUser._id === data.battle.player1.id;
         const itemsPool = currentCase.items;
 
         // --- ATUALIZA NOME E PREÇO DA CAIXA ATUAL ---
-        document.getElementById('cur-case-name').innerText = currentCase.name.toUpperCase();
+        document.getElementById('cur-case-name').innerText = currentCase.name;
         document.getElementById('cur-case-price').innerText = formatCurrency(casePrice);
+        const curCaseBanner = document.querySelector('#arena-tab .current-case-banner');
+        if (curCaseBanner) { curCaseBanner.classList.remove('swap'); void curCaseBanner.offsetWidth; curCaseBanner.classList.add('swap'); }
 
         document.querySelectorAll('.timeline-case').forEach(el => el.classList.remove('active'));
         const currentStep = document.getElementById(`step-${i}`);
-        if(currentStep) 
-            currentStep.classList.add('active', 'passed');
-        currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        if (currentStep) currentStep.classList.add('active', 'passed');
+        // scroll só DENTRO da timeline (horizontal) — scrollIntoView mexia na página toda e puxava-a de volta ao topo
+        if (currentStep && timeline) {
+            const left = currentStep.offsetLeft - (timeline.clientWidth - currentStep.offsetWidth) / 2;
+            timeline.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+        }
         document.getElementById('current-round').innerText = i + 1;
+        if (statsBar) statsBar.style.setProperty('--prog', (((i + 1) / data.p1Rolls.length) * 100) + '%');
 
         spinSound.currentTime = 0; 
         spinSound.play().catch(e => {});
 
+        // Só UM spinner faz som por ronda: se só um deles é super spin ouve-se esse;
+        // caso contrário ouve-se o do jogador local (ou o do P1 se for espectador)
+        const p1Super = !!data.p1Rolls[i].isSuperSpin, p2Super = !!data.p2Rolls[i].isSuperSpin;
+        let audible;
+        if (p1Super !== p2Super) audible = p1Super ? 1 : 2;
+        else audible = amIPlayer2 && !amIPlayer1 ? 2 : 1;
+
         await Promise.all([
-            // Passamos o resultado da verificação amIPlayerX para o spin
-            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true, data.p1Rolls[i].isSuperSpin, amIPlayer1),
-            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true, data.p2Rolls[i].isSuperSpin, amIPlayer2)
+            executeArenaSpin(1, 'p1-spinner', data.p1Rolls[i], casePrice, itemsPool, true, data.p1Rolls[i].isSuperSpin, audible === 1),
+            executeArenaSpin(2, 'p2-spinner', data.p2Rolls[i], casePrice, itemsPool, true, data.p2Rolls[i].isSuperSpin, audible === 2)
         ]);
         const oldP1 = p1Acc;
         const oldP2 = p2Acc;
@@ -2353,6 +2952,15 @@ const amIPlayer1 = currentUser && currentUser._id === data.battle.player1.id;
     // Resultado Final
     const winnerName = data.winnerId === data.battle.player1.id ? data.battle.player1.username : data.battle.player2.username;
     document.getElementById('battle-msg').innerText = `${winnerName.toUpperCase()} WINS!`;
+    if (msgEl) msgEl.classList.add('decided');
+    const p1Won = data.winnerId === data.battle.player1.id;
+    const laneW = document.getElementById(p1Won ? 'lane-p1' : 'lane-p2');
+    const laneL = document.getElementById(p1Won ? 'lane-p2' : 'lane-p1');
+    if (laneW) laneW.classList.add('is-winner-lane');
+    if (laneL) laneL.classList.add('is-loser-lane');
+
+    markBestDrops();
+    playBattleWinSound();
 
     const myFinalBalance = (currentUser._id === data.battle.player1.id) ? data.p1FinalBalance : data.p2FinalBalance;
     if (myFinalBalance !== undefined) updateBalanceUI(myFinalBalance);
@@ -2642,431 +3250,10 @@ socket.on('updateOnlineCount', (count) => {
     const el = document.getElementById('users-online');
     if (el) el.innerText = count;
 });
-// ===================== CATCH (pares / memória) =====================
-let catchSortMode = 'newest';
-let catchPage = 0;
-let selectedCatchSkins = [];
-let catchGame = null; // { tiles, matched:Set, openId, locked, offset, deadline, state }
-let catchTimerInterval = null;
-let catchFlashTimeout = null;
-
-function catchIdleHTML() {
-    return `
-        <div id="catch-map-idle" class="catch-map-idle">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#2a2f3d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h8M3 17h8"/></svg>
-            <span>Select your skins and start</span>
-            <small>All cards are face down. Flip two to find identical skins. Each pair raises your multiplier. Too many misses or no time left = you lose everything.</small>
-        </div>`;
-}
-
-// ---------- inventário ----------
-function selectCatchOption(val, text) {
-    document.getElementById('selected-catch-inv').innerText = text;
-    document.getElementById('catch-inv-options').classList.remove('show');
-    catchSortMode = val;
-    catchPage = 0;
-    renderCatchInventory();
-}
-
-function renderCatchInventory() {
-    const grid = document.getElementById('catch-inv-grid');
-    if (!grid || !currentUser) return;
-
-    let items = [...currentUser.inventory];
-    if (catchSortMode === 'high') items.sort((a, b) => b.value - a.value);
-    else if (catchSortMode === 'low') items.sort((a, b) => a.value - b.value);
-    else items.reverse();
-
-    const start = catchPage * 9;
-    const pageItems = items.slice(start, start + 9);
-    const busy = !!catchGame;
-
-    grid.innerHTML = pageItems.map(item => {
-        const isSelected = selectedCatchSkins.includes(item.id);
-        const equipped = item.equippedTeam > 0;
-        const dim = equipped || busy ? 'opacity:0.35; pointer-events:none;' : '';
-        return `
-            <div class="up-card ${isSelected ? 'selected' : ''}" style="${dim}" title="${equipped ? 'Equipped in CS2 loadout' : ''}" onclick="toggleCatchSkin('${item.id}')">
-                <div class="badge cond-${item.conditionShort}">${item.conditionShort}</div>
-                <img src="${item.img}">
-                <b>${item.name}</b>
-                <span>$${formatCurrency(item.value)}</span>
-            </div>`;
-    }).join('');
-
-    const container = document.getElementById('catch-pagination');
-    const totalPages = Math.ceil(items.length / 9);
-    if (totalPages <= 1) { container.innerHTML = ''; }
-    else {
-        let html = '';
-        for (let i = 0; i < totalPages; i++) {
-            html += `<button class="${i === catchPage ? 'active' : ''}" onclick="catchPage=${i}; renderCatchInventory();">${i + 1}</button>`;
-        }
-        container.innerHTML = html;
-    }
-    updateCatchBetUI();
-}
-
-function toggleCatchSkin(id) {
-    if (catchGame) return;
-    const idx = selectedCatchSkins.indexOf(id);
-    if (idx > -1) selectedCatchSkins.splice(idx, 1);
-    else if (selectedCatchSkins.length < 5) selectedCatchSkins.push(id);
-    renderCatchInventory();
-}
-
-function catchBetValue() {
-    if (!currentUser) return 0;
-    return currentUser.inventory
-        .filter(i => selectedCatchSkins.includes(i.id))
-        .reduce((sum, i) => sum + i.value, 0);
-}
-
-function updateCatchBetUI() {
-    const countEl = document.getElementById('catch-count');
-    if (countEl) countEl.innerText = `${selectedCatchSkins.length}/5`;
-    if (!catchGame) updateCatchPreview(catchBetValue());
-}
-
-function updateCatchPreview(value) {
-    const empty = document.getElementById('catch-preview-empty');
-    const box = document.getElementById('catch-preview-box');
-    if (!empty || !box) return;
-    const skin = value > 0 ? getClosestSkinLocal(value) : null;
-    if (!skin) {
-        empty.style.display = 'block';
-        box.style.display = 'none';
-        return;
-    }
-    empty.style.display = 'none';
-    box.style.display = 'flex';
-    document.getElementById('catch-preview-img').src = skin.img;
-    document.getElementById('catch-preview-name').innerText = skin.name;
-    document.getElementById('catch-preview-price').innerText = `$${formatCurrency(skin.price)}`;
-}
-
-function catchFlash(text, color) {
-    const el = document.getElementById('catch-flash');
-    if (!el) return;
-    el.innerText = text;
-    el.style.color = color || '#fff';
-    el.classList.add('show');
-    clearTimeout(catchFlashTimeout);
-    catchFlashTimeout = setTimeout(() => el.classList.remove('show'), 1400);
-}
-
-// ---------- ciclo do jogo ----------
-async function initCatch() {
-    renderCatchInventory();
-    if (catchGame) return; // jogo já a decorrer, não mexer no mapa
-    try {
-        const res = await fetch('/api/catch/state');
-        const data = await res.json();
-        if (data.active) {
-            beginCatch(data.tiles, data.state, data.matched, data.opened);
-        } else if (data.over) {
-            showCatchResult(false, null, 0, 'time');
-            loadInventory();
-        }
-    } catch (e) { /* sem jogo ativo */ }
-}
-
-async function startCatchGame() {
-    if (catchGame) return;
-    if (selectedCatchSkins.length === 0) return catchFlash('Select at least 1 skin', '#ffb703');
-
-    const btn = document.getElementById('catch-start-btn');
-    btn.disabled = true;
-    try {
-        const res = await fetch('/api/catch/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itemIds: selectedCatchSkins })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            btn.disabled = false;
-            return catchFlash(data.error || 'Could not start', '#eb4b4b');
-        }
-        currentUser.inventory = data.inventory;
-        selectedCatchSkins = [];
-        beginCatch(data.tiles, data.state, [], null);
-    } catch (e) {
-        btn.disabled = false;
-        catchFlash('Connection error', '#eb4b4b');
-    }
-}
-
-function beginCatch(tiles, state, matched, opened) {
-    catchGame = {
-        tiles,
-        matched: new Set((matched || []).map(m => m.id)),
-        openId: opened ? opened.id : null,
-        locked: false,
-        offset: state.now - Date.now(),
-        deadline: state.deadline,
-        state
-    };
-
-    document.getElementById('catch-start-btn').style.display = 'none';
-    document.getElementById('catch-cash-btn').style.display = 'block';
-
-    renderCatchMap();
-    // cartas que já estavam reveladas (jogo retomado)
-    (matched || []).forEach(m => revealCatchTile(m.id, m.img, m.name, false));
-    if (opened) revealCatchTile(opened.id, opened.img, opened.name, false);
-
-    applyCatchState(state);
-    renderCatchInventory();
-
-    clearInterval(catchTimerInterval);
-    catchTimerInterval = setInterval(catchTick, 100);
-}
-
-function renderCatchMap() {
-    const map = document.getElementById('catch-map');
-    map.innerHTML = catchGame.tiles.map(t => `
-        <div class="catch-tile ${catchGame.matched.has(t.id) ? 'matched' : ''}" id="catch-tile-${t.id}"
-             style="left:${t.x}%; top:${t.y}%; --rot:${t.rot}deg;" onclick="clickCatchTile(${t.id})">
-            <div class="catch-card">
-                <div class="catch-face catch-back"><span>?</span></div>
-                <div class="catch-face catch-front"><img src="" draggable="false" alt=""></div>
-            </div>
-        </div>`).join('');
-}
-
-function revealCatchTile(id, img, name, animate = true) {
-    const tile = document.getElementById(`catch-tile-${id}`);
-    if (!tile) return;
-    const image = tile.querySelector('.catch-front img');
-    image.src = img;
-    image.alt = name || '';
-    tile.title = name || '';
-    tile.classList.add('flipped');
-}
-
-function hideCatchTile(id) {
-    const tile = document.getElementById(`catch-tile-${id}`);
-    if (!tile) return;
-    tile.classList.remove('flipped');
-    // só apaga a foto depois de a carta voltar a ficar de costas
-    setTimeout(() => {
-        if (!tile.classList.contains('flipped')) {
-            tile.querySelector('.catch-front img').src = '';
-            tile.title = '';
-        }
-    }, 450);
-}
-
-function applyCatchState(state) {
-    catchGame.state = state;
-    catchGame.deadline = state.deadline;
-    catchGame.offset = state.now - Date.now();
-
-    const multEl = document.getElementById('catch-mult');
-    multEl.innerText = state.multiplier.toFixed(2) + 'x';
-    multEl.classList.remove('bump'); void multEl.offsetWidth; multEl.classList.add('bump');
-
-    document.getElementById('catch-pairs').innerText = state.pairs;
-
-    const missEl = document.getElementById('catch-misses');
-    missEl.innerText = `${state.misses}/${state.maxMisses}`;
-    missEl.style.color = state.misses >= state.maxMisses - 2 ? '#eb4b4b' : '#fff';
-
-    const potential = state.betValue * state.multiplier;
-    const cashBtn = document.getElementById('catch-cash-btn');
-    const minPairs = state.minPairs || 1;
-    cashBtn.disabled = state.pairs < minPairs;
-    cashBtn.querySelector('span').innerHTML = state.pairs < minPairs
-        ? `<small>CASH OUT LOCKED</small><b>MATCH ${minPairs} ${minPairs === 1 ? 'PAIR' : 'PAIRS'}</b>`
-        : `<small>CASH OUT</small><b>$${formatCurrency(potential)}</b>`;
-
-    updateCatchPreview(potential);
-}
-
-function catchTick() {
-    if (!catchGame) return;
-    const remaining = catchGame.deadline - (Date.now() + catchGame.offset);
-    const timeEl = document.getElementById('catch-time');
-    const fill = document.getElementById('catch-timebar-fill');
-
-    if (remaining <= 0) {
-        timeEl.innerText = '0.0s';
-        fill.style.width = '0%';
-        clearInterval(catchTimerInterval);
-        catchTimeout();
-        return;
-    }
-    timeEl.innerText = (remaining / 1000).toFixed(1) + 's';
-    timeEl.style.color = remaining < 10000 ? '#eb4b4b' : '#fff';
-    fill.style.width = Math.min(100, (remaining / 60000) * 100) + '%';
-}
-
-async function catchTimeout() {
-    if (!catchGame) return;
-    catchGame.locked = true;
-    try {
-        // O servidor dá 1s de tolerância; confirma o fim do jogo
-        for (let i = 0; i < 4; i++) {
-            const res = await fetch('/api/catch/state');
-            const data = await res.json();
-            if (!data.active) return finishCatch({ win: false, reason: 'time' });
-            if (data.state && data.state.deadline > Date.now() + catchGame.offset) {
-                // relógio dessincronizado: o servidor ainda tem tempo, retoma
-                applyCatchState(data.state);
-                catchGame.locked = false;
-                catchTimerInterval = setInterval(catchTick, 100);
-                return;
-            }
-            await new Promise(r => setTimeout(r, 400));
-        }
-    } catch (e) { /* ignora */ }
-    finishCatch({ win: false, reason: 'time' });
-}
-
-const catchWait = ms => new Promise(r => setTimeout(r, ms));
-
-async function clickCatchTile(id) {
-    if (!catchGame || catchGame.locked || catchGame.matched.has(id) || catchGame.openId === id) return;
-    catchGame.locked = true;
-
-    try {
-        const res = await fetch('/api/catch/flip', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            catchGame.locked = false;
-            return catchFlash(data.error || 'Invalid move', '#ffb703');
-        }
-        if (data.over && data.reason === 'time') return finishCatch(data);
-
-        // 1ª carta do par
-        if (data.opened) {
-            revealCatchTile(id, data.opened.img, data.opened.name);
-            catchGame.openId = id;
-            applyCatchState(data.state);
-            catchGame.locked = false;
-            return;
-        }
-
-        // 2ª carta do par
-        revealCatchTile(id, data.second.img, data.second.name);
-        const [firstId, secondId] = data.ids;
-        catchGame.openId = null;
-
-        if (data.correct) {
-            await catchWait(550);
-            data.ids.forEach(i => {
-                catchGame.matched.add(i);
-                document.getElementById(`catch-tile-${i}`).classList.add('matched');
-            });
-            if (typeof upgradeWinSound !== 'undefined') { upgradeWinSound.currentTime = 0; upgradeWinSound.play().catch(() => {}); }
-            if (data.over) return finishCatch(data);
-            applyCatchState(data.state);
-            catchFlash('+ PAIR!', '#00ff88');
-        } else {
-            [firstId, secondId].forEach(i => document.getElementById(`catch-tile-${i}`).classList.add('wrong'));
-            await catchWait(950);
-            [firstId, secondId].forEach(i => {
-                const t = document.getElementById(`catch-tile-${i}`);
-                if (t) t.classList.remove('wrong');
-                hideCatchTile(i);
-            });
-            if (typeof upgradeLossSound !== 'undefined') { upgradeLossSound.currentTime = 0; upgradeLossSound.play().catch(() => {}); }
-            if (data.over) return finishCatch(data);
-            applyCatchState(data.state);
-            catchFlash('NO MATCH', '#eb4b4b');
-        }
-        if (catchGame) catchGame.locked = false;
-    } catch (e) {
-        if (catchGame) catchGame.locked = false;
-        catchFlash('Connection error', '#eb4b4b');
-    }
-}
-
-async function cashOutCatch() {
-    if (!catchGame || catchGame.locked || catchGame.state.pairs < (catchGame.state.minPairs || 1)) return;
-    catchGame.locked = true;
-    try {
-        const res = await fetch('/api/catch/cashout', { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) {
-            catchGame.locked = false;
-            return catchFlash(data.error || 'Could not cash out', '#eb4b4b');
-        }
-        finishCatch(data);
-    } catch (e) {
-        catchGame.locked = false;
-        catchFlash('Connection error', '#eb4b4b');
-    }
-}
-
-function finishCatch(data) {
-    clearInterval(catchTimerInterval);
-    if (data.inventory && currentUser) currentUser.inventory = data.inventory;
-    catchGame = null;
-    selectedCatchSkins = [];
-
-    // repõe o ecrã
-    document.getElementById('catch-start-btn').style.display = 'block';
-    document.getElementById('catch-start-btn').disabled = false;
-    document.getElementById('catch-cash-btn').style.display = 'none';
-    document.getElementById('catch-mult').innerText = '1.00x';
-    document.getElementById('catch-pairs').innerText = '0';
-    const missEl = document.getElementById('catch-misses');
-    missEl.innerText = '0/6';
-    missEl.style.color = '#fff';
-    document.getElementById('catch-time').innerText = '--';
-    document.getElementById('catch-time').style.color = '#fff';
-    document.getElementById('catch-timebar-fill').style.width = '0%';
-    document.getElementById('catch-map').innerHTML = catchIdleHTML();
-
-    showCatchResult(!!data.win, data.skin || null, data.multiplier || 0, data.reason);
-    renderCatchInventory();
-    if (typeof loadInventory === 'function') loadInventory();
-}
-
-function showCatchResult(win, skin, mult, reason) {
-    const modal = document.getElementById('catch-result-modal');
-    const card = document.getElementById('catch-result-card');
-    if (!modal || !card) return;
-
-    const itemBox = document.getElementById('catch-result-item-box');
-    const titleEl = document.getElementById('catch-result-title');
-    const multBadge = document.getElementById('catch-result-mult-badge');
-
-    if (win && skin) {
-        card.className = 'result-card result-win';
-        titleEl.innerText = reason === 'cleared' ? 'MAP CLEARED!' : 'CASHED OUT!';
-        multBadge.innerText = `${Number(mult).toFixed(2)}x`;
-        multBadge.style.display = 'inline-block';
-        itemBox.style.display = 'block';
-        document.getElementById('catch-result-img').src = skin.img;
-        document.getElementById('catch-result-name').innerText = skin.name;
-        document.getElementById('catch-result-price').innerText = `$${formatCurrency(skin.value)}`;
-        document.getElementById('catch-result-badge').innerText = skin.conditionShort;
-        if (typeof upgradeWinSound !== 'undefined') upgradeWinSound.play().catch(() => {});
-    } else {
-        card.className = 'result-card result-loss';
-        titleEl.innerText = reason === 'misses' ? 'TOO MANY MISSES!' : "TIME'S UP!";
-        multBadge.innerText = '0.00x';
-        itemBox.style.display = 'none';
-        document.getElementById('catch-result-name').innerText = 'YOU LOST YOUR SKINS. TRY AGAIN.';
-        document.getElementById('catch-result-price').innerText = '';
-        if (typeof upgradeLossSound !== 'undefined') upgradeLossSound.play().catch(() => {});
-    }
-    modal.style.display = 'flex';
-}
-// ===================== FIM CATCH =====================
-
 // ===================== GRÁFICO DO HISTÓRICO DE SALDO =====================
 // Usado nas Settings (o teu saldo) e no painel de perfil (só admins veem o de outro jogador).
-const BH_UP = '#00ff88';
-const BH_DOWN = '#ff4444';
+const BH_UP = '#4fe8b0';
+const BH_DOWN = '#ff5d6c';
 const BH_MAX_POINTS = 300;
 
 function bhFormatTime(t) {
@@ -3169,12 +3356,12 @@ function createBalanceChart(ids) {
             ctx.moveTo(padL, y);
             ctx.lineTo(W - padR, y);
             ctx.stroke();
-            ctx.fillStyle = '#666';
+            ctx.fillStyle = 'rgba(235,240,255,0.45)';
             ctx.fillText('$' + formatCurrency(v), padL - 8, y);
         }
 
         // Eixo X: primeiro e último ponto
-        ctx.fillStyle = '#666';
+        ctx.fillStyle = 'rgba(235,240,255,0.45)';
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
         ctx.fillText(bhFormatTime(pts[0].t), padL, H - 6);
@@ -3189,7 +3376,7 @@ function createBalanceChart(ids) {
             const x1 = xAt(i), y1 = yAt(pts[i].b);
 
             const grad = ctx.createLinearGradient(0, Math.min(y0, y1), 0, baseY);
-            grad.addColorStop(0, up ? 'rgba(0,255,136,0.20)' : 'rgba(255,68,68,0.20)');
+            grad.addColorStop(0, up ? 'rgba(79,232,176,0.22)' : 'rgba(255,93,108,0.22)');
             grad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = grad;
             ctx.beginPath();

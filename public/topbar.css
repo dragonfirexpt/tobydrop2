@@ -1,0 +1,180 @@
+/* topbar.css — Top bar · glass estilo iOS, igual ao Upgrader / Battles / Inventário / Cases (TOBYDROP, fonte Outfit)
+   Só estilo: HTML, classes (.nav-link.active, .pfp-wrap.active…) e JS ficam como estavam. Carrega DEPOIS do style.css. */
+
+.top-nav {
+    --line: rgba(255, 255, 255, .08);
+    --line-hi: rgba(255, 255, 255, .16);
+    --acc: var(--accent, #00f2ff);
+    --glass-hi: rgba(255, 255, 255, .08);
+    --raise: rgba(255, 255, 255, .05);
+    --muted: rgba(235, 240, 255, .5);
+    --soft: rgba(235, 240, 255, .75);
+    --ease: cubic-bezier(.22, 1, .36, 1);
+    position: relative; z-index: 50;
+    height: 68px; margin: 12px 16px 0; padding: 0 14px 0 22px; gap: 16px;
+    border: 1px solid var(--line); border-radius: 24px;
+    background:
+        radial-gradient(60% 120% at 12% 0%, rgba(0, 150, 255, .14), transparent 70%),
+        radial-gradient(50% 120% at 100% 100%, rgba(140, 90, 255, .10), transparent 70%),
+        rgba(14, 17, 25, .66);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+            backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: inset 0 1px 0 var(--line-hi), 0 20px 50px -30px rgba(0, 0, 0, .9);
+    font-family: 'Outfit', sans-serif;
+}
+.top-nav *, .top-nav *::before, .top-nav *::after { box-sizing: border-box; }
+.top-nav button { font-family: inherit; }
+.top-nav :focus-visible { outline: 2px solid rgba(0, 242, 255, .7); outline-offset: 2px; }
+
+/* ---------- logo ---------- */
+.top-nav .brand {
+    flex: none; font-size: 22px; font-weight: 800; letter-spacing: .6px; color: #fff;
+    transition: transform .25s var(--ease), filter .25s;
+}
+.top-nav .brand:hover { transform: translateY(-1px); filter: drop-shadow(0 0 14px rgba(0, 242, 255, .45)); }
+.top-nav .brand:active { transform: scale(.97); }
+.top-nav .brand span { color: var(--acc); }
+
+/* ---------- navegação (dois grupos em pílulas de vidro) ---------- */
+.top-nav .main-nav { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.top-nav .nav-group {
+    display: flex; align-items: center; gap: 2px; padding: 4px;
+    background: var(--raise); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.top-nav .nav-separator { display: none; }          /* os grupos já se separam sozinhos */
+
+.top-nav .nav-link {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: 14px; cursor: pointer;
+    font-size: 12.5px; font-weight: 700; letter-spacing: .7px; white-space: nowrap;
+    color: var(--muted); background: transparent; text-shadow: none;
+    transition: color .2s, background .2s, border-color .2s, box-shadow .25s, transform .25s var(--ease);
+}
+.top-nav .nav-link:hover { color: #fff; background: var(--glass-hi); }
+.top-nav .nav-link:active { transform: scale(.96); }
+.top-nav .nav-link.active {
+    color: var(--acc); text-shadow: none;
+    background: rgba(0, 242, 255, .1); border-color: rgba(0, 242, 255, .32);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 0 22px -8px rgba(0, 242, 255, .55);
+}
+
+/* ---------- lado direito ---------- */
+.top-nav .nav-user { flex: none; display: flex; align-items: center; gap: 10px; }
+
+.top-nav .online-counter {
+    display: inline-flex; align-items: center; gap: 8px; height: 38px; margin: 0; padding: 0 14px;
+    font-size: 11px; font-weight: 700; letter-spacing: .7px; font-variant-numeric: tabular-nums; white-space: nowrap;
+    color: #5dffb0; background: rgba(0, 255, 136, .07);
+    border: 1px solid rgba(0, 255, 136, .24); border-radius: 999px;
+}
+.top-nav .online-counter .dot { width: 7px; height: 7px; background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+
+.top-nav .balance-display {
+    display: flex; flex-direction: column; justify-content: center; gap: 1px; height: 46px; min-width: 112px;
+    padding: 0 18px; text-align: right;
+    background: var(--raise); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+.top-nav .balance-display small { margin: 0; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; line-height: 1; color: var(--muted); }
+.top-nav .balance-display span { font-size: 17px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--acc); }
+
+.top-nav .pfp-wrap { flex: none; width: 44px; height: 44px; }
+.top-nav .pfp-wrap img {
+    display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #12151d;
+    border: 2px solid rgba(0, 242, 255, .55);
+}
+
+/* ---------- ecrãs mais pequenos ---------- */
+@media (max-width: 1280px) {
+    .top-nav .nav-link { padding: 0 12px; font-size: 12px; letter-spacing: .4px; }
+    .top-nav .online-counter { display: none; }
+}
+@media (max-width: 1000px) {
+    .top-nav { margin: 8px 8px 0; padding: 0 10px 0 14px; gap: 10px; }
+    .top-nav .brand { font-size: 18px; }
+    .top-nav .main-nav { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+    .top-nav .main-nav::-webkit-scrollbar { display: none; }
+    .top-nav .nav-group { flex: none; }
+    .top-nav .balance-display { min-width: 0; padding: 0 12px; }
+}
+
+
+/* =====================================================================
+   LIVE DROPS (barra por cima da top bar) — vidro, igual à top bar
+   O JS só faz prepend de .drop-item no #live-drops-track; ids e classes ficam como estavam.
+   ===================================================================== */
+.live-drops-container {
+    --line: rgba(255, 255, 255, .08);
+    --line-hi: rgba(255, 255, 255, .16);
+    --acc: var(--accent, #00f2ff);
+    --muted: rgba(235, 240, 255, .5);
+    --ease: cubic-bezier(.22, 1, .36, 1);
+    position: relative; z-index: 49; flex: none;
+    display: flex; align-items: center; gap: 12px;
+    height: 52px; margin: 8px 16px 0; padding: 0 8px 0 8px; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 22px;
+    background:
+        radial-gradient(60% 160% at 8% 0%, rgba(0, 150, 255, .12), transparent 70%),
+        radial-gradient(50% 160% at 100% 100%, rgba(140, 90, 255, .09), transparent 70%),
+        rgba(14, 17, 25, .66);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+            backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: inset 0 1px 0 var(--line-hi), 0 20px 50px -30px rgba(0, 0, 0, .9);
+    font-family: 'Outfit', sans-serif;
+}
+.live-drops-container *, .live-drops-container *::before, .live-drops-container *::after { box-sizing: border-box; }
+
+/* etiqueta LIVE */
+.ld-live {
+    flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: #ff8f99;
+    background: rgba(255, 93, 108, .1); border: 1px solid rgba(255, 93, 108, .32); border-radius: 999px;
+}
+.ld-live i { width: 7px; height: 7px; border-radius: 50%; background: #ff5d6c; box-shadow: 0 0 10px #ff5d6c; animation: ld-pulse 1.8s ease-in-out infinite; }
+@keyframes ld-pulse { 50% { opacity: .35; } }
+
+/* pista: corta à direita com um fade suave */
+.live-drops-container .live-drops-track {
+    flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 24px 0 0; gap: 8px; align-items: center; overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+            mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+}
+
+/* cada drop = chip de vidro com a cor da raridade (--item-color) */
+.live-drops-container .drop-item {
+    --ic: var(--item-color, #7a8ba8);
+    position: relative; flex: none; height: 38px; min-width: 150px; padding: 0 14px 0 8px; gap: 9px;
+    display: flex; align-items: center; cursor: pointer;
+    border: 1px solid color-mix(in srgb, var(--ic) 38%, rgba(255, 255, 255, .08)); border-left-width: 1px; border-radius: 14px;
+    background:
+        radial-gradient(70% 140% at 0% 50%, color-mix(in srgb, var(--ic) 22%, transparent), transparent 75%),
+        rgba(255, 255, 255, .045);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+    animation: ld-in .5s var(--ease) both;
+    transition: transform .25s var(--ease), border-color .2s, background .2s;
+}
+.live-drops-container .drop-item:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--ic) 70%, rgba(255, 255, 255, .1));
+    background:
+        radial-gradient(70% 140% at 0% 50%, color-mix(in srgb, var(--ic) 34%, transparent), transparent 80%),
+        rgba(255, 255, 255, .08);
+}
+.live-drops-container .drop-item:active { transform: scale(.97); }
+.live-drops-container .drop-item img { height: 28px; width: auto; max-width: 52px; flex: none; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .5)); }
+.live-drops-container .drop-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.live-drops-container .drop-info b { max-width: 96px; font-size: 11.5px; font-weight: 700; line-height: 1.15; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-drops-container .drop-info small { font-size: 10px; font-weight: 600; line-height: 1.1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 96px; }
+@keyframes ld-in { from { opacity: 0; transform: translateX(-16px) scale(.94); } to { opacity: 1; transform: none; } }
+
+/* a top bar fica logo por baixo, com o mesmo espaçamento */
+.live-drops-container + .top-nav { margin-top: 12px; }
+
+@media (max-width: 1000px) {
+    .live-drops-container { margin: 6px 8px 0; }
+    .ld-live { padding: 0 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .live-drops-container .drop-item, .ld-live i { animation: none !important; }
+}

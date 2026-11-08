@@ -1,0 +1,212 @@
+/* cases.css — UI das Cases · glass estilo iOS, igual às Battles / Upgrader / Inventário (TOBYDROP, fonte Outfit)
+   Só estilo: ids, classes e lógica (main.js) ficam como estavam. Tem de carregar DEPOIS do style.css. */
+
+#home-tab, #opening-tab {
+    --line: rgba(255, 255, 255, .08);
+    --line-hi: rgba(255, 255, 255, .16);
+    --acc: var(--accent, #00f2ff);
+    --glass: rgba(255, 255, 255, .045);
+    --glass-hi: rgba(255, 255, 255, .08);
+    --raise: rgba(255, 255, 255, .05);
+    --muted: rgba(235, 240, 255, .5);
+    --soft: rgba(235, 240, 255, .75);
+    --ease: cubic-bezier(.22, 1, .36, 1);
+    font-family: 'Outfit', sans-serif;
+    color: var(--text, #fff);
+}
+#home-tab *, #home-tab *::before, #home-tab *::after,
+#opening-tab *, #opening-tab *::before, #opening-tab *::after { box-sizing: border-box; }
+#home-tab button, #opening-tab button { font-family: inherit; }
+#home-tab :focus-visible, #opening-tab :focus-visible { outline: 2px solid rgba(0, 242, 255, .7); outline-offset: 2px; }
+
+/* painel de vidro (o mesmo do upgrader / battles) */
+.cx-head, #home-tab .case-card-premium, #opening-tab .opening-header,
+#opening-tab .spinner-wrapper, #opening-tab .preview-section {
+    border: 1px solid var(--line);
+    background:
+        radial-gradient(70% 45% at 15% 0%, rgba(0, 150, 255, .14), transparent 70%),
+        radial-gradient(60% 40% at 100% 100%, rgba(140, 90, 255, .10), transparent 70%),
+        rgba(16, 19, 28, .72);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+            backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: inset 0 1px 0 var(--line-hi), 0 24px 60px -30px rgba(0, 0, 0, .9);
+}
+
+/* ---------- HOME: cabeçalho ---------- */
+#home-tab { max-width: 1280px; margin: 0 auto; width: 100%; }
+.cx-head {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px 20px;
+    padding: 22px 26px; border-radius: 26px; margin-bottom: 26px;
+}
+.cx-head h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.3px; color: #fff; }
+.cx-head span.cx-sub { display: block; margin-top: 3px; font-size: 13.5px; font-weight: 500; color: var(--muted); }
+.cx-pill {
+    font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap;
+    background: var(--glass-hi); border: 1px solid var(--line-hi); padding: 6px 13px; border-radius: 999px;
+}
+
+/* ---------- HOME: secções ---------- */
+#home-tab .case-section { margin-bottom: 34px; width: 100%; }
+#home-tab .section-title { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 0 6px; }
+#home-tab .section-title span {
+    font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: var(--soft);
+    text-shadow: none; white-space: nowrap;
+}
+#home-tab .section-title span.glow-text { color: var(--acc) !important; text-shadow: 0 0 18px rgba(0, 242, 255, .35); }
+#home-tab .section-title .line { flex: 1; width: auto; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+
+/* ---------- HOME: grelha + cartas ---------- */
+#home-tab .case-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;
+    padding: 6px 0 4px; align-items: stretch !important; height: auto !important;
+}
+#home-tab .case-card-premium {
+    position: relative; overflow: hidden; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 6px;
+    min-height: 262px; padding: 22px 16px 18px; border-radius: 22px; text-align: center;
+    animation: cx-in .45s var(--ease) both;
+    transition: transform .25s var(--ease), border-color .2s, box-shadow .25s;
+}
+#home-tab .case-card-premium::before {            /* brilho por trás da caixa */
+    content: ''; position: absolute; left: 50%; top: 34%; width: 170px; height: 120px; z-index: 0;
+    transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(0, 190, 255, .22), transparent);
+    opacity: .7; transition: opacity .3s, transform .4s var(--ease);
+}
+#home-tab .case-card-premium::after { display: none; }
+#home-tab .case-card-premium:hover {
+    transform: translateY(-4px); border-color: var(--line-hi);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 28px 50px -24px rgba(0, 0, 0, .95), 0 0 40px -18px rgba(0, 242, 255, .5);
+}
+#home-tab .case-card-premium:hover::before { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+#home-tab .case-card-premium:active { transform: scale(.98); }
+#home-tab .case-card-premium .case-img-wrap { position: relative; z-index: 1; display: grid; place-items: center; width: 100%; margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+#home-tab .case-card-premium img {
+    position: relative; z-index: 1; width: 150px; height: 108px; margin: 0 0 4px; object-fit: contain;
+    filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .55)); transition: transform .35s var(--ease);
+}
+#home-tab .case-card-premium:hover img { transform: scale(1.08) translateY(-3px); }
+#home-tab .case-card-premium h3 {
+    position: relative; z-index: 1; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.1px; color: #fff;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#home-tab .case-card-price {
+    position: relative; z-index: 1; margin-top: 4px; padding: 7px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--acc);
+    background: rgba(0, 242, 255, .08); border: 1px solid rgba(0, 242, 255, .28);
+    box-shadow: none; text-shadow: none;
+    transition: background .2s, border-color .2s, color .2s;
+}
+#home-tab .case-card-premium:hover .case-card-price { background: linear-gradient(180deg, #62e4ff, #2f8bff); border-color: transparent; color: #04121a; }
+#home-tab .case-card-tag {
+    position: absolute; top: 12px; right: 12px; z-index: 2;
+    font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+    color: var(--acc); background: rgba(0, 242, 255, .1); border: 1px solid rgba(0, 242, 255, .32);
+    padding: 4px 10px; border-radius: 999px;
+}
+
+/* caixas de prémio do ranking diário */
+#home-tab .reward-box { border-color: rgba(0, 255, 136, .4) !important; animation: cx-in .45s var(--ease) both, cx-reward 2.4s ease-in-out infinite; }
+#home-tab .reward-box::before { background: radial-gradient(closest-side, rgba(0, 255, 136, .24), transparent); }
+#home-tab .reward-box .case-card-tag { color: #5dffb0; background: rgba(0, 255, 136, .1); border-color: rgba(0, 255, 136, .4); }
+#home-tab .reward-box .case-card-price { color: #5dffb0; background: rgba(0, 255, 136, .08); border-color: rgba(0, 255, 136, .32); }
+#home-tab .reward-box:hover .case-card-price { background: linear-gradient(180deg, #7dffc4, #1fd98a); color: #03160d; }
+
+@keyframes cx-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cx-reward { 50% { box-shadow: inset 0 1px 0 var(--line-hi), 0 24px 60px -30px rgba(0, 0, 0, .9), 0 0 34px -10px rgba(0, 255, 136, .45); } }
+
+/* ---------- OPENING: cabeçalho ---------- */
+#opening-tab { max-width: 1280px; margin: 0 auto; width: 100%; }
+#opening-tab .opening-header {
+    position: relative; display: flex; align-items: center; justify-content: center; min-height: 104px;
+    padding: 14px 26px; margin-bottom: 20px; border-radius: 26px;
+}
+#opening-tab .btn-back {
+    position: absolute; left: 22px; top: 50%; transform: translateY(-50%);
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; cursor: pointer;
+    font-size: 13px; font-weight: 700; letter-spacing: .3px; color: var(--soft);
+    background: var(--raise); border: 1px solid var(--line); border-radius: 14px;
+    transition: background .2s, border-color .2s, color .2s, transform .25s var(--ease);
+}
+#opening-tab .btn-back:hover { color: #fff; background: var(--glass-hi); border-color: var(--line-hi); transform: translateY(calc(-50% - 1px)); }
+#opening-tab .btn-back:active { transform: translateY(-50%) scale(.97); }
+#opening-tab #case-title { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.3px; color: #fff; }
+
+/* ---------- OPENING: spinner (só o contorno; a geometria do spinner fica intacta) ---------- */
+#opening-tab .spinner-wrapper { margin: 0 0 20px; padding: 22px 18px 26px; border-radius: 26px; gap: 6px; }
+#opening-tab .spinner-frame {
+    background: rgba(8, 10, 16, .6); border: 1px solid var(--line); border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 40px -24px rgba(0, 0, 0, .9);
+}
+
+/* botão principal (igual ao .btl-btn) */
+#opening-tab .btn-open {
+    position: relative; overflow: hidden; isolation: isolate;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-width: 300px; height: 52px; margin-top: 22px; padding: 0 30px; border: 0; border-radius: 18px; cursor: pointer;
+    font-size: 15px; font-weight: 700; letter-spacing: .2px; text-transform: none; color: #04121a;
+    background: linear-gradient(180deg, #62e4ff, #2f8bff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 12px 28px -14px rgba(40, 150, 255, .75);
+    transition: filter .2s, opacity .2s, transform .25s var(--ease), box-shadow .25s;
+}
+#opening-tab .btn-open::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%);
+    background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .45) 50%, transparent 62%);
+}
+#opening-tab .btn-open:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 18px 32px -14px rgba(40, 150, 255, .85); }
+#opening-tab .btn-open:hover:not(:disabled)::before { transform: translateX(120%); transition: transform .8s ease; }
+#opening-tab .btn-open:active:not(:disabled) { transform: scale(.97); }
+#opening-tab .btn-open:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; filter: none; transform: none; }
+
+/* ---------- OPENING: conteúdo da case (simples, vidro) ---------- */
+#opening-tab .preview-section { margin-top: 0; padding: 22px 22px 24px; border-radius: 26px; }
+#opening-tab .pv-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#opening-tab .preview-section h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.1px; color: #fff; }
+#opening-tab .preview-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; margin-top: 18px; }
+
+#opening-tab .preview-item {
+    --rc: #4b69ff;
+    position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 30px 12px 14px; text-align: center; border-radius: 20px;
+    border: 1px solid var(--line);
+    background:
+        radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--rc) 22%, transparent), transparent 75%),
+        rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+    transition: transform .25s var(--ease), border-color .2s, background .2s;
+}
+#opening-tab .preview-item::after {                 /* fio de raridade em baixo */
+    content: ''; position: absolute; left: 22%; right: 22%; bottom: 0; height: 2px; border-radius: 2px 2px 0 0;
+    background: var(--rc); box-shadow: 0 0 14px 1px var(--rc); opacity: .85;
+}
+#opening-tab .preview-item:hover {
+    transform: translateY(-3px); border-color: color-mix(in srgb, var(--rc) 55%, rgba(255, 255, 255, .12));
+    background:
+        radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--rc) 34%, transparent), transparent 80%),
+        rgba(255, 255, 255, .07);
+}
+#opening-tab .pv-chance {
+    position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--soft);
+    background: rgba(0, 0, 0, .28); border: 1px solid var(--line);
+}
+#opening-tab .pv-img { position: relative; flex: none; width: 100%; height: 86px; overflow: hidden; }
+#opening-tab .pv-img img {                      /* absoluto: a imagem nunca cresce para lá da caixa nem passa por cima do texto */
+    position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px); max-width: none; max-height: none;
+    object-fit: contain; object-position: center; margin: 0;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .55)); transition: transform .3s var(--ease);
+}
+#opening-tab .preview-item:hover .pv-img img { transform: scale(1.05); }
+#opening-tab .pv-name { display: flex; flex-direction: column; gap: 1px; width: 100%; min-width: 0; margin-top: 2px; }
+#opening-tab .pv-name small { font-size: 11px; font-weight: 600; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#opening-tab .pv-name b { font-size: 13.5px; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#opening-tab .pv-price { margin-top: 2px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--acc); }
+
+@media (max-width: 760px) {
+    #opening-tab .opening-header { flex-direction: column; gap: 12px; padding: 16px; }
+    #opening-tab .btn-back { position: static; transform: none; align-self: flex-start; }
+    #opening-tab .btn-back:hover { transform: translateY(-1px); }
+    #opening-tab .btn-open { min-width: 0; width: 100%; }
+    #home-tab .case-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
