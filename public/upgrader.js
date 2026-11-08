@@ -159,6 +159,9 @@
         const r = await fetch('/api/me');
         const d = await r.json();
         S.inv = (d && d.user && d.user.inventory) || [];
+        // mantém o estado global (usado pelo Slider e pelo Inventário) em sincronia
+        if (d && d.user) { try { currentUser = d.user; } catch (e) { /* ignora */ } }
+        if (typeof sldOnInventory === 'function') sldOnInventory();
         // remove seleções que já não existem
         S.sel = S.sel.filter((id) => S.inv.some((i) => i.id === id && !i.isLocked));
     }

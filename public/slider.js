@@ -273,9 +273,8 @@ function sldBind() {
 
 async function initSlider() {
     sldBind();
-    if (!currentUser) {
-        try { await loadInventory(); } catch (e) { /* sem sessão */ }
-    }
+    sldRenderInventory(); // mostra já o que há
+    try { await loadInventory(); } catch (e) { /* sem sessão */ } // e refresca sempre ao entrar na aba
     sldRenderInventory();
 }
 
