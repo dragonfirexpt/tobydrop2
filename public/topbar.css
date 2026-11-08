@@ -175,6 +175,3 @@
     .live-drops-container { margin: 6px 8px 0; }
     .ld-live { padding: 0 10px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .live-drops-container .drop-item, .ld-live i { animation: none !important; }
-}

@@ -154,10 +154,6 @@
 #sld-result-modal .result-info h2 { text-transform: none; }
 #sld-result-modal .result-loss .result-info h2 { color: var(--soft); font-weight: 600; margin-bottom: 14px; }
 #sld-result-modal .result-info p:empty { display: none; }
-@media (prefers-reduced-motion: reduce) {
-    #sld-result-modal *, #sld-result-modal *::before, #sld-result-modal *::after { animation: none !important; transition: none !important; }
-}
-
 
 /* =====================================================================
    SLIDER (#slider-tab) — vidro, igual ao upgrader / Songy / inventário
@@ -275,9 +271,6 @@
 @media (max-width: 560px) {
     .sld-hero { padding: 14px 16px; }
     .sld-track { height: 54px; }
-}
-@media (prefers-reduced-motion: reduce) {
-    .sld-track, .sld-track * { animation: none !important; transition: none !important; }
 }
 
 /* altura fixa (o painel de skins faz scroll por dentro); o palco faz scroll só se o ecrã for mesmo pequeno */

@@ -90,9 +90,6 @@
     .inv2-tools .ugx-dd { flex: 1 1 100%; }
     .inv2 .ugx-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 18px 0 24px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .inv2 *, .inv2 *::before, .inv2 *::after { animation: none !important; transition: none !important; }
-}
 
 
 /* =====================================================================
@@ -263,9 +260,6 @@
     .skm-side { padding: 22px 20px 22px; }
     .skm-id h2 { font-size: 26px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    #skin-action-modal *, #skin-action-modal *::before, #skin-action-modal *::after { animation: none !important; transition: none !important; }
-}
 
 /* =====================================================================
    MODAL DO SELL ALL (#sell-all-modal) — vidro, igual ao modal da skin / upgrader
@@ -348,10 +342,7 @@
     .sam-actions { grid-template-columns: 1fr; }
     .sam-btn.danger { order: -1; }
 }
-@media (prefers-reduced-motion: reduce) {
-    #sell-all-modal *, #sell-all-modal *::before, #sell-all-modal *::after { animation: none !important; transition: none !important; }
-    .sam-btn.loading::after { animation: sam-spin 1.4s linear infinite !important; }
-}
+
 
 /* =====================================================================
    NOTIFICAÇÕES (toast) — vidro, no topo do ecrã
@@ -414,10 +405,6 @@
 @keyframes toast-out { to { opacity: 0; transform: translateY(-20px) scale(.94); filter: blur(4px); } }
 @keyframes toast-pop { from { transform: scale(.3) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes toast-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-@media (prefers-reduced-motion: reduce) {
-    .toast, .toast.out, .toast-ic svg { animation-duration: .01s !important; }
-    .toast-bar { animation: none; display: none; }
-}
 
 /* =====================================================================
    FOTO DE PERFIL (abre as Settings)
@@ -596,9 +583,6 @@
     .set2 .bh-chart-wrap { height: 220px; }
     .set2 .aban-row { flex-direction: column; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .set2 *, .set2 *::before, .set2 *::after, .pfp-wrap { animation: none !important; transition: none !important; }
-}
 
 /* =====================================================================
    MODAL DO CHANGELOG (#changelog-modal) — vidro, igual ao inventário / upgrader / settings
@@ -684,9 +668,6 @@
     .clg-close { right: 14px; }
     #changelog-modal .changelog-scroll { padding: 16px 16px 20px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    #changelog-modal *, #changelog-modal *::before, #changelog-modal *::after { animation: none !important; transition: none !important; }
-}
 
 /* =====================================================================
    SONGY (#beat-drop-tab) — vidro, igual ao upgrader / inventário / settings
@@ -757,8 +738,6 @@
 .sgy .sgy-skin.skin-changing #bd-preview-img { opacity: 0; transform: scale(.88) translateY(6px); }
 .sgy .sgy-skin.skin-changing #bd-preview-name, .sgy .sgy-skin.skin-changing #bd-preview-price { opacity: 0; }
 .sgy #bd-preview-name, .sgy #bd-preview-price { transition: opacity .3s .1s; }
-@media (prefers-reduced-motion: reduce) { .sgy #bd-preview-img { animation: none; } }
-
 /* selected skins slot */
 .sgy-slot-wrap { display: flex; justify-content: center; flex: none; position: relative; z-index: 2; }
 .sgy-slot-wrap { max-height: 180px; overflow: hidden;
@@ -831,10 +810,6 @@
     .sgy #bd-wrapper { height: 120px; }
     .sgy .wave-bar { width: 3px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .sgy *, .sgy *::before, .sgy *::after { animation: none !important; transition: none !important; }
-}
-
 
 /* =====================================================================
    BATTLES (#battles-tab, #battle-modal, #arena-tab) — vidro, igual ao upgrader / inventário
@@ -1155,9 +1130,6 @@
     #arena-tab .lane { padding: 12px; border-radius: 22px; }
     #arena-tab .arena-inventory { height: 340px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .btl *, .btl *::before, .btl *::after, #battle-modal *, #battle-modal *::before, #battle-modal *::after { animation: none !important; transition: none !important; }
-}
 
 
 /* ---- Battles: refinamento do modal de criar (altura fixa, só as listas fazem scroll) ---- */
@@ -1342,9 +1314,6 @@
     #arena-tab .arena-vs { display: none; }
     #arena-tab .arena-inventory { height: 320px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    #arena-tab *, #arena-tab *::before, #arena-tab *::after { transition: none !important; }
-}
 
 
 /* ---- Arena: ajustes (progresso fora da barra, só setas no spinner, tag Winner) ---- */
@@ -1452,9 +1421,6 @@
 #arena-tab .lane-inv-head b.bump { animation: drop-count-bump .35s var(--ease); }
 @keyframes drop-count-bump { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
-@media (prefers-reduced-motion: reduce) {
-    #arena-tab .won-item-card.anim-entry, #arena-tab .lane-inv-head b.bump { animation: none; }
-}
 
 /* ---- Arena: banner da caixa atual (simples) ---- */
 #arena-tab .current-case-banner {
@@ -1474,8 +1440,6 @@
     flex: none; padding: 6px 12px; border-radius: 999px; font-size: 13.5px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
     color: var(--acc); background: rgba(255, 255, 255, .08); border: 0;
 }
-@media (prefers-reduced-motion: reduce) { #arena-tab .current-case-banner.swap { animation: none; } }
-/* ---- Arena: banner da caixa atual centrado (nome + preço) ---- */
 #arena-tab .arena-header { align-items: center; justify-content: center; text-align: center; width: 100%; }
 #arena-tab .current-case-banner {
     flex-direction: row; justify-content: center; align-items: center;

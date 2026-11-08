@@ -424,9 +424,6 @@
     .ugx-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
     .ugx-stage { padding: 28px 24px 20px; }
 }
-@media (prefers-reduced-motion: reduce) {
-    .ugx *, .ugx *::before, .ugx *::after { animation: none !important; transition: none !important; }
-}
 
 
 /* =====================================================================
@@ -584,9 +581,6 @@
 @keyframes ugx-modal-ring { 0% { transform: translate(-50%, -50%) scale(.4); opacity: .8; } 100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; } }
 @keyframes ugx-modal-sheen { to { transform: translateX(120%); } }
 
-@media (prefers-reduced-motion: reduce) {
-    #upgrade-modal *, #upgrade-modal *::before, #upgrade-modal *::after { animation: none !important; transition: none !important; }
-}
 
 
 /* =====================================================================
@@ -745,6 +739,3 @@
 #bd-result-modal .result-info h2 { text-transform: none; }
 #bd-result-modal .result-loss .result-info h2 { color: var(--soft); font-weight: 600; margin-bottom: 14px; }
 #bd-result-modal .result-info p:empty { display: none; }
-@media (prefers-reduced-motion: reduce) {
-    #bd-result-modal *, #bd-result-modal *::before, #bd-result-modal *::after { animation: none !important; transition: none !important; }
-}
