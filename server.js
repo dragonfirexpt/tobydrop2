@@ -67,8 +67,8 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
 passport.use(new SteamStrategy({
-    returnURL: 'https://tobydrop2.onrender.com/auth/steam/return',
-    realm: 'https://tobydrop2.onrender.com/',
+    returnURL: 'http://localhost:3000/auth/steam/return',
+    realm: 'http://localhost:3000/',
     apiKey: 'E20E7617408679026BD8DAC7C926A5C5'
   },
   async (identifier, profile, done) => {
@@ -314,17 +314,11 @@ function runBeatDropGame() {
 
             if (multiplier > 0) {
                 const totalValue = bet.initialValue * multiplier;
-                const wonSkinTemplate = getClosestSkin(totalValue);
+                const wonSkinTemplate = getMinigameSkin(totalValue);
                 
                 const user = await User.findById(bet.userId);
                 if (user && wonSkinTemplate) {
-                    const newSkin = {
-                        ...wonSkinTemplate,
-                        id: Math.random().toString(36).substr(2, 9),
-                        wear: generateRandomWear(wonSkinTemplate.conditionShort),
-                        seed: generateRandomSeed(),
-                        equippedTeam: 0
-                    };
+                    const newSkin = minigameSkinToItem(wonSkinTemplate);
                     user.inventory.push(newSkin);
                     await user.save();
                 }
@@ -6107,7 +6101,7 @@ butterfly: {
     name: "BUTTERFLY",
     price: 742.50,
     img: "https://key-drop.com/uploads/skins/1_111.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "★ Butterfly Knife | Doppler Black Pearl",
@@ -6484,7 +6478,7 @@ bloodshot: {
     name: "BLOODSHOT",
     price: 315.72,
     img: "https://key-drop.com/uploads/skins/1_5.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "AWP | Dragon Lore",
@@ -6674,7 +6668,7 @@ lore: {
     name: "LORE",
     price: 394.64,
     img: "https://key-drop.com/uploads/skins/1_2.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "AWP | Gungnir",
@@ -6931,7 +6925,7 @@ sport: {
     name: "SPORT",
     price: 1700.00,
     img: "https://key-drop.com/uploads/skins/high_premium_6.png",
-    tag: "NEW",
+    tag: "BOXES",
     items: [
         {
             name: "★ Sport Gloves | Vice",
@@ -7146,6 +7140,7 @@ sport: {
     ]
 },
 };
+Object.assign(caseData, require('./extraCases')); // caixas extra (Key-Drop)
 const rewardCases = {
     rank1_reward: {
         name: "CHAMPION BOX",
@@ -7660,6 +7655,73 @@ const axios = require('axios'); // Você pode precisar instalar: npm install axi
 Object.assign(caseData, rewardCases);
 let skinDatabase = []; // Agora é um Array
 
+// ===== Preços reais (OpenSkin) — data/prices.json é criado com `npm run prices` =====
+const priceTools = require('./prices');
+const casePricing = require('./casePricing');
+priceTools.applyPrices(caseData); // se o ficheiro não existir, ficam os preços manuais
+casePricing.recalc(caseData);     // preço da caixa = valor esperado dos itens / RTP
+// Lista de TODAS as skins do CS para o upgrader (caixas + resto do catálogo)
+const catalogTools = require('./catalog');
+let upgraderTargets = [];
+let upgraderIndex = new Map();
+// Skins que o Songy e o Slider podem dar como prémio: TODO o catálogo (não só as skins das caixas)
+let minigamePool = [];
+function rebuildMinigamePool() {
+    minigamePool = (upgraderTargets || [])
+        .filter(e => e && e.name && e.img && Number(e.price) > 0)
+        .map(e => ({
+            name: e.name,
+            img: e.img,
+            color: e.color,
+            weaponId: Number(e.weaponId) || 0,
+            paintKit: Number(e.paintKit) || 0,
+            value: Number(e.price),
+            conditionShort: e.displayCond || e.conditionShort || 'FN',
+            float: e.float,
+            seed: e.seed
+        }));
+}
+// skin mais próxima do valor-alvo (nunca abaixo de minValue, se existir alguma); usa o catálogo completo
+function getMinigameSkin(targetValue, minValue = 0) {
+    const pool = minigamePool.length ? minigamePool : globalSkinPool;
+    if (!pool.length) return null;
+    const closest = (arr) => arr.reduce((p, c) => (Math.abs(c.value - targetValue) < Math.abs(p.value - targetValue) ? c : p));
+    const above = minValue > 0 ? pool.filter(sk => sk.value >= minValue) : pool;
+    return closest(above.length ? above : pool);
+}
+// transforma o molde da pool numa skin pronta para o inventário
+function minigameSkinToItem(t) {
+    return {
+        name: t.name,
+        img: t.img,
+        color: t.color,
+        conditionShort: t.conditionShort,
+        value: t.value,
+        weaponId: t.weaponId,
+        paintKit: t.paintKit,
+        wear: (t.float != null) ? t.float : generateRandomWear(t.conditionShort),
+        seed: (t.seed != null) ? t.seed : generateRandomSeed(),
+        id: Math.random().toString(36).substr(2, 9),
+        equippedTeam: 0
+    };
+}
+async function rebuildUpgraderCatalog() {
+    try {
+        const r = await catalogTools.buildCatalog(caseData, KNIFE_NAMES);
+        upgraderTargets = r.list;
+        upgraderIndex = r.index;
+        rebuildMinigamePool();
+        console.log(`🎮 Pool dos minigames: ${minigamePool.length} skins (catálogo completo).`);
+    } catch (e) { console.error('❌ Erro a construir o catálogo do upgrader:', e); }
+}
+priceTools.watch(() => {          // recarrega sozinho quando o ficheiro muda
+    priceTools.applyPrices(caseData);
+    casePricing.recalc(caseData);
+    try { refreshSkinPool(); } catch (e) { /* pool ainda não pronta */ }
+    rebuildUpgraderCatalog();
+});
+app.get('/api/upgrader-skins', (req, res) => res.json(upgraderTargets));
+
 
 const getConditionForItem = (rolledItem) => {
     // We already picked the rarity during rollItem, so we just return its metadata
@@ -7669,7 +7731,7 @@ const getConditionForItem = (rolledItem) => {
     };
 };
 
-loadSkinDatabase();
+loadSkinDatabase().then(() => rebuildUpgraderCatalog());
 
 // Chame a função no final do arquivo ou antes do server.listen
 
@@ -7888,7 +7950,11 @@ setInterval(() => {
 // --- END OF simulation ENGINE ---
 app.post('/api/upgrade', async (req, res) => {
     try {
-        const { inputItemIds, targetSkinName, targetPrice, targetCondition } = req.body;
+        const { inputItemIds, targetSkinName, targetCondition } = req.body;
+        // O preço e os dados da skin alvo vêm SEMPRE do servidor (o cliente não pode mandar o preço)
+        const target = upgraderIndex.get(catalogTools.keyOf(String(targetSkinName || ''), targetCondition || 'FN'));
+        if (!target) return res.status(400).json({ error: "Skin alvo inválida" });
+        const targetPrice = target.price;
         const user = await User.findById(req.session.userId);
         if (!user) return res.status(401).json({ error: "Não autorizado" });
 
@@ -7897,6 +7963,14 @@ app.post('/api/upgrade', async (req, res) => {
         
         if (itemsToSacrifice.length === 0) {
             return res.status(400).json({ error: "Nenhum item de sacrifício encontrado" });
+        }
+        if (itemsToSacrifice.reduce((sum, item) => sum + item.value, 0) >= targetPrice) {
+            return res.status(400).json({ error: "A skin alvo tem de valer mais do que os itens sacrificados" });
+        }
+        // Limites de chance: entre 1% e 80% (validado ANTES de mexer em qualquer item)
+        const preChancePct = (itemsToSacrifice.reduce((sum, item) => sum + item.value, 0) / targetPrice) * 0.95 * 100;
+        if (preChancePct < 1 - 1e-6 || preChancePct > 80 + 1e-6) {
+            return res.status(400).json({ error: "A chance de upgrade tem de estar entre 1% e 80%" });
         }
 
         // --- NEW: CLEANUP SACRIFICED ITEMS FROM CS2 LOADOUT (MySQL) ---
@@ -7939,6 +8013,7 @@ app.post('/api/upgrade', async (req, res) => {
         // Remove the sacrificed items from the MongoDB inventory
         user.inventory = user.inventory.filter(i => !inputItemIds.includes(i.id));
 
+        let wonItem = null;
         if (win) {
             let template = null;
             for (let k in caseData) {
@@ -7946,16 +8021,17 @@ app.post('/api/upgrade', async (req, res) => {
                 if (found) { template = found; break; }
             }
             
-            const wonItem = {
+            wonItem = {
                 name: targetSkinName,
                 value: targetPrice,
-                img: template ? template.img : "",
-                color: template ? template.color : "#fff",
+                img: template ? template.img : target.img,
+                color: template ? template.color : target.color,
                 conditionShort: targetCondition || "FN",
-                weaponId: template ? Number(template.weaponId) : 0, 
-                paintKit: template ? Number(template.paintKit) : 0,
-                wear: generateRandomWear(targetCondition || "FN"),
-                seed: generateRandomSeed(),
+                weaponId: Number(template ? template.weaponId : target.weaponId) || 0,
+                paintKit: Number(template ? template.paintKit : target.paintKit) || 0,
+                // float/pattern do anúncio da source (o que o upgrader mostra); se não houver, aleatório como antes
+                wear: target.float != null ? target.float : generateRandomWear(targetCondition || "FN"),
+                seed: target.seed != null ? target.seed : generateRandomSeed(),
                 equippedTeam: 0, // New items are NEVER equipped by default
                 id: Math.random().toString(36).substr(2, 9)
             };
@@ -7970,7 +8046,8 @@ app.post('/api/upgrade', async (req, res) => {
             win, 
             roll: roll * 100, 
             chance: (chance * 100).toFixed(2), 
-            balance: user.balance 
+            balance: user.balance,
+            item: wonItem
         });
     } catch (e) {
         console.error("Upgrade Error:", e);
@@ -8067,270 +8144,76 @@ app.post('/api/login', async (req, res) => {
     } else res.status(401).json({ error: "Invalid login" });
 });
 
-// ===================== CATCH (pares / memória) =====================
-const CATCH_MULTS = [1, 1.15, 1.35, 1.65, 2.05, 2.6, 3.4, 4.5, 6, 8, 11, 15, 20]; // índice = nº de pares feitos (0 a 12)
-const CATCH_PAIRS = 12;
-const CATCH_MIN_CASHOUT_PAIRS = 2; // pares mínimos para poder fazer cash out
-const CATCH_MAX_MISSES = 6;        // pares errados permitidos antes de perder
-const CATCH_BASE_TIME = 60000;     // ms
-const CATCH_TIME_PER_PAIR = 3000;  // ms ganhos por cada par certo
-const CATCH_MIN_FLIP_GAP = 200;    // ms mínimos entre viragens (anti-bot)
-const activeCatchGames = new Map(); // userId -> jogo
+// ===================== SLIDER (verde / vermelho) =====================
+// O jogador escolhe a chance de ganhar (zona verde). Quanto maior o verde, menor o multiplicador.
+// Tudo é decidido aqui no servidor: chance validada, multiplicador calculado, resultado sorteado.
+const SLIDER_MIN_CHANCE = 2;     // % — mínimo (multiplicador máx. 47.5x)
+const SLIDER_MAX_CHANCE = 90;    // % — máximo (multiplicador mín. ~1.05x)
+const SLIDER_EDGE = 0.05;        // margem da casa (igual ao upgrader: 95% de retorno)
+const SLIDER_MAX_ITEMS = 5;
+const sliderBusy = new Set();    // userIds com um jogo a decorrer (evita pedidos em paralelo / duplicar skins)
 
-// Pasta com as fotos personalizadas do Catch: public/catch/
-const CATCH_FOLDER = path.join(__dirname, 'public', 'catch');
-const CATCH_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg']);
+const sliderMultiplier = (chance) => Math.round((100 / chance) * (1 - SLIDER_EDGE) * 100) / 100;
 
-function listCatchPhotos() {
+// skin mais próxima do valor-alvo, mas nunca abaixo do valor apostado (ganhar não pode dar menos do que apostaste)
+function sliderPickSkin(target, bet) {
+    return getMinigameSkin(target, bet);   // catálogo completo, nunca abaixo do valor apostado
+}
+
+app.post('/api/slider/play', async (req, res) => {
+    const uid = req.session && req.session.userId ? String(req.session.userId) : null;
+    if (!uid) return res.status(401).json({ error: 'Não autorizado' });
+    if (sliderBusy.has(uid)) return res.status(429).json({ error: 'Já tens um jogo a decorrer.' });
+    sliderBusy.add(uid);
     try {
-        return fs.readdirSync(CATCH_FOLDER)
-            .filter(f => CATCH_EXTS.has(path.extname(f).toLowerCase()))
-            .map(f => ({
-                img: '/catch/' + encodeURIComponent(f),
-                name: path.basename(f, path.extname(f)).replace(/[_-]+/g, ' ')
-            }));
-    } catch (e) {
-        return [];
-    }
-}
-
-function buildCatchBoard() {
-    // Escolhe 12 fotos aleatórias da pasta (precisa de pelo menos 12 ficheiros)
-    const photos = listCatchPhotos().sort(() => Math.random() - 0.5);
-    if (photos.length < CATCH_PAIRS) return null;
-    const uniq = photos.slice(0, CATCH_PAIRS);
-
-    // 24 cartas espalhadas num "mapa" 6x4, com posição aleatória dentro de cada célula
-    const cols = 6, rows = 4;
-    const cells = [];
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ r, c });
-    cells.sort(() => Math.random() - 0.5);
-
-    const tiles = [];
-    let n = 0;
-    uniq.forEach((photo, symbol) => {
-        for (let k = 0; k < 2; k++) {
-            const cell = cells[n];
-            tiles.push({
-                id: n,
-                symbol,
-                img: photo.img,
-                name: photo.name,
-                x: ((cell.c + 0.3 + Math.random() * 0.4) / cols) * 100,
-                y: ((cell.r + 0.3 + Math.random() * 0.4) / rows) * 100,
-                rot: Math.round((Math.random() * 24 - 12) * 10) / 10
-            });
-            n++;
-        }
-    });
-    return tiles;
-}
-
-// O cliente só recebe posição e rotação. A foto de cada carta só é enviada quando ela é virada.
-const catchHiddenTiles = g => g.tiles.map(t => ({ id: t.id, x: t.x, y: t.y, rot: t.rot }));
-const catchReveal = t => ({ id: t.id, img: t.img, name: t.name });
-
-function catchPublic(g) {
-    const pairs = g.matched.size / 2;
-    return {
-        pairs,
-        multiplier: CATCH_MULTS[pairs],
-        misses: g.misses,
-        maxMisses: CATCH_MAX_MISSES,
-        deadline: g.deadline,
-        now: Date.now(),
-        betValue: g.betValue,
-        minPairs: CATCH_MIN_CASHOUT_PAIRS
-    };
-}
-
-async function catchPayout(user, g, multiplier) {
-    const template = getClosestSkin(g.betValue * multiplier);
-    if (!template) return null;
-    const newSkin = {
-        name: template.name,
-        img: template.img,
-        color: template.color,
-        conditionShort: template.conditionShort,
-        value: template.value,
-        weaponId: template.weaponId,
-        paintKit: template.paintKit,
-        wear: generateRandomWear(template.conditionShort),
-        seed: generateRandomSeed(),
-        id: Math.random().toString(36).substr(2, 9),
-        equippedTeam: 0
-    };
-    user.inventory.push(newSkin);
-    user.markModified('inventory');
-    await user.save();
-    return newSkin;
-}
-
-app.post('/api/catch/start', async (req, res) => {
-    try {
-        const user = await User.findById(req.session.userId);
+        const user = await User.findById(uid);
         if (!user) return res.status(401).json({ error: 'Não autorizado' });
 
-        const existing = activeCatchGames.get(String(user._id));
-        if (existing && Date.now() > existing.deadline + 1000) activeCatchGames.delete(String(user._id));
-        if (activeCatchGames.has(String(user._id))) return res.status(400).json({ error: 'Já tens um jogo a decorrer.' });
+        // chance (%) com 2 casas decimais, dentro dos limites
+        let chance = Math.round(Number(req.body.chance) * 100) / 100;
+        if (!Number.isFinite(chance) || chance < SLIDER_MIN_CHANCE - 1e-9 || chance > SLIDER_MAX_CHANCE + 1e-9) {
+            return res.status(400).json({ error: `A chance tem de estar entre ${SLIDER_MIN_CHANCE}% e ${SLIDER_MAX_CHANCE}%.` });
+        }
 
-        const ids = Array.isArray(req.body.itemIds) ? req.body.itemIds.slice(0, 5) : [];
+        const ids = Array.isArray(req.body.itemIds) ? [...new Set(req.body.itemIds.map(String))].slice(0, SLIDER_MAX_ITEMS) : [];
         const items = user.inventory.filter(i => ids.includes(i.id));
-        if (items.length === 0) return res.status(400).json({ error: 'Seleciona pelo menos 1 skin.' });
+        if (items.length === 0 || items.length !== ids.length) return res.status(400).json({ error: 'Seleciona pelo menos 1 skin válida.' });
+        if (items.some(i => i.isLocked)) return res.status(400).json({ error: 'Não podes apostar skins bloqueadas.' });
         if (items.some(i => i.equippedTeam > 0)) return res.status(400).json({ error: 'Remove as skins equipadas do loadout antes de apostar.' });
 
-        const tiles = buildCatchBoard();
-        if (!tiles) return res.status(400).json({ error: 'A pasta public/catch precisa de pelo menos 12 fotos.' });
+        const betValue = Math.round(items.reduce((s, i) => s + (Number(i.value) || 0), 0) * 100) / 100;
+        const multiplier = sliderMultiplier(chance);
 
-        const betValue = items.reduce((s, i) => s + i.value, 0);
-        const betIds = items.map(i => i.id);
-        user.inventory = user.inventory.filter(i => !betIds.includes(i.id));
+        // sorteio: 0.00 – 99.99. Verde = [0, chance). Ganha se cair no verde.
+        const roll = require('crypto').randomInt(0, 10000) / 100;
+        const win = roll < chance;
+
+        let newSkin = null;
+        if (win) {
+            const template = sliderPickSkin(betValue * multiplier, betValue);
+            if (!template) return res.status(500).json({ error: 'Sem skins disponíveis para o prémio. Tenta outra vez.' });
+            newSkin = minigameSkinToItem(template);
+        }
+
+        user.inventory = user.inventory.filter(i => !ids.includes(i.id));
+        if (newSkin) user.inventory.push(newSkin);
         user.markModified('inventory');
         await user.save();
 
-        const g = {
-            tiles,
-            betValue,
-            matched: new Set(),
-            open: null,
-            misses: 0,
-            lastFlipAt: 0,
-            deadline: Date.now() + CATCH_BASE_TIME
-        };
-        activeCatchGames.set(String(user._id), g);
-
-        res.json({
-            success: true,
-            tiles: catchHiddenTiles(g),
-            inventory: user.inventory,
-            state: catchPublic(g)
-        });
+        res.json({ success: true, win, roll, chance, multiplier, betValue, skin: newSkin, inventory: user.inventory });
     } catch (e) {
-        console.error('Catch start error:', e);
-        res.status(500).json({ error: 'Erro ao iniciar o Catch' });
+        console.error('Slider error:', e);
+        res.status(500).json({ error: 'Erro no Slider' });
+    } finally {
+        sliderBusy.delete(uid);
     }
 });
-
-// Retomar jogo (recarregar a página) ou confirmar fim por tempo
-app.get('/api/catch/state', async (req, res) => {
-    try {
-        if (!req.session.userId) return res.json({ active: false });
-        const key = String(req.session.userId);
-        const g = activeCatchGames.get(key);
-        if (!g) return res.json({ active: false });
-        if (Date.now() > g.deadline + 1000) {
-            activeCatchGames.delete(key);
-            return res.json({ active: false, over: true, reason: 'time' });
-        }
-        res.json({
-            active: true,
-            tiles: catchHiddenTiles(g),
-            matched: [...g.matched].map(id => catchReveal(g.tiles[id])),
-            opened: g.open !== null ? catchReveal(g.tiles[g.open]) : null,
-            state: catchPublic(g)
-        });
-    } catch (e) {
-        res.json({ active: false });
-    }
-});
-
-// Virar uma carta. 1ª carta: fica aberta. 2ª carta: o servidor decide se é par.
-app.post('/api/catch/flip', async (req, res) => {
-    try {
-        const user = await User.findById(req.session.userId);
-        if (!user) return res.status(401).json({ error: 'Não autorizado' });
-        const key = String(user._id);
-        const g = activeCatchGames.get(key);
-        if (!g) return res.status(400).json({ error: 'Sem jogo ativo.' });
-
-        const now = Date.now();
-        if (now > g.deadline + 1000) {
-            activeCatchGames.delete(key);
-            return res.json({ success: true, over: true, reason: 'time', win: false });
-        }
-
-        const id = Number(req.body.id);
-        const tile = g.tiles[id];
-        if (!tile || g.matched.has(id) || g.open === id) {
-            return res.status(400).json({ error: 'Carta inválida.' });
-        }
-        if (now - g.lastFlipAt < CATCH_MIN_FLIP_GAP) {
-            return res.status(429).json({ error: 'Calma, demasiado rápido.' });
-        }
-        g.lastFlipAt = now;
-
-        // 1ª carta do par
-        if (g.open === null) {
-            g.open = id;
-            return res.json({ success: true, opened: catchReveal(tile), state: catchPublic(g) });
-        }
-
-        // 2ª carta do par
-        const first = g.tiles[g.open];
-        g.open = null;
-        const ids = [first.id, tile.id];
-        const second = catchReveal(tile);
-
-        if (first.symbol === tile.symbol) {
-            g.matched.add(first.id);
-            g.matched.add(tile.id);
-            g.deadline += CATCH_TIME_PER_PAIR;
-
-            const pairs = g.matched.size / 2;
-            const multiplier = CATCH_MULTS[pairs];
-
-            // Mapa limpo = cash out automático
-            if (pairs >= CATCH_PAIRS) {
-                activeCatchGames.delete(key);
-                const skin = await catchPayout(user, g, multiplier);
-                return res.json({ success: true, correct: true, ids, second, over: true, reason: 'cleared', win: !!skin, skin, multiplier, inventory: user.inventory });
-            }
-            return res.json({ success: true, correct: true, ids, second, state: catchPublic(g) });
-        }
-
-        g.misses++;
-        if (g.misses >= CATCH_MAX_MISSES) {
-            activeCatchGames.delete(key);
-            return res.json({ success: true, correct: false, ids, second, over: true, reason: 'misses', win: false });
-        }
-        res.json({ success: true, correct: false, ids, second, state: catchPublic(g) });
-    } catch (e) {
-        console.error('Catch flip error:', e);
-        res.status(500).json({ error: 'Erro no Catch' });
-    }
-});
-
-app.post('/api/catch/cashout', async (req, res) => {
-    try {
-        const user = await User.findById(req.session.userId);
-        if (!user) return res.status(401).json({ error: 'Não autorizado' });
-        const key = String(user._id);
-        const g = activeCatchGames.get(key);
-        if (!g) return res.status(400).json({ error: 'Sem jogo ativo.' });
-
-        if (Date.now() > g.deadline + 1000) {
-            activeCatchGames.delete(key);
-            return res.json({ success: true, over: true, reason: 'time', win: false });
-        }
-        const pairs = g.matched.size / 2;
-        if (pairs < CATCH_MIN_CASHOUT_PAIRS) return res.status(400).json({ error: `Faz pelo menos ${CATCH_MIN_CASHOUT_PAIRS} ${CATCH_MIN_CASHOUT_PAIRS === 1 ? 'par' : 'pares'} antes de sair.` });
-
-        activeCatchGames.delete(key);
-        const multiplier = CATCH_MULTS[pairs];
-        const skin = await catchPayout(user, g, multiplier);
-        res.json({ success: true, over: true, reason: 'cashout', win: !!skin, skin, multiplier, inventory: user.inventory });
-    } catch (e) {
-        console.error('Catch cashout error:', e);
-        res.status(500).json({ error: 'Erro no cash out' });
-    }
-});
-// ===================== FIM CATCH =====================
+// ===================== FIM SLIDER =====================
 
 // ===================== ADMIN (menu secreto + sons dirigidos) =====================
 // SteamID64 dos admins. Define na variável de ambiente ADMIN_STEAM_IDS (separados por vírgula)
 // ou troca o texto de fallback abaixo pelo teu SteamID64 (os 17 dígitos).
-const ADMIN_STEAM_IDS = (process.env.ADMIN_STEAM_IDS || '76561199470606845')
+const ADMIN_STEAM_IDS = (process.env.ADMIN_STEAM_IDS || '')
     .split(',').map(s => s.trim()).filter(Boolean);
 const ADMIN_SOUNDS_FOLDER = path.join(__dirname, 'public', 'admin-sounds');
 const ADMIN_SOUND_EXTS = new Set(['.mp3', '.wav', '.ogg', '.m4a']);
@@ -8480,6 +8363,20 @@ app.post('/api/admin/screen-effect', requireAdmin, (req, res) => {
 });
 
 // ===================== BANS TEMPORÁRIOS (admin) =====================
+// Atualiza os preços a partir da OpenSkin (1 pedido) e aplica logo ao site
+app.post('/api/admin/update-prices', requireAdmin, async (req, res) => {
+    try {
+        const info = await priceTools.fetchAndSave();
+        const r = priceTools.applyPrices(caseData);
+        casePricing.recalc(caseData);
+        try { refreshSkinPool(); } catch (e) { /* ignora */ }
+        await rebuildUpgraderCatalog();
+        res.json({ success: true, primary: info.primary, total: info.count, applied: r ? r.updated : 0, missing: r ? r.missing.length : 0 });
+    } catch (e) {
+        res.status(500).json({ error: e.message || 'Falhou' });
+    }
+});
+
 const BAN_MAX_SECONDS = 60 * 60 * 24 * 365; // máximo: 1 ano
 
 function emitBanStatus(steamId, ban) {
@@ -8946,27 +8843,13 @@ socket.on('claimBeatDrop', async (data) => {
     if (multiplier <= 1.05) return socket.emit('beatDropResult', { win: false });
 
     const targetWinValue = initialValue * multiplier;
-    const template = getClosestSkin(targetWinValue);
+    const template = getMinigameSkin(targetWinValue);   // catálogo completo (todas as skins)
     
     if (template) {
         const user = await User.findById(userId);
         
-        // CRIAR A NOVA SKIN PARA O INVENTÁRIO
-        const newSkin = {
-            name: template.name,
-            img: template.img,
-            color: template.color,
-            conditionShort: template.conditionShort,
-            // AQUI ESTÁ A CORREÇÃO:
-            // Usamos template.value (preço real) e NÃO o valor multiplicado
-            value: template.value, 
-            weaponId: template.weaponId,
-            paintKit: template.paintKit,
-            wear: generateRandomWear(template.conditionShort),
-            seed: generateRandomSeed(),
-            id: Math.random().toString(36).substr(2, 9),
-            equippedTeam: 0
-        };
+        // CRIAR A NOVA SKIN PARA O INVENTÁRIO (value = preço real da skin, não o valor multiplicado)
+        const newSkin = minigameSkinToItem(template);
 
         user.inventory.push(newSkin);
         await user.save();
